@@ -47,6 +47,9 @@ jobs:
           npm run build
           npm run test --if-present
 
+      - name: Remove node_modules before upload
+        run: rm -rf Frontend/node_modules
+
       # Upload the entire Frontend directory as an artifact
       # This includes package.json, .next, public/, etc.
       - name: Upload artifact for deployment job
