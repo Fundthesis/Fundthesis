@@ -47,8 +47,10 @@ jobs:
           npm run build
           npm run test --if-present
 
-      - name: Remove node_modules before upload
-        run: rm -rf Frontend/node_modules
+      - name: Remove packaged dependencies before upload
+        run: |
+          rm -rf Frontend/node_modules
+          rm -f Frontend/node_modules.tar.gz
 
       # Upload the entire Frontend directory as an artifact
       # This includes package.json, .next, public/, etc.
