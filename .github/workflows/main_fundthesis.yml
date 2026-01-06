@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: Frontend/.next
+          path: Frontend
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,6 +51,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: Frontend
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -65,4 +66,4 @@ jobs:
         with:
           app-name: "Fundthesis"
           slot-name: "Production"
-          package: Frontend/.next
+          package: node-app
