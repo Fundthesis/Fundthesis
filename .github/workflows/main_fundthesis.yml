@@ -42,8 +42,13 @@ jobs:
           # Create deployment folder
           mkdir -p ../deploy
           cp -R .next/standalone/* ../deploy/
+          mkdir -p ../deploy/.next
           cp -R .next/static ../deploy/.next/static
           cp -R public ../deploy/public || true
+
+          # Verify server.js exists for Azure startup
+          test -f ../deploy/server.js || (echo "ERROR: server.js not found in deploy folder" && exit 1)
+          echo "✓ server.js found, deployment structure verified"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -71,6 +76,19 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7EDA8E94C6BD4776A51B83E85A01B168 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EBD35B074BBF49BBB46AEB35EECCF751 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C712BA5896CF447C995950775B71D60B }}
+
+      - name: Configure Azure Web App startup command
+        run: |
+          RESOURCE_GROUP=$(az webapp show --name Fundthesis --query resourceGroup -o tsv)
+          az webapp config set \
+            --name Fundthesis \
+            --resource-group "$RESOURCE_GROUP" \
+            --startup-file "node server.js"
+          az webapp config appsettings set \
+            --name Fundthesis \
+            --resource-group "$RESOURCE_GROUP" \
+            --settings WEBSITES_CONTAINER_START_TIME_LIMIT=1800 \
+            --output none
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
