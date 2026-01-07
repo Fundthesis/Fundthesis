@@ -25,7 +25,7 @@ interface DefaultStockExpandedModalProps {
   timeframe: 'day' | 'month' | 'year' | 'all'
   setTimeframe: (timeframe: 'day' | 'month' | 'year' | 'all') => void
   fetchStockDetail: (symbol: string) => Promise<void>
-  stockDetails: { [key: string]: StockDetail }
+
 }
 
 export function DefaultStockExpandedModal({
@@ -34,7 +34,7 @@ export function DefaultStockExpandedModal({
   timeframe,
   setTimeframe,
   fetchStockDetail,
-  stockDetails
+
 }: DefaultStockExpandedModalProps) {
   const formatVolume = (vol: number) => {
     if (vol >= 1000000) return (vol / 1000000).toFixed(1) + 'M'
@@ -49,20 +49,20 @@ export function DefaultStockExpandedModal({
       </button>
 
       <div className="flex items-start justify-center min-h-screen p-8" onClick={(e) => e.stopPropagation()}>
-        <div classNa m e="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] p-8 relative overflow-y-auto">
-          <div classNa m e="space-y-6">
-            <div classNa m e="flex items-start justify-between pb-6 border-b">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] p-8 relative overflow-y-auto">
+          <div className="space-y-6">
+            <div className="flex items-start justify-between pb-6 border-b">
               <div>
-                <h2 classNa m e="text-5xl font-bold text-gray-900" >{stock.symb ol}</ h2>
+                <h2 className="text-5xl font-bold text-gray-900" >{stock.symbol}</h2>
                 <p className="text-xl text-gray-600 mt-2">{stock.company}</p>
-              </d iv>
+              </div>
               <div className="text-right">
                 <p className="text-5xl font-bold text-gray-900">${stock.price.toFixed(2)}</p>
                 <p className={`text-2xl font-semibold mt-2 ${stock.change >= 0 ? 'text-[#9DB38A]' : 'text-[#c17b7b]'}`}>
                   {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
                 </p>
               </div>
-            </d iv>
+            </div>
 
             <div className="w-full h-96 rounded-xl bg-gray-50 border-2 border-gray-200 overflow-hidden">
               {stock.chartData && stock.chartData.length > 0 ? (
@@ -133,9 +133,9 @@ export function DefaultStockExpandedModal({
                 </div>
               </div>
             </div>
-          </d iv>
-        </d iv>
-      </d iv>
-    </d iv >
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

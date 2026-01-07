@@ -1,8 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import StockTicker from "@/components/StockTicker";
 import ProgressRing from "@/app/lessonmodules/components/ProgressRing";
 import { getProgress, resetAllProgress } from "@/app/lessonmodules/data/userProgress";
 
@@ -19,29 +17,7 @@ const moduleTitles = [
   "Demo",
 ];
 
-const CircularRing: React.FC<{ percent: number; size?: number }> = ({ percent, size = 40 }) => {
-  const stroke = 6;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dash = (percent / 100) * circumference;
 
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={radius} stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        stroke="#3b82f6"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray={`${dash} ${circumference - dash}`}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-    </svg>
-  );
-};
 
 const LearnPage: React.FC = () => {
   const [progress, setProgress] = useState<number[]>(() => Array(moduleTitles.length).fill(0));
@@ -50,7 +26,7 @@ const LearnPage: React.FC = () => {
     try {
       const p = moduleTitles.map((_, i) => getProgress(i + 1, 4));
       setProgress(p);
-    } catch (e) {/* ignore */ }
+    } catch {/* ignore */ }
   };
 
   useEffect(() => {
@@ -71,7 +47,7 @@ const LearnPage: React.FC = () => {
       try {
         resetAllProgress(); // triggers ft-progress-changed
         reloadProgress();
-      } catch (e) {/* ignore */ }
+      } catch {/* ignore */ }
     }
   };
 
@@ -147,7 +123,7 @@ const LearnPage: React.FC = () => {
                       </div>
                       <div className="w-12 h-12">
                         <ProgressRing
-                          percent={getProgress(moduleNumber, 4)}
+                          percent={progress[i] || 0}
                           size={44}
                         />
                       </div>

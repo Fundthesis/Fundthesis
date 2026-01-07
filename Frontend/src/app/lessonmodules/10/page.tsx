@@ -1,71 +1,12 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { StockModel, TradeResult } from '../lib/stockModel';
+import { StockModel } from '../lib/stockModel';
 import ModNav from '../components/ModNav';
-import questionsByModule, { getQuestions } from '../data/moduleQuestions';
 import Confetti from '../components/Confetti';
 // DecisionQuiz is defined in this file for the Module X assessment
-type Decision = 'BUY' | 'SELL' | 'HOLD' | null;
 
-const DecisionQuiz: React.FC = () => {
-  const scenarios = [
-    { id: 's1', title: 'AI chip demand surges', text: 'Analysts report stronger-than-expected demand for GPUs in data centers, which may boost NVDA revenue this quarter.', correct: 'BUY' as Decision, explanation: 'Increased demand for GPUs is a positive signal for NVDA revenue and growth.' },
-    { id: 's2', title: 'Fed signals on interest rates', text: 'Recent commentary suggests rates could remain elevated, potentially weighing on growth stocks by increasing discount rates.', correct: 'HOLD' as Decision, explanation: 'Higher rates can pressure growth valuations; a cautious approach (hold) may be appropriate.' },
-    { id: 's3', title: 'Supply chain tariffication risk', text: 'New tariffs proposed on semiconductor components could raise costs for manufacturers and squeeze margins.', correct: 'SELL' as Decision, explanation: 'Tariffs that increase costs can hurt margins and are a near-term negative for suppliers.' },
-    { id: 's4', title: 'Partnership announcement', text: 'NVDA announces a strategic partnership with a major cloud provider to integrate its AI stack, expanding reach.', correct: 'BUY' as Decision, explanation: 'Strategic partnerships can expand revenue opportunities and distribution.' }
-  ];
 
-  const [answers, setAnswers] = React.useState<Record<string, Decision>>({});
-  const [submitted, setSubmitted] = React.useState(false);
 
-  function select(id: string, choice: Decision) {
-    setAnswers(a => ({ ...a, [id]: choice }));
-  }
-
-  function score() {
-    let correct = 0;
-    scenarios.forEach(s => { if (answers[s.id] === s.correct) correct++; });
-    return { correct, total: scenarios.length };
-  }
-
-  const result = submitted ? score() : null;
-
-  return (
-    <div className="space-y-4">
-      {scenarios.map(s => (
-        <div key={s.id} className="p-3 border rounded">
-          <div className="font-semibold">{s.title}</div>
-          <div className="text-sm text-gray-700 mb-2">{s.text}</div>
-          <div className="flex gap-3">
-            {(['BUY', 'SELL', 'HOLD'] as Decision[]).map(opt => (
-              <button
-                key={opt || 'null'}
-                onClick={() => select(s.id, opt)}
-                className={`px-3 py-1 rounded ${answers[s.id] === opt ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                {opt}
-              </button>
-            ))}
-          </div>
-          {submitted && (
-            <div className="mt-2 text-sm">
-              <div><strong>Correct:</strong> {s.correct}</div>
-              <div className="text-gray-600">{s.explanation}</div>
-              <div className="mt-1">Your answer: <span className="font-semibold">{answers[s.id] ?? '—'}</span></div>
-            </div>
-          )}
-        </div>
-      ))}
-
-      <div className="flex items-center gap-3">
-        <button onClick={() => setSubmitted(true)} className="px-4 py-2 bg-blue-600 text-white rounded">Check Answers</button>
-        <button onClick={() => { setAnswers({}); setSubmitted(false); }} className="px-4 py-2 bg-gray-200 rounded">Reset</button>
-        {submitted && result && (
-          <div className="ml-auto font-semibold">Score: {result.correct} / {result.total}</div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const Module10: React.FC = () => {
   const stock = useMemo(() => new StockModel(875.4), []);
@@ -82,7 +23,7 @@ const Module10: React.FC = () => {
   const [amount, setAmount] = useState<number>(1);
   const [orderType, setOrderType] = useState<'market' | 'limit' | 'stop'>('market');
   const [limitPrice, setLimitPrice] = useState<string>('');
-  const [history, setHistory] = useState<TradeResult[]>([]);
+
 
   // Assessment mode intercepts buy/sell clicks and uses them as answers to scenarios
   const [assessmentActive] = useState<boolean>(true);
@@ -104,7 +45,7 @@ const Module10: React.FC = () => {
     if (balance < res.total) { alert('Insufficient funds'); return; }
     setBalance(b => b - res.total);
     setShares(s => s + res.shares);
-    setHistory(h => [...h, res]);
+
   };
 
   const doSell = () => {
@@ -118,7 +59,7 @@ const Module10: React.FC = () => {
     const res = stock.executeTrade('SELL', amount, orderType, Number.isFinite(limit) ? limit : undefined);
     setBalance(b => b + res.total);
     setShares(s => s - res.shares);
-    setHistory(h => [...h, res]);
+
   };
 
   // --- Decision assessment state and handlers ---

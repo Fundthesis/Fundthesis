@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -88,19 +88,19 @@ model Article {
 model StockForecast {
   id               String   @id @default(uuid())
   symbol           String
-  price_series     Json?
-  forecast_results Json?
+  price_series     String?
+  forecast_results String?
   run_date         DateTime
   updated_at       DateTime @default(now()) @updatedAt
 
-  @@index([symbol, run_date(sort: Desc)])
+  @@index([symbol])
   @@map("stock_forecasts")
 }
 
 model StockPriceSeries {
   symbol           String   @id
-  price_series     Json?
-  forecast_results Json?
+  price_series     String?
+  forecast_results String?
   updated_at       DateTime @default(now()) @updatedAt
 
   @@map("stock_price_series")

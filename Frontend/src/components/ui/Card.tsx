@@ -73,3 +73,16 @@ export function CardDescription({ children, className }: CardDescriptionProps) {
   )
 }
 
+interface CardFooterProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function CardFooter({ children, className }: CardFooterProps) {
+  return (
+    <div className={cn("p-6 border-t border-gray-200", className)}>
+      {children}
+    </div>
+  )
+}
+

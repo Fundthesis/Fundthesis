@@ -55,7 +55,7 @@ interface StockCardStackProps {
   setCurrentIndex: (index: number) => void;
   timeframe: "day" | "month" | "year";
   setTimeframe: (timeframe: "day" | "month" | "year") => void;
-  loadingMore: boolean;
+
   checkAndLoadMore: (index: number) => void;
 }
 
@@ -198,7 +198,7 @@ export function StockCard({
   onClick,
   chartData = [],
 }: StockCardProps) {
-  const combinedChartData = chartData || [];
+  const combinedChartData = useMemo(() => chartData || [], [chartData]);
   const currentDetail = detail;
   const forecastPoints = useMemo(
     () => combinedChartData.filter((point) => point.type === "forecast"),
@@ -339,8 +339,8 @@ export function StockCard({
               }
             }}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${timeframe === tf
-                ? "bg-[#9DB38A] text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-[#9DB38A] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
           >
             {tf.charAt(0).toUpperCase() + tf.slice(1)}
@@ -406,8 +406,8 @@ export function StockCard({
                     className="bg-[#9DB38A] h-2 rounded-full"
                     style={{
                       width: `${((stock.price - currentDetail.fiftyTwoWeekLow) /
-                          (currentDetail.fiftyTwoWeekHigh -
-                            currentDetail.fiftyTwoWeekLow)) *
+                        (currentDetail.fiftyTwoWeekHigh -
+                          currentDetail.fiftyTwoWeekLow)) *
                         100
                         }%`,
                     }}
@@ -475,7 +475,7 @@ export function StockCardStack({
   setCurrentIndex,
   timeframe,
   setTimeframe,
-  loadingMore,
+
   checkAndLoadMore,
 }: StockCardStackProps) {
   const [expandedStock, setExpandedStock] = useState<StockDetail | null>(null);
@@ -790,8 +790,8 @@ export function StockCardStack({
                         setTimeframe(tf as "day" | "month" | "year");
                       }}
                       className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${timeframe === tf
-                          ? "bg-[#9DB38A] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-[#9DB38A] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                     >
                       {tf.charAt(0).toUpperCase() + tf.slice(1)}
@@ -860,9 +860,9 @@ export function StockCardStack({
                               className="bg-[#9DB38A] h-2 rounded-full"
                               style={{
                                 width: `${((stock.price -
-                                    currentDetail.fiftyTwoWeekLow) /
-                                    (currentDetail.fiftyTwoWeekHigh -
-                                      currentDetail.fiftyTwoWeekLow)) *
+                                  currentDetail.fiftyTwoWeekLow) /
+                                  (currentDetail.fiftyTwoWeekHigh -
+                                    currentDetail.fiftyTwoWeekLow)) *
                                   100
                                   }%`,
                               }}
@@ -898,8 +898,8 @@ export function StockCardStack({
                       </p>
                       <p
                         className={`text-2xl font-bold mb-1 ${stock.changePercent >= 0
-                            ? "text-[#9DB38A]"
-                            : "text-[#c17b7b]"
+                          ? "text-[#9DB38A]"
+                          : "text-[#c17b7b]"
                           }`}
                       >
                         {stock.changePercent >= 0 ? "BUY" : "HOLD"}
@@ -979,8 +979,8 @@ export function StockCardStack({
                   </p>
                   <p
                     className={`text-2xl font-semibold ${liveStockDetail.change >= 0
-                        ? "text-[#9DB38A]"
-                        : "text-[#c17b7b]"
+                      ? "text-[#9DB38A]"
+                      : "text-[#c17b7b]"
                       }`}
                   >
                     {liveStockDetail.change >= 0 ? "+" : ""}
@@ -1016,8 +1016,8 @@ export function StockCardStack({
                               setTimeframe(tf as "day" | "month" | "year");
                             }}
                             className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${timeframe === tf
-                                ? "bg-[#9DB38A] text-white"
-                                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                              ? "bg-[#9DB38A] text-white"
+                              : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                               }`}
                           >
                             {tf.charAt(0).toUpperCase() + tf.slice(1)}
@@ -1212,9 +1212,9 @@ export function StockCardStack({
                             className="bg-gradient-to-r from-[#c17b7b] via-[#9DB38A] to-[#9DB38A] h-3 rounded-full relative"
                             style={{
                               width: `${((liveStockDetail.price -
-                                  liveStockDetail.fiftyTwoWeekLow) /
-                                  (liveStockDetail.fiftyTwoWeekHigh -
-                                    liveStockDetail.fiftyTwoWeekLow)) *
+                                liveStockDetail.fiftyTwoWeekLow) /
+                                (liveStockDetail.fiftyTwoWeekHigh -
+                                  liveStockDetail.fiftyTwoWeekLow)) *
                                 100
                                 }%`,
                             }}
@@ -1241,8 +1241,8 @@ export function StockCardStack({
                       </p>
                       <p
                         className={`text-4xl font-bold mb-2 ${liveStockDetail.changePercent >= 0
-                            ? "text-[#9DB38A]"
-                            : "text-[#c17b7b]"
+                          ? "text-[#9DB38A]"
+                          : "text-[#c17b7b]"
                           }`}
                       >
                         {liveStockDetail.changePercent >= 0 ? "BUY" : "HOLD"}

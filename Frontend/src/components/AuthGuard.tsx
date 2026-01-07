@@ -1,19 +1,19 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/auth/AuthProvidor";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.push("/auth"); // redirect if not authenticated
     }
-  }, [loading, user, router]);
+  }, [isLoading, user, router]);
 
-  if (loading || !user) return <div>Loading...</div>;
+  if (isLoading || !user) return <div>Loading...</div>;
 
   return <>{children}</>;
 }

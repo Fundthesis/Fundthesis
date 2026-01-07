@@ -27,12 +27,12 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
   const prev = moduleIndex - 1;
   const next = moduleIndex + 1;
   const isFirst = moduleIndex <= 1;
-  const isLast = moduleIndex === totalModules;
+
   const [counts, setCounts] = useState(() => getAnsweredCount(moduleIndex));
 
   useEffect(() => {
     function onChange() {
-      try { setCounts(getAnsweredCount(moduleIndex)); } catch (e) { /* ignore */ }
+      try { setCounts(getAnsweredCount(moduleIndex)); } catch { /* ignore */ }
     }
     // custom event dispatched by userProgress write
     window.addEventListener('ft-progress-changed', onChange);

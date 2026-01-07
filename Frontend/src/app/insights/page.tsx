@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import StockTicker from "@/components/StockTicker";
 import NewsArticleModal from "@/components/NewsArticleModal";
 import MarkdownContent from "@/components/MarkdownContent";
 import { fetchArticles, NewsArticle } from "@/lib/api";

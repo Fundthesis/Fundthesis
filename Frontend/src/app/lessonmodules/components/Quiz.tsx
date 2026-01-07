@@ -28,7 +28,7 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     const explanation = q.explanations?.[choiceIndex];
     setShowResult({ correct, explanation, selectedIndex: choiceIndex });
     // store correctness in a local dummy DB until backend/auth is available
-    try { saveResult(moduleIndex, q.id, correct); } catch (e) { /* ignore */ }
+    try { saveResult(moduleIndex, q.id, correct); } catch { /* ignore */ }
     // mark this question answered ONLY if the user was correct
     if (correct) {
       markQuestionAnswered(moduleIndex, q.id, questions.length);

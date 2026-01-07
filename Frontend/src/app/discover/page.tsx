@@ -48,7 +48,7 @@ interface StockDetail {
 }
 
 // Use Next.js API routes instead of external Flask server
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 
 const getDaysForTimeframe = (tf: "day" | "month" | "year") => {
   switch (tf) {
@@ -717,7 +717,7 @@ function DiscoverPage() {
             setCurrentIndex={setCurrentIndex}
             timeframe={timeframe}
             setTimeframe={setTimeframe}
-            loadingMore={loadingMore}
+
             checkAndLoadMore={checkAndLoadMore}
           />
         </div>

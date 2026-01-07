@@ -8,13 +8,13 @@ function read(): Entry[] {
     const raw = localStorage.getItem(KEY);
     if (!raw) return [];
     return JSON.parse(raw) as Entry[];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
 
 function write(entries: Entry[]) {
-  try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch (e) { /* ignore */ }
+  try { localStorage.setItem(KEY, JSON.stringify(entries)); } catch { /* ignore */ }
 }
 
 export function saveResult(moduleIndex: number, questionId: string, correct: boolean) {
@@ -31,4 +31,5 @@ export function clearResults() {
   write([]);
 }
 
-export default { saveResult, getResultsForModule, clearResults };
+const dummyProgressDB = { saveResult, getResultsForModule, clearResults };
+export default dummyProgressDB;

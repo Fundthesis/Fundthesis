@@ -22,13 +22,7 @@ type HoldingRow = {
   isPositive: boolean;
 };
 
-type StockQuoteResponse = {
-  symbol: string;
-  company: string;
-  price: number;
-  change: number;
-  changePercent: number;
-};
+
 
 type StockData = {
   [symbol: string]: {
@@ -258,7 +252,7 @@ export default function PortfolioPage() {
       let payload: { error?: string; message?: string } | null = null;
       try {
         payload = await response.json();
-      } catch (error) {
+      } catch {
         payload = null;
       }
 
@@ -314,7 +308,7 @@ export default function PortfolioPage() {
         let payload: { error?: string; message?: string } | null = null;
         try {
           payload = await response.json();
-        } catch (error) {
+        } catch {
           payload = null;
         }
 

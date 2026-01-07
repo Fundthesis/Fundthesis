@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface StockCard {
   id: number;
@@ -20,8 +20,6 @@ const stocks: StockCard[] = [
 
 const mod = (n: number, m: number) => ((n % m) + m) % m;
 
-const CARD_WIDTH = 300;
-const CARD_HEIGHT = 200;
 const CARD_SPACING = 180;
 const VISIBLE_RANGE = 2;
 
@@ -30,8 +28,8 @@ const RouletteStocks: React.FC = () => {
   const startX = useRef<number | null>(null);
   const isDragging = useRef(false);
 
-  const prev = () => setCenterIndex(mod(centerIndex - 1, stocks.length));
-  const next = () => setCenterIndex(mod(centerIndex + 1, stocks.length));
+  const prev = useCallback(() => setCenterIndex(mod(centerIndex - 1, stocks.length)), [centerIndex]);
+  const next = useCallback(() => setCenterIndex(mod(centerIndex + 1, stocks.length)), [centerIndex]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -40,7 +38,7 @@ const RouletteStocks: React.FC = () => {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [centerIndex]);
+  }, [prev, next]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     startX.current = e.clientX;

@@ -1,6 +1,7 @@
 'use client'
 
 import './globals.css'
+import { Toaster } from 'sonner'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -131,7 +132,7 @@ export default function RootLayout({
     <html lang="en" className={merriweather.className}>
       <body suppressHydrationWarning={true}>
         <AuthProvider>
-          <AppFrame>{children}</AppFrame>
+          <AppFrame>{children}</AppFrame><Toaster position="top-center" richColors />
         </AuthProvider>
       </body>
     </html>

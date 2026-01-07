@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface CarouselProps<T> {

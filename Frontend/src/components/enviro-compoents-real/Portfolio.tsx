@@ -33,10 +33,9 @@ const timeRanges = [
 export function PortfolioChart({ portfolioHistory }: PortfolioChartProps) {
   const [selectedRange, setSelectedRange] = useState("1W");
 
-  const now = new Date();
-
   // Filter data based on selected range
   const filteredData = useMemo(() => {
+    const now = new Date();
     const range = timeRanges.find((r) => r.label === selectedRange);
     if (!range) return portfolioHistory;
 

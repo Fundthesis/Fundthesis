@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { StockCard } from './StockCard'
@@ -41,7 +41,7 @@ interface StockCardStackProps {
   setCurrentIndex: (index: number) => void
   timeframe: 'day' | 'month' | 'year' | 'all'
   setTimeframe: (timeframe: 'day' | 'month' | 'year' | 'all') => void
-  loadingMore: boolean
+
   checkAndLoadMore: (index: number) => void
   fetchStockDetail: (symbol: string) => Promise<void>
   // New prop: completely custom expanded modal component
@@ -62,7 +62,7 @@ export function StockCardStack({
   setCurrentIndex,
   timeframe,
   setTimeframe,
-  loadingMore,
+
   checkAndLoadMore,
   fetchStockDetail,
   ExpandedModal
@@ -122,7 +122,7 @@ export function StockCardStack({
     return <div className="flex items-center justify-center h-auto py-20"><div className="text-gray-600">No stocks available</div></div>
   }
 
-  const currentStock = stocks[currentIndex]
+
 
   return (
     <>
@@ -165,7 +165,7 @@ export function StockCardStack({
           {stocks.map((_, index) => (
             <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-[#9DB38A] w-6' : 'bg-gray-400 hover:bg-gray-600'}`} />
           ))}
-          {loadingMore && <div className="ml-2 text-sm text-gray-500">Loading more...</div>}
+
         </div>
       </div>
 

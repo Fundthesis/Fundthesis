@@ -70,10 +70,7 @@ export default function EnviroPage() {
     router.push(`/enviro/enviro-dashboard?sandboxId=${encodeURIComponent(id)}`)
   }
 
-  const removeSandbox = (id: string) => {
-    const filtered = sandboxes.filter(s => s.id !== id)
-    save(filtered)
-  }
+
 
   // typed-delete confirmation states for landing page
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)

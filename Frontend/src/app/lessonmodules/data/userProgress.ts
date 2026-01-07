@@ -9,7 +9,7 @@ function read(): StorageShape {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     return JSON.parse(raw) as StorageShape;
-  } catch (e) {
+  } catch {
     return {};
   }
 }
@@ -18,8 +18,8 @@ function write(map: StorageShape) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     // notify any UI listeners (other components/tabs) that progress changed
-    try { window.dispatchEvent(new Event('ft-progress-changed')); } catch (e) { /* ignore */ }
-  } catch (e) { /* ignore */ }
+    try { window.dispatchEvent(new Event('ft-progress-changed')); } catch { /* ignore */ }
+  } catch { /* ignore */ }
 }
 
 /**

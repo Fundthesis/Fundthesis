@@ -282,16 +282,17 @@ async function generateAndCacheForecast(
   }
 
   try {
+    const forecastJson = JSON.stringify(forecast);
     if (hasExistingRow) {
       await prisma.stockPriceSeries.update({
         where: { symbol },
-        data: { forecast_results: forecast },
+        data: { forecast_results: forecastJson },
       });
     } else {
       await prisma.stockPriceSeries.upsert({
         where: { symbol },
-        update: { forecast_results: forecast },
-        create: { symbol, forecast_results: forecast },
+        update: { forecast_results: forecastJson },
+        create: { symbol, forecast_results: forecastJson },
       });
     }
   } catch (error) {
@@ -620,11 +621,14 @@ export async function GET(
 
     console.log(`🎉 Response ready for ${symbol} (Yahoo fallback)`);
     return NextResponse.json(responseData);
-  } catch (error) {
+  } catch (error: unknown) {
     const { symbol: symbolParam } = await params;
-    console.error(`❌ Error fetching ${symbolParam}:`, error);
+    const symbol = symbolParam.toUpperCase();
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Error fetching ${symbol}:`, errorMessage);
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: errorMessage || 'Unknown error' },
       { status: 500 },
     );
   }

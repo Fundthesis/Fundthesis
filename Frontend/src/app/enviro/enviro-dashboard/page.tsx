@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import {
@@ -7,8 +7,6 @@ import {
   PortfolioHistoryPoint,
 } from "@/components/enviro-compoents-real/Portfolio";
 import { PortfolioSummary } from "@/components/enviro-compoents-real/PortfolioSummary";
-import Navbar from "@/components/Navbar";
-import StockTicker from "@/components/StockTicker";
 import MarketTips from "@/components/enviro-compoents-real/market-tips";
 import { StockCardStack } from "@/components/StockCardStack";
 import StockTradeModal from "@/components/StockTradeModal";
@@ -190,7 +188,7 @@ function PortfolioDashboardPageContent() {
   const [timeframe, setTimeframe] = useState<"day" | "month" | "year" | "all">(
     "day"
   );
-  const [loadingMore, setLoadingMore] = useState(false);
+
   const searchParams = useSearchParams();
 
   type Difficulty = "easy" | "medium" | "hard";
@@ -332,7 +330,7 @@ function PortfolioDashboardPageContent() {
   }, [searchParams]);
 
   // Function to generate mock chart data
-  const generateChartData = (
+  const generateChartData = useCallback((
     symbol: string,
     timeframe: "day" | "month" | "year" | "all"
   ) => {
@@ -368,10 +366,10 @@ function PortfolioDashboardPageContent() {
     }
 
     return data;
-  };
+  }, [stocks]);
 
   // Fetch stock details when needed
-  const fetchStockDetail = async (symbol: string) => {
+  const fetchStockDetail = useCallback(async (symbol: string) => {
     if (stockDetails[symbol]) return;
 
     const stock = stocks.find((s) => s.symbol === symbol);
@@ -402,10 +400,10 @@ function PortfolioDashboardPageContent() {
         chartData: generateChartData(symbol, timeframe),
       },
     }));
-  };
+  }, [stockDetails, stocks, timeframe, generateChartData]);
 
   // Check if we need to load more stocks
-  const checkAndLoadMore = (index: number) => {
+  const checkAndLoadMore = () => {
     // Placeholder - implement if you want infinite loading
   };
 
@@ -414,7 +412,7 @@ function PortfolioDashboardPageContent() {
     if (stocks[currentIndex]) {
       fetchStockDetail(stocks[currentIndex].symbol);
     }
-  }, [currentIndex, timeframe]);
+  }, [currentIndex, stocks, fetchStockDetail]);
 
   const [transactions, setTransactions] =
     useState<Transaction[]>(sampleTransactions);
@@ -589,7 +587,6 @@ function PortfolioDashboardPageContent() {
                   setCurrentIndex={setCurrentIndex}
                   timeframe={timeframe}
                   setTimeframe={setTimeframe}
-                  loadingMore={loadingMore}
                   checkAndLoadMore={checkAndLoadMore}
                   fetchStockDetail={fetchStockDetail}
                   ExpandedModal={ExpandedModalWrapper}
@@ -675,8 +672,8 @@ function PortfolioDashboardPageContent() {
                   }}
                   disabled={deleteConfirmText.trim().toLowerCase() !== "delete"}
                   className={`px-3 py-2 rounded text-white ${deleteConfirmText.trim().toLowerCase() === "delete"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-red-300 cursor-not-allowed"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-red-300 cursor-not-allowed"
                     }`}
                 >
                   Confirm Delete

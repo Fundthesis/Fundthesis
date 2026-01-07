@@ -15,7 +15,7 @@ function getAnsweredQuestionIds(moduleIndex: number): string[] {
     if (!raw) return [];
     const data = JSON.parse(raw);
     return data[moduleIndex] ?? [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }

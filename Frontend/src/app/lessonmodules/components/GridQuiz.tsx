@@ -40,7 +40,7 @@ const GridQuiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     const explanation = q.explanations?.[choiceIndex];
 
     // persist correctness to dummy DB
-    try { saveResult(moduleIndex, q.id, correct); } catch (e) { /* ignore */ }
+    try { saveResult(moduleIndex, q.id, correct); } catch { /* ignore */ }
 
     setResults(prev => {
       const next = prev.slice();

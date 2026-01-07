@@ -7,7 +7,7 @@ import YahooFinance from 'yahoo-finance2';
 const yahooFinance = new YahooFinance();
 const DEFAULT_LOOKBACK_DAYS = 90;
 
-export async function GET(request) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
