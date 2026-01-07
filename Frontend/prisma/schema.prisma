@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   schemas  = ["public", "auth", "vault"]
 }
 
@@ -127,6 +126,7 @@ model StockQuoteCache {
 
   @@index([last_fetched])
   @@map("stock_quote_cache")
+  @@schema("public")
 }
 
 model UserAccount {
