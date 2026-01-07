@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { fetchQuote, fetchHistorical } from '@/lib/yahooFinanceService';
+import { fetchQuote } from '@/lib/multiApiService';
+import { fetchHistorical } from '@/lib/yahooFinanceService'; // Historical data still uses Yahoo
 import { requireAuth } from '@/lib/apiAuth';
 import path from 'path';
 import { spawn } from 'child_process';

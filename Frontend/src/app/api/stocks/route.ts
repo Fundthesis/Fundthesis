@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchQuotes, quoteToStockSummary } from '@/lib/yahooFinanceService';
+import { fetchQuotes } from '@/lib/multiApiService';
+import { quoteToStockSummary } from '@/lib/stockUtils';
 import { requireAuth } from '@/lib/apiAuth';
 
 const MAX_SYMBOLS = 50;

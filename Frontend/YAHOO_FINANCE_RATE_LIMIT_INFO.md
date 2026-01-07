@@ -1,8 +1,22 @@
-# Yahoo Finance Rate Limiting - Current Status
+# Stock Data API System - Multi-Provider with Fallback
 
-## Problem
+## ⚠️ UPDATE: Multi-API System Implemented
 
-Your Yahoo Finance API access is currently **rate-limited (HTTP 429)**. This is Yahoo's way of protecting their servers from excessive requests.
+The application now uses a **multi-API system** with automatic fallback. If Yahoo Finance is rate-limited, the system automatically tries:
+1. Alpha Vantage
+2. Finnhub  
+3. Twelve Data
+4. Financial Modeling Prep
+
+See `MULTI_API_SYSTEM.md` for complete documentation.
+
+---
+
+## Previous Yahoo Finance Rate Limiting Issue
+
+**Note**: This section describes the old single-provider system. The new system handles rate limiting automatically.
+
+Your Yahoo Finance API access was previously **rate-limited (HTTP 429)**. This is Yahoo's way of protecting their servers from excessive requests.
 
 ## What We've Implemented
 
