@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchQuotes, quoteToStockSummary } from '@/lib/yahooFinanceService';
+import { requireAuth } from '@/lib/apiAuth';
+
+const MAX_SYMBOLS = 50;
 
 type PriceSeriesPoint = {
   date: string;
@@ -74,14 +77,18 @@ async function fetchYahooSummaries(symbols: string[]): Promise<StockSummary[]> {
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const symbolsParam = searchParams.get('symbols');
 
-    console.log(`📥 Received symbols param: "${symbolsParam}"`);
+    console.log(`Received symbols param: "${symbolsParam}"`);
 
-    const customSymbols = symbolsParam && symbolsParam !== 'null'
+    let customSymbols = symbolsParam && symbolsParam !== 'null'
       ? Array.from(
         new Set(
           symbolsParam
@@ -92,7 +99,12 @@ export async function GET(request: NextRequest) {
       )
       : null;
 
-    console.log(`📥 Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
+    // Limit custom symbols to prevent abuse
+    if (customSymbols && customSymbols.length > MAX_SYMBOLS) {
+      customSymbols = customSymbols.slice(0, MAX_SYMBOLS);
+    }
+
+    console.log(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
 
     const paginatedSymbols =
       customSymbols && customSymbols.length > 0

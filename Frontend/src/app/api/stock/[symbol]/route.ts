@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { fetchQuote, fetchHistorical } from '@/lib/yahooFinanceService';
+import { requireAuth } from '@/lib/apiAuth';
 import path from 'path';
 import { spawn } from 'child_process';
 
@@ -470,13 +471,17 @@ export async function GET(
   { params }: { params: Promise<{ symbol: string }> },
 ) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const { symbol: symbolParam } = await params;
     const rawSymbol = symbolParam.trim();
     const symbol = rawSymbol.toUpperCase();
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '30', 10);
 
-    console.log(`📊 Fetching stock detail for ${symbol}...`);
+    console.log(`Fetching stock detail for ${symbol}...`);
 
     const cachedRows = await prisma.stockPriceSeries.findMany({
       where: {

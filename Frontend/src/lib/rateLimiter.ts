@@ -115,7 +115,12 @@ class RateLimiter {
     }
 
     return new Promise<T>((resolve, reject) => {
-      this.queue.push({ resolve, reject, fn } as QueuedRequest<T>);
+      // Cast to unknown queue type for storage
+      this.queue.push({
+        resolve: resolve as (value: unknown) => void,
+        reject,
+        fn: fn as () => Promise<unknown>
+      });
       this.processQueue();
     });
   }

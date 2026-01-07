@@ -122,13 +122,13 @@ async function getCachedQuote(symbol: string): Promise<QuoteData | null> {
     
     // Return fresh cache (< 5 min)
     if (age < CACHE_TTL_MS) {
-      return cached.quote_data as QuoteData;
+      return cached.quote_data as unknown as QuoteData;
     }
 
     // Return stale cache (< 30 min) for fallback
     if (age < STALE_CACHE_TTL_MS) {
       console.log(`📦 Using stale cache for ${symbol} (${Math.round(age / 1000)}s old)`);
-      return cached.quote_data as QuoteData;
+      return cached.quote_data as unknown as QuoteData;
     }
 
     return null;
@@ -168,7 +168,7 @@ async function getCachedQuotesBatch(symbols: string[]): Promise<Map<string, Quot
         if (age >= CACHE_TTL_MS) {
           console.log(`📦 Using stale cache for ${item.symbol} (${Math.round(age / 1000)}s old)`);
         }
-        cacheMap.set(item.symbol, item.quote_data as QuoteData);
+        cacheMap.set(item.symbol, item.quote_data as unknown as QuoteData);
       }
     }
   } catch (error) {
@@ -183,17 +183,20 @@ async function getCachedQuotesBatch(symbols: string[]): Promise<Map<string, Quot
  */
 async function saveCachedQuote(symbol: string, quoteData: QuoteData, error?: string): Promise<void> {
   try {
+    // Cast to Prisma JSON input type
+    const quoteDataJson = JSON.parse(JSON.stringify(quoteData));
+
     await prisma.stockQuoteCache.upsert({
       where: { symbol: symbol.toUpperCase() },
       create: {
         symbol: symbol.toUpperCase(),
-        quote_data: quoteData,
+        quote_data: quoteDataJson,
         last_fetched: new Date(),
         fetch_attempts: error ? 1 : 0,
         last_error: error || null,
       },
       update: {
-        quote_data: quoteData,
+        quote_data: quoteDataJson,
         last_fetched: new Date(),
         fetch_attempts: error ? { increment: 1 } : 0,
         last_error: error || null,

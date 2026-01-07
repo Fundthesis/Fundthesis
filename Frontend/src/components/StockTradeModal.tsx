@@ -70,7 +70,13 @@ export default function StockTradeModal({ stock, onClose, timeframe, setTimefram
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-0" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-0"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="trade-modal-title"
+    >
       <button onClick={onClose} aria-label="Close" className="fixed right-4 top-4 z-60 p-2 rounded hover:bg-gray-100 bg-white/80 backdrop-blur-sm">
         <X className="w-5 h-5 text-gray-600" />
       </button>
@@ -80,7 +86,7 @@ export default function StockTradeModal({ stock, onClose, timeframe, setTimefram
           <div className="space-y-6">
             <div className="flex items-start justify-between pb-6 border-b">
               <div>
-                <h2 className="text-5xl font-bold text-gray-900">{stock.symbol}</h2>
+                <h2 id="trade-modal-title" className="text-5xl font-bold text-gray-900">{stock.symbol}</h2>
                 <p className="text-xl text-gray-600 mt-2">{stock.company}</p>
               </div>
               <div className="text-right">

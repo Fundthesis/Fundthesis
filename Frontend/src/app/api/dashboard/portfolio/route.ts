@@ -1,12 +1,61 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { fetchHistorical } from '@/lib/yahooFinanceService';
 
 const DEFAULT_LOOKBACK_DAYS = 90;
+const TICKER_REGEX = /^[A-Z]{1,5}$/;
 
-export async function GET() {
+interface PriceRow {
+  ticker: string;
+  date: string;
+  close: number;
+}
+
+interface PerformancePoint {
+  date: string;
+  percentChange: number;
+}
+
+interface OHLCVEntry {
+  Date: string;
+  Open: number;
+  High: number;
+  Low: number;
+  Close: number;
+  Volume: number;
+}
+
+interface StockDataEntry {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
+
+interface PortfolioSummary {
+  latestPercent: number;
+  latestValue: number;
+  dailyChange: number;
+  weeklyChange: number;
+  monthlyChange: number;
+}
+
+interface UserAccountRow {
+  stockTicker: string | null;
+}
+
+interface HistoricalItem {
+  date: Date | string;
+  open?: number;
+  high?: number;
+  low?: number;
+  close: number;
+  volume?: number;
+}
+
+export async function GET(): Promise<NextResponse> {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
@@ -28,7 +77,7 @@ export async function GET() {
       return NextResponse.json({ tickers: [], performance: [] });
     }
 
-    const tickers = extractTickers(userAccountRows);
+    const tickers = extractTickers(userAccountRows as UserAccountRow[]);
 
     if (tickers.length === 0) {
       return NextResponse.json({ tickers: [], performance: [] });
@@ -37,8 +86,6 @@ export async function GET() {
     const histories = await loadHistories(tickers);
     const performance = computePortfolioPerformance(histories);
     const summary = buildSummary(performance);
-
-    // Build per-ticker stock data with current prices and changes
     const stockData = buildStockData(histories);
 
     return NextResponse.json({
@@ -53,7 +100,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
@@ -71,6 +118,10 @@ export async function POST(request) {
 
     if (ticker.length === 0) {
       return NextResponse.json({ error: 'Ticker is required' }, { status: 400 });
+    }
+
+    if (!TICKER_REGEX.test(ticker)) {
+      return NextResponse.json({ error: 'Invalid ticker format. Must be 1-5 uppercase letters.' }, { status: 400 });
     }
 
     const existingRow = await prisma.userAccount.findFirst({
@@ -101,7 +152,7 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
@@ -135,8 +186,8 @@ export async function DELETE(request) {
   }
 }
 
-function extractTickers(rows) {
-  const tickerSet = new Set();
+function extractTickers(rows: UserAccountRow[]): string[] {
+  const tickerSet = new Set<string>();
 
   rows.forEach((row) => {
     if (typeof row.stockTicker === 'string' && row.stockTicker.trim().length > 0) {
@@ -147,9 +198,9 @@ function extractTickers(rows) {
   return Array.from(tickerSet.values());
 }
 
-async function loadHistories(tickers) {
+async function loadHistories(tickers: string[]): Promise<Record<string, PriceRow[]>> {
   const results = await Promise.all(
-    tickers.map(async (ticker) => {
+    tickers.map(async (ticker): Promise<[string, PriceRow[]]> => {
       const cached = await fetchCachedPrices(ticker);
 
       if (cached.length > 0) {
@@ -164,7 +215,7 @@ async function loadHistories(tickers) {
   return Object.fromEntries(results);
 }
 
-async function fetchCachedPrices(ticker) {
+async function fetchCachedPrices(ticker: string): Promise<PriceRow[]> {
   const data = await prisma.stockPriceSeries.findUnique({
     where: {
       symbol: ticker
@@ -178,11 +229,9 @@ async function fetchCachedPrices(ticker) {
     return [];
   }
 
-  // Transform the OHLCV data to match expected format
-  return data.price_series
-    .map((entry) => {
-      // Handle both ISO date strings and regular date strings
-      let dateStr;
+  return (data.price_series as unknown as OHLCVEntry[])
+    .map((entry): PriceRow | null => {
+      let dateStr: string | null = null;
       if (entry.Date) {
         const dateObj = new Date(entry.Date);
         dateStr = dateObj.toISOString().split('T')[0];
@@ -202,11 +251,11 @@ async function fetchCachedPrices(ticker) {
         close,
       };
     })
-    .filter((row) => row !== null)
+    .filter((row): row is PriceRow => row !== null)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-async function downloadAndCachePrices(ticker) {
+async function downloadAndCachePrices(ticker: string): Promise<PriceRow[]> {
   try {
     const historical = await fetchHistorical(
       ticker,
@@ -220,8 +269,8 @@ async function downloadAndCachePrices(ticker) {
       return [];
     }
 
-    const priceRows = historical
-      .map((item) => {
+    const priceRows = (historical as HistoricalItem[])
+      .map((item): PriceRow | null => {
         if (typeof item.close !== 'number' || Number.isNaN(item.close)) {
           return null;
         }
@@ -237,21 +286,20 @@ async function downloadAndCachePrices(ticker) {
           close: Number(item.close),
         };
       })
-      .filter((row) => row !== null)
+      .filter((row): row is PriceRow => row !== null)
       .sort((a, b) => a.date.localeCompare(b.date));
 
     if (priceRows.length === 0) {
       return [];
     }
 
-    // Format data to match your Python script's format (OHLCV with capital letters and ISO dates)
-    const ohlcvData = historical
-      .map((item) => {
+    const ohlcvData = (historical as HistoricalItem[])
+      .map((item): OHLCVEntry | null => {
         const date = normaliseDate(item.date);
         if (!date) return null;
 
         return {
-          Date: new Date(date).toISOString(), // ISO format to match Python script
+          Date: new Date(date).toISOString(),
           Open: item.open || 0,
           High: item.high || 0,
           Low: item.low || 0,
@@ -259,23 +307,25 @@ async function downloadAndCachePrices(ticker) {
           Volume: item.volume || 0,
         };
       })
-      .filter((row) => row !== null);
+      .filter((row): row is OHLCVEntry => row !== null);
 
-    // Save to stock_price_series table with UPSERT (matching Python script behavior)
+    // Cast to Prisma JSON input type
+    const priceSeriesData = JSON.parse(JSON.stringify(ohlcvData));
+
     await prisma.stockPriceSeries.upsert({
       where: {
         symbol: ticker
       },
       update: {
-        price_series: ohlcvData
+        price_series: priceSeriesData
       },
       create: {
         symbol: ticker,
-        price_series: ohlcvData
+        price_series: priceSeriesData
       }
     });
 
-    console.log(`✅ Cached ${ohlcvData.length} price points for ${ticker}`);
+    console.log(`Cached ${ohlcvData.length} price points for ${ticker}`);
 
     return priceRows;
   } catch (error) {
@@ -284,8 +334,8 @@ async function downloadAndCachePrices(ticker) {
   }
 }
 
-function computePortfolioPerformance(histories) {
-  const dateMap = new Map();
+function computePortfolioPerformance(histories: Record<string, PriceRow[]>): PerformancePoint[] {
+  const dateMap = new Map<string, { totalPercent: number; count: number }>();
 
   Object.values(histories).forEach((rows) => {
     if (!rows || rows.length === 0) {
@@ -322,7 +372,7 @@ function computePortfolioPerformance(histories) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function buildSummary(performance) {
+function buildSummary(performance: PerformancePoint[]): PortfolioSummary | null {
   if (performance.length === 0) {
     return null;
   }
@@ -344,8 +394,8 @@ function buildSummary(performance) {
   };
 }
 
-function buildStockData(histories) {
-  const stockData = {};
+function buildStockData(histories: Record<string, PriceRow[]>): Record<string, StockDataEntry> {
+  const stockData: Record<string, StockDataEntry> = {};
 
   Object.entries(histories).forEach(([ticker, rows]) => {
     if (!rows || rows.length === 0) {
@@ -358,7 +408,6 @@ function buildStockData(histories) {
       return;
     }
 
-    // Sort by date to ensure we have the latest data
     const sortedRows = [...rows].sort((a, b) => a.date.localeCompare(b.date));
 
     const latestRow = sortedRows[sortedRows.length - 1];
@@ -380,7 +429,7 @@ function buildStockData(histories) {
   return stockData;
 }
 
-function deltaFromOffset(performance, offset) {
+function deltaFromOffset(performance: PerformancePoint[], offset: number): number {
   if (performance.length <= offset) {
     return 0;
   }
@@ -390,7 +439,7 @@ function deltaFromOffset(performance, offset) {
   return latest - previous;
 }
 
-function normaliseDate(input) {
+function normaliseDate(input: Date | string | null | undefined): string | null {
   if (!input) {
     return null;
   }

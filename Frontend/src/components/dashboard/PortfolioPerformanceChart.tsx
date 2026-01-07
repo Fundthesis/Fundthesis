@@ -11,6 +11,28 @@ import {
   YAxis,
 } from 'recharts';
 
+interface PerformanceDataPoint {
+  date: string;
+  percentChange: number;
+}
+
+interface PortfolioPerformanceChartProps {
+  data: PerformanceDataPoint[] | null;
+  loading?: boolean;
+  error?: string | null;
+  className?: string;
+}
+
+interface TooltipPayloadItem {
+  value: number | string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string;
+}
+
 const axisDateFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
@@ -22,7 +44,7 @@ const tooltipDateFormatter = new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
 });
 
-function formatAxisDate(date) {
+function formatAxisDate(date: string): string {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) {
     return date;
@@ -30,14 +52,14 @@ function formatAxisDate(date) {
   return axisDateFormatter.format(parsed);
 }
 
-function formatPercent(value) {
+function formatPercent(value: number): string {
   if (Number.isNaN(value)) {
     return '0%';
   }
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
@@ -54,7 +76,12 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export function PortfolioPerformanceChart({ data, loading = false, error = null, className = '' }) {
+export function PortfolioPerformanceChart({
+  data,
+  loading = false,
+  error = null,
+  className = ''
+}: PortfolioPerformanceChartProps) {
   if (loading) {
     return (
       <div className={`flex h-64 items-center justify-center bg-slate-50 ${className}`}>
@@ -115,7 +142,3 @@ export function PortfolioPerformanceChart({ data, loading = false, error = null,
     </div>
   );
 }
-
-
-
-
