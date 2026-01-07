@@ -5,8 +5,10 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 
 type User = typeof authClient.$Infer.Session.user;
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Fetch initial session
@@ -52,12 +55,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     fetchSession();
   }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await authClient.signOut();
     setSession(null);
     setUser(null);
-    window.location.reload(); // Optional: reload to clear state
-  };
+    router.push('/auth');
+    router.refresh();
+  }, [router]);
 
   const value = {
     session,

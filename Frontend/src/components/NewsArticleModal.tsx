@@ -92,6 +92,9 @@ export default function NewsArticleModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
       onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="news-modal-title"
     >
       <div
         className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
@@ -100,7 +103,7 @@ export default function NewsArticleModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-start">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 id="news-modal-title" className="text-2xl font-bold text-gray-900 mb-2">
               {article.headline}
             </h2>
             <div className="flex flex-wrap gap-2 items-center text-sm text-gray-600">

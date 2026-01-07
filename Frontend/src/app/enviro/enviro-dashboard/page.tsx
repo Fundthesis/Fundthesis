@@ -5,15 +5,15 @@ import { Search, X } from "lucide-react";
 import {
   PortfolioChart,
   PortfolioHistoryPoint,
-} from "@/components/enviro-compoents-real/Portfolio";
-import { PortfolioSummary } from "@/components/enviro-compoents-real/PortfolioSummary";
-import MarketTips from "@/components/enviro-compoents-real/market-tips";
+} from "@/components/enviro-components/Portfolio";
+import { PortfolioSummary } from "@/components/enviro-components/PortfolioSummary";
+import MarketTips from "@/components/enviro-components/market-tips";
 import { StockCardStack } from "@/components/StockCardStack";
 import StockTradeModal from "@/components/StockTradeModal";
 import {
   TransactionHistory,
   Transaction,
-} from "@/components/enviro-compoents-real/sandbox-transaction";
+} from "@/components/enviro-components/sandbox-transaction";
 
 interface StockDetail {
   symbol: string;

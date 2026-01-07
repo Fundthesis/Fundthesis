@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { StockCard } from './StockCard'
+import { StockCard } from '@/components/StockCard'
 
 interface Stock {
   symbol: string

@@ -116,6 +116,19 @@ model StockPriceSeries {
   @@schema("public")
 }
 
+model StockQuoteCache {
+  symbol         String   @id
+  quote_data     Json
+  last_fetched   DateTime @default(now())
+  fetch_attempts Int      @default(0)
+  last_error     String?
+  updated_at     DateTime @default(now()) @updatedAt
+
+  @@index([last_fetched])
+  @@map("stock_quote_cache")
+  @@schema("public")
+}
+
 model UserAccount {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")

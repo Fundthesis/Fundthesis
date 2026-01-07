@@ -9,21 +9,13 @@ import StockTicker from '@/components/StockTicker'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
 import { AuthProvider, useAuth } from '@/providers/AuthProvider'
+import { navItems } from '@/constants/navigation'
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700', '900'],
   subsets: ['latin'],
   display: 'swap',
 })
-
-const NAV_ITEMS = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Discover', href: '/discover' },
-  { name: 'Insights', href: '/insights' },
-  { name: 'Portfolio', href: '/portfolio' },
-  { name: 'LearnThesis', href: '/learn' },
-  { name: 'EnviroThesis', href: '/enviro' },
-]
 
 function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -48,7 +40,7 @@ function AppFrame({ children }: { children: ReactNode }) {
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}

@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireAuth } from "@/lib/apiAuth";
+
+const MAX_LIMIT = 100;
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
+    const rawLimit = parseInt(searchParams.get("limit") || "20", 10);
+    const rawOffset = parseInt(searchParams.get("offset") || "0", 10);
+
+    // Validate and constrain pagination
+    const limit = Math.min(Math.max(1, rawLimit), MAX_LIMIT);
+    const offset = Math.max(0, rawOffset);
     const category = searchParams.get("category");
     const source = searchParams.get("source");
     const tickers = searchParams.get("tickers");

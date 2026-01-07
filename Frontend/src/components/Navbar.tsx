@@ -3,18 +3,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { navItems } from '@/constants/navigation'
 
 const Navbar = () => {
   const pathname = usePathname()
-
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Discover', href: '/discover' },
-    { name: 'Insights', href: '/insights' },
-    { name: 'Portfolio', href: '/portfolio' },
-    { name: 'LearnThesis', href: '/learn' },
-    { name: 'EnviroThesis', href: '/enviro' },
-  ]
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-5">

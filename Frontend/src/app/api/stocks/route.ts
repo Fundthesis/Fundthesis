@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchQuotes } from '@/lib/multiApiService';
+import { quoteToStockSummary } from '@/lib/stockUtils';
+import { requireAuth } from '@/lib/apiAuth';
 
-import YahooFinance from 'yahoo-finance2';
+const MAX_SYMBOLS = 50;
 
 type PriceSeriesPoint = {
   date: string;
   price: number;
 };
-
-
 
 type StockSummary = {
   symbol: string;
@@ -17,9 +18,6 @@ type StockSummary = {
   changePercent: number;
   forecastData: PriceSeriesPoint[];
 };
-
-// Create a singleton instance
-const yahooFinance = new YahooFinance();
 
 // Extended list of symbols (matching the Python server)
 const SYMBOLS = [
@@ -45,106 +43,53 @@ const SYMBOLS = [
   'SLB', 'HAL', 'BKR', 'NOV', 'FTI', 'HP', 'RIG', 'VAL', 'MRO', 'DVN'
 ];
 
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-
-
-// Simple in-memory cache
-const cache = new Map<string, { data: StockSummary; timestamp: number }>();
-const CACHE_TTL = 60 * 1000; // 1 minute
-
 async function fetchYahooSummaries(symbols: string[]): Promise<StockSummary[]> {
-  const now = Date.now();
-  const results: StockSummary[] = [];
-  const symbolsToFetch: string[] = [];
-
-  // Check cache first
-  symbols.forEach(symbol => {
-    const cached = cache.get(symbol);
-    if (cached && (now - cached.timestamp) < CACHE_TTL) {
-      results.push(cached.data);
-    } else {
-      symbolsToFetch.push(symbol);
-    }
-  });
-
-  console.log(`🔍 Cache hit: ${results.length}, Needs fetch: ${symbolsToFetch.length}`);
-
-  if (symbolsToFetch.length === 0) {
-    return results;
+  if (symbols.length === 0) {
+    return [];
   }
 
   try {
-    console.log(`🌐 Fetching Yahoo quotes for ${symbolsToFetch.length} symbols: ${symbolsToFetch.join(', ')}...`);
+    console.log(`🌐 Fetching quotes for ${symbols.length} symbols: ${symbols.join(', ')}...`);
 
-    // yahoo-finance2 supports passing an array for bulk quotes
-    const quotes = await yahooFinance.quote(symbolsToFetch);
+    // Use the service wrapper which handles caching, rate limiting, and retries
+    const quotes = await fetchQuotes(symbols, true);
 
-    console.log(`✅ Received ${Array.isArray(quotes) ? quotes.length : (quotes ? 1 : 0)} quotes from Yahoo Finance`);
+    console.log(`✅ Received ${quotes.length} quotes from Yahoo Finance service`);
 
-    // Handle both single quote and array of quotes
-    const quoteArray = Array.isArray(quotes) ? quotes : [quotes];
+    const summaries: StockSummary[] = [];
 
-    quoteArray.forEach(quote => {
-      if (!quote) {
-        console.log('⚠️ Received null/undefined quote');
-        return;
+    for (const quote of quotes) {
+      const summary = quoteToStockSummary(quote);
+      if (summary) {
+        summaries.push({
+          ...summary,
+          forecastData: [], // Forecast data handled separately
+        });
       }
-      if (!quote.symbol) {
-        console.log('⚠️ Quote missing symbol:', JSON.stringify(quote).slice(0, 100));
-        return;
-      }
-      if (quote.regularMarketPrice === undefined) {
-        console.log(`⚠️ Quote for ${quote.symbol} missing regularMarketPrice`);
-        return;
-      }
+    }
 
-      const symbol = quote.symbol;
-      const currentPrice = quote.regularMarketPrice;
-      const openPrice = quote.regularMarketOpen || currentPrice;
-      const change = currentPrice - openPrice;
-      const changePercent = openPrice !== 0 ? (change / openPrice) * 100 : 0;
-
-      const companyName =
-        (quote.longName && typeof quote.longName === 'string' && quote.longName.length > 0
-          ? quote.longName
-          : quote.shortName) || `${symbol} Inc.`;
-
-      const summary: StockSummary = {
-        symbol,
-        company: companyName,
-        price: round(currentPrice),
-        change: round(change),
-        changePercent: round(changePercent),
-        forecastData: [],
-      };
-
-      // Update cache
-      cache.set(symbol, { data: summary, timestamp: now });
-      results.push(summary);
-    });
-
-    return results;
+    return summaries;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`❌ Error fetching bulk quotes from Yahoo Finance:`, errorMessage);
-    // No mock data - return whatever we got from cache
-    return results;
+    return [];
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const symbolsParam = searchParams.get('symbols');
 
-    console.log(`📥 Received symbols param: "${symbolsParam}"`);
+    console.log(`Received symbols param: "${symbolsParam}"`);
 
-    const customSymbols = symbolsParam && symbolsParam !== 'null'
+    let customSymbols = symbolsParam && symbolsParam !== 'null'
       ? Array.from(
         new Set(
           symbolsParam
@@ -155,7 +100,12 @@ export async function GET(request: NextRequest) {
       )
       : null;
 
-    console.log(`📥 Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
+    // Limit custom symbols to prevent abuse
+    if (customSymbols && customSymbols.length > MAX_SYMBOLS) {
+      customSymbols = customSymbols.slice(0, MAX_SYMBOLS);
+    }
+
+    console.log(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
 
     const paginatedSymbols =
       customSymbols && customSymbols.length > 0

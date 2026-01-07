@@ -3,7 +3,8 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import StockTicker from './StockTicker'
+import StockTicker from '@/components/StockTicker'
+import { navItems } from '@/constants/navigation'
 
 interface PageLayoutProps {
   children: React.ReactNode
@@ -11,15 +12,6 @@ interface PageLayoutProps {
 
 export default function PageLayout({ children }: PageLayoutProps) {
   const pathname = usePathname()
-
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Discover', href: '/discover' },
-    { name: 'Insights', href: '/insights' },
-    { name: 'Portfolio', href: '/portfolio' },
-    { name: 'LearnThesis', href: '/learn' },
-    { name: 'EnviroThesis', href: '/enviro' },
-  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
