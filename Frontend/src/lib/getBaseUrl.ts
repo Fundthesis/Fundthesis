@@ -47,11 +47,22 @@ export function getBaseUrlFromRequest(request?: {
   }
 
   // Try to get from headers first (most reliable)
-  const host = request.headers.get?.('host') || 
-                (request.headers as any).host;
-  const protocol = request.headers.get?.('x-forwarded-proto') || 
-                   (request.headers as any)['x-forwarded-proto'] ||
-                   'https';
+  // Handle both Headers object and plain object
+  let host: string | null = null;
+  let protocol: string = 'https';
+
+  if (request.headers instanceof Headers) {
+    host = request.headers.get('host');
+    protocol = request.headers.get('x-forwarded-proto') || 'https';
+  } else if (typeof request.headers.get === 'function') {
+    host = request.headers.get('host');
+    protocol = request.headers.get('x-forwarded-proto') || 'https';
+  } else {
+    // Handle plain object with host property
+    const headersObj = request.headers as unknown as Record<string, string | undefined>;
+    host = headersObj.host || null;
+    protocol = headersObj['x-forwarded-proto'] || 'https';
+  }
 
   if (host) {
     // Azure Static Web Apps uses x-forwarded-proto
