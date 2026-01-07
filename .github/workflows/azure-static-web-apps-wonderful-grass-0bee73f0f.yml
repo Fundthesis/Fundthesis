@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+      - dev
+      - "feature/**"
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
+      - dev
+      - "feature/**"
 
 jobs:
   build_and_deploy_job:

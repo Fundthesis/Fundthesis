@@ -5,11 +5,12 @@ import time
 import hashlib
 import requests
 import feedparser
+import asyncio
 from datetime import datetime, timezone, timedelta
 import re
 
-# Import from utils.py to reuse scraping, sentiment, DB insert
-from utils import get_fulltext, insert_into_supabase, supabase
+# Import from utils.py to reuse scraping, sentiment, DB insert (Prisma-based)
+from utils import get_fulltext, insert_into_db
 
 # RSS feed URLs
 FEEDS = [
@@ -158,8 +159,8 @@ def normalize_entry(entry: dict, source: str) -> dict:
     }
     return article_db
 
-def ingest_feed_once(feed_info: dict):
-    """Fetch a feed, normalize entries, scrape content, and insert into Supabase."""
+async def ingest_feed_once(feed_info: dict):
+    """Fetch a feed, normalize entries, scrape content, and insert into database via Prisma."""
     feed_name = feed_info["name"]
     feed_url = feed_info["url"]
     
@@ -223,9 +224,9 @@ def ingest_feed_once(feed_info: dict):
                 print(f"[{feed_name}] Skipping non-financial article: {article_db['headline'][:60]}...")
                 continue
         
-        # Insert into Supabase with sentiment analysis
+        # Insert into database with sentiment analysis (Prisma)
         try:
-            insert_into_supabase(
+            await insert_into_db(
                 article_db=article_db,
                 text=text,
                 status=status,
@@ -240,8 +241,8 @@ def ingest_feed_once(feed_info: dict):
     print(f"[{feed_name}] Inserted {new_count} new articles")
     return new_count
 
-def ingest_all_feeds():
-    """Process all RSS feeds and insert articles into Supabase."""
+async def ingest_all_feeds():
+    """Process all RSS feeds and insert articles into database via Prisma."""
     total_new = 0
     for feed_info in FEEDS:
         # Skip disabled feeds
@@ -250,7 +251,7 @@ def ingest_all_feeds():
             continue
         
         try:
-            count = ingest_feed_once(feed_info)
+            count = await ingest_feed_once(feed_info)
             total_new += count
             # Small delay between feeds to be respectful
             time.sleep(2)
@@ -260,7 +261,7 @@ def ingest_all_feeds():
     print(f"\n[All Feeds] Total inserted: {total_new} articles")
     return total_new
 
-def get_stock_articles_last_24h(stock_name: str) -> list:
+async def get_stock_articles_last_24h(stock_name: str) -> list:
     """
     Fetch all articles about a specific stock from the past 24 hours.
     
@@ -268,22 +269,44 @@ def get_stock_articles_last_24h(stock_name: str) -> list:
         stock_name: The stock ticker or company name (e.g., "AAPL", "Apple", "NVIDIA")
     
     Returns:
-        List of article dictionaries from Supabase
+        List of article dictionaries from database
     """
+    from utils import db  # db is already set up in utils.py
+    
     # Calculate timestamp for 24 hours ago
     twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
-    timestamp_str = twenty_four_hours_ago.isoformat()
     
     try:
-        # Query Supabase for articles containing the stock name
-        # We'll search in headline, summary, and related fields
-        response = supabase.table("articles").select("*").or_(
-            f"headline.ilike.%{stock_name}%,summary.ilike.%{stock_name}%,full_text.ilike.%{stock_name}%,related.ilike.%{stock_name}%"
-        ).gte("published_at", timestamp_str).order("published_at", desc=True).execute()
+        if not db.is_connected():
+            await db.connect()
         
-        if response.data:
-            print(f"Found {len(response.data)} articles about '{stock_name}' in the last 24 hours")
-            return response.data
+        # Query Prisma for articles containing the stock name
+        articles = await db.article.find_many(
+            where={
+                'AND': [
+                    {
+                        'published_at': {
+                            'gte': twenty_four_hours_ago
+                        }
+                    },
+                    {
+                        'OR': [
+                            {'headline': {'contains': stock_name, 'mode': 'insensitive'}},
+                            {'summary': {'contains': stock_name, 'mode': 'insensitive'}},
+                            {'full_text': {'contains': stock_name, 'mode': 'insensitive'}},
+                            {'related': {'contains': stock_name, 'mode': 'insensitive'}}
+                        ]
+                    }
+                ]
+            },
+            order={
+                'published_at': 'desc'
+            }
+        )
+        
+        if articles:
+            print(f"Found {len(articles)} articles about '{stock_name}' in the last 24 hours")
+            return [a.model_dump() for a in articles]
         else:
             print(f"No articles found about '{stock_name}' in the last 24 hours")
             return []
@@ -292,7 +315,7 @@ def get_stock_articles_last_24h(stock_name: str) -> list:
         print(f"Error fetching stock articles: {e}")
         return []
 
-def get_stock_articles_by_ticker(ticker: str, hours: int = 24) -> list:
+async def get_stock_articles_by_ticker(ticker: str, hours: int = 24) -> list:
     """
     Fetch articles for a specific stock ticker with a configurable time range.
     
@@ -301,31 +324,54 @@ def get_stock_articles_by_ticker(ticker: str, hours: int = 24) -> list:
         hours: Number of hours to look back (default: 24)
     
     Returns:
-        List of article dictionaries from Supabase
+        List of article dictionaries from database
     """
+    from db_client import db
+    
     # Calculate timestamp
     time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-    timestamp_str = time_threshold.isoformat()
     
     try:
+        if not db.is_connected():
+            await db.connect()
+        
         # Search for the ticker in various fields
-        response = supabase.table("articles").select("*").or_(
-            f"headline.ilike.%{ticker}%,summary.ilike.%{ticker}%,full_text.ilike.%{ticker}%,related.ilike.%{ticker}%"
-        ).gte("published_at", timestamp_str).order("published_at", desc=True).execute()
+        articles = await db.article.find_many(
+            where={
+                'AND': [
+                    {
+                        'published_at': {
+                            'gte': time_threshold
+                        }
+                    },
+                    {
+                        'OR': [
+                            {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'headline': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'summary': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'full_text': {'contains': ticker, 'mode': 'insensitive'}}
+                        ]
+                    }
+                ]
+            },
+            order={
+                'published_at': 'desc'
+            }
+        )
         
-        articles = response.data if response.data else []
+        articles_list = [a.model_dump() for a in articles] if articles else []
         
-        print(f"Found {len(articles)} articles for ticker '{ticker}' in the last {hours} hours")
+        print(f"Found {len(articles_list)} articles for ticker '{ticker}' in the last {hours} hours")
         
         # Format the output nicely
-        for article in articles:
+        for article in articles_list:
             print(f"\n--- {article.get('headline', 'No headline')[:80]} ---")
             print(f"Source: {article.get('source', 'Unknown')}")
             print(f"Published: {article.get('published_at', 'Unknown')}")
             print(f"Sentiment: {article.get('label', 'N/A')}")
             print(f"URL: {article.get('url', 'No URL')}")
         
-        return articles
+        return articles_list
             
     except Exception as e:
         print(f"Error fetching ticker articles: {e}")
@@ -335,9 +381,8 @@ if __name__ == "__main__":
     # Process all feeds once
     # In production, run this periodically (e.g., every 15-30 minutes)
     try:
-        ingest_all_feeds()
+        asyncio.run(ingest_all_feeds())
     except KeyboardInterrupt:
         print("\nStopped by user")
     except Exception as e:
         print(f"Fatal error: {e}")
-
