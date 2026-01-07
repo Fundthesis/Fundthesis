@@ -1,25 +1,29 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-py"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "auth", "vault"]
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String        @unique
-  emailVerified Boolean?
-  image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  userAccounts  UserAccount[]
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String              @unique
+  emailVerified      Boolean?
+  image              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  sessions           Session[]
+  accounts           Account[]
+  userAccounts       UserAccount[]
+  simulationAccounts SimulationAccount[]
 
   @@map("user")
+  @@schema("public")
 }
 
 model Session {
@@ -34,6 +38,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
+  @@schema("public")
 }
 
 model Account {
@@ -50,6 +55,7 @@ model Account {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
+  @@schema("public")
 }
 
 model Verification {
@@ -61,11 +67,12 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@map("verification")
+  @@schema("public")
 }
 
 model Article {
-  id            String    @id @default(uuid())
-  url           String    @unique
+  id            String                   @id @default(uuid())
+  url           String                   @unique
   headline      String?
   summary       String?
   full_text     String?
@@ -75,45 +82,275 @@ model Article {
   related       String?
   category      String?
   tickers       String?
-  inserted_at   DateTime  @default(now())
+  inserted_at   DateTime                 @default(now())
   fetch_status  String?
   fetch_error   String?
   source_domain String?
   sqlite_id     String?
   article_id    String?
+  tsv           Unsupported("tsvector")? @default(dbgenerated())
 
   @@map("articles")
+  @@schema("public")
 }
 
 model StockForecast {
   id               String   @id @default(uuid())
   symbol           String
-  price_series     String?
-  forecast_results String?
+  price_series     Json?
+  forecast_results Json?
   run_date         DateTime
   updated_at       DateTime @default(now()) @updatedAt
 
-  @@index([symbol])
+  @@index([symbol, run_date(sort: Desc)])
   @@map("stock_forecasts")
+  @@schema("public")
 }
 
 model StockPriceSeries {
   symbol           String   @id
-  price_series     String?
-  forecast_results String?
+  price_series     Json?
+  forecast_results Json?
+  r2Value          Float?   @map("r2_value")
   updated_at       DateTime @default(now()) @updatedAt
 
   @@map("stock_price_series")
+  @@schema("public")
 }
 
 model UserAccount {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
-  stockTicker String   @map("stock_ticker")
+  stockTicker String?  @map("stock_ticker")
+  shares      Int      @default(1)
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, stockTicker])
   @@map("user_account")
+  @@schema("public")
+}
+
+// ============= SIMULATION/PAPER TRADING MODELS =============
+
+model SimulationAccount {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  balance   Float    @default(0)
+  settings  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positions Position[]
+  trades    Trade[]
+
+  @@map("simulation_accounts")
+  @@schema("public")
+}
+
+model Position {
+  id        String    @id @default(uuid())
+  accountId String    @map("account_id")
+  ticker    String
+  quantity  Float
+  avgPrice  Float     @map("avg_price")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("positions")
+  @@schema("public")
+}
+
+model Trade {
+  id         String    @id @default(uuid())
+  accountId  String    @map("account_id")
+  ticker     String
+  side       String // 'buy' or 'sell'
+  price      Float
+  quantity   Float
+  executedAt DateTime? @default(now()) @map("executed_at")
+
+  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("trades")
+  @@schema("public")
+}
+
+// ============= STOCK PRICE CACHE =============
+
+model StockPriceCache {
+  id           String    @id @default(uuid())
+  symbol       String    @unique
+  priceHistory Json      @map("price_history")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+  createdAt    DateTime? @default(now()) @map("created_at")
+
+  @@map("stock_price_cache")
+  @@schema("public")
+}
+
+// ============= SUPABASE AUTH MODELS =============
+
+model SupabaseUser {
+  id                          String    @id @db.Uuid
+  instance_id                 String?   @db.Uuid
+  aud                         String?
+  role                        String?
+  email                       String?
+  encrypted_password          String?
+  email_confirmed_at          DateTime? @db.Timestamptz
+  invited_at                  DateTime? @db.Timestamptz
+  confirmation_token          String?
+  confirmation_sent_at        DateTime? @db.Timestamptz
+  recovery_token              String?
+  recovery_sent_at            DateTime? @db.Timestamptz
+  email_change_token_new      String?
+  email_change                String?
+  email_change_sent_at        DateTime? @db.Timestamptz
+  last_sign_in_at             DateTime? @db.Timestamptz
+  raw_app_meta_data           Json?
+  raw_user_meta_data          Json?
+  is_super_admin              Boolean?
+  created_at                  DateTime? @db.Timestamptz
+  updated_at                  DateTime? @db.Timestamptz
+  phone                       String?   @unique
+  phone_confirmed_at          DateTime? @db.Timestamptz
+  phone_change                String?   @default("")
+  phone_change_token          String?   @default("")
+  phone_change_sent_at        DateTime? @db.Timestamptz
+  confirmed_at                DateTime? @db.Timestamptz
+  email_change_token_current  String?   @default("")
+  email_change_confirm_status Int?      @default(0) @db.SmallInt
+  banned_until                DateTime? @db.Timestamptz
+  reauthentication_token      String?   @default("")
+  reauthentication_sent_at    DateTime? @db.Timestamptz
+  is_sso_user                 Boolean   @default(false)
+  deleted_at                  DateTime? @db.Timestamptz
+  is_anonymous                Boolean   @default(false)
+
+  identities  SupabaseIdentity[]
+  mfa_factors SupabaseMfaFactor[]
+  sessions    SupabaseSession[]
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model SupabaseSession {
+  id              String    @id @db.Uuid
+  user_id         String    @db.Uuid
+  created_at      DateTime? @db.Timestamptz
+  updated_at      DateTime? @db.Timestamptz
+  factor_id       String?   @db.Uuid
+  aal             String?
+  not_after       DateTime? @db.Timestamptz
+  refreshed_at    DateTime? @db.Timestamp
+  user_agent      String?
+  ip              String?
+  tag             String?
+  oauth_client_id String?   @db.Uuid
+
+  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@schema("auth")
+}
+
+model AuditLogEntry {
+  instance_id String?   @db.Uuid
+  id          String    @id @db.Uuid
+  payload     Json?
+  created_at  DateTime? @db.Timestamptz
+  ip_address  String    @default("")
+
+  @@map("audit_log_entries")
+  @@schema("auth")
+}
+
+model SupabaseIdentity {
+  provider_id     String
+  user_id         String    @db.Uuid
+  identity_data   Json
+  provider        String
+  last_sign_in_at DateTime? @db.Timestamptz
+  created_at      DateTime? @db.Timestamptz
+  updated_at      DateTime? @db.Timestamptz
+  email           String?
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("identities")
+  @@schema("auth")
+}
+
+model FlowState {
+  id                     String    @id @db.Uuid
+  user_id                String?   @db.Uuid
+  auth_code              String
+  code_challenge_method  String
+  code_challenge         String
+  provider_type          String
+  provider_access_token  String?
+  provider_refresh_token String?
+  created_at             DateTime? @db.Timestamptz
+  updated_at             DateTime? @db.Timestamptz
+  authentication_method  String
+  auth_code_issued_at    DateTime? @db.Timestamptz
+
+  @@map("flow_state")
+  @@schema("auth")
+}
+
+model MfaFactor {
+  id                           String    @id @db.Uuid
+  user_id                      String    @db.Uuid
+  friendly_name                String?
+  factor_type                  String
+  status                       String
+  created_at                   DateTime  @db.Timestamptz
+  updated_at                   DateTime  @db.Timestamptz
+  secret                       String?
+  phone                        String?
+  last_challenged_at           DateTime? @unique @db.Timestamptz
+  web_authn_credential         Json?
+  web_authn_aaguid             String?   @db.Uuid
+  last_webauthn_challenge_data Json?
+
+  @@map("mfa_factors")
+  @@schema("auth")
+}
+
+model SupabaseMfaFactor {
+  id                 String    @id @db.Uuid
+  user_id            String    @db.Uuid
+  friendly_name      String?
+  factor_type        String
+  status             String
+  created_at         DateTime  @db.Timestamptz
+  updated_at         DateTime  @db.Timestamptz
+  secret             String?
+  phone              String?
+  last_challenged_at DateTime? @unique @db.Timestamptz
+
+  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("mfa_factors_deprecated") // Just avoid conflict if naming is same
+  @@schema("auth")
+}
+
+model VaultSecret {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String?
+  description String   @default("")
+  secret      String
+  key_id      String?  @db.Uuid
+  nonce       Bytes?
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @db.Timestamptz
+
+  @@map("secrets")
+  @@schema("vault")
 }
