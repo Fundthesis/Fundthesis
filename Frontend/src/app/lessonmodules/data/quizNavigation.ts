@@ -2,7 +2,7 @@
  * Quiz navigation utilities for managing question progress and navigation
  */
 
-import { Question } from '../components/types';
+import { Question } from '@/app/lessonmodules/components/types';
 
 const STORAGE_KEY = 'ft_user_progress_v1';
 

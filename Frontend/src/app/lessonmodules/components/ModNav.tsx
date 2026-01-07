@@ -21,7 +21,7 @@ const ArrowCircle: React.FC<{ disabled?: boolean; direction: 'left' | 'right' }>
   );
 };
 
-import { getAnsweredCount } from '../data/userProgress';
+import { getAnsweredCount } from '@/app/lessonmodules/data/userProgress';
 
 const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
   const prev = moduleIndex - 1;

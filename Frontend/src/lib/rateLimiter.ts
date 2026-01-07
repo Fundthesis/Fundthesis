@@ -9,7 +9,7 @@ type QueuedRequest<T> = {
   fn: () => Promise<T>;
 };
 
-class RateLimiter {
+export class RateLimiter {
   private tokens: number;
   private maxTokens: number;
   private refillRate: number; // tokens per second

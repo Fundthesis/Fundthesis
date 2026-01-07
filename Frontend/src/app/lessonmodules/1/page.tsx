@@ -1,8 +1,8 @@
 "use client";
 import React from 'react';
-import ModNav from '../components/ModNav';
-import Quiz from '../components/Quiz';
-import { getQuestions } from '../data/moduleQuestions';
+import ModNav from '@/app/lessonmodules/components/ModNav';
+import Quiz from '@/app/lessonmodules/components/Quiz';
+import { getQuestions } from '@/app/lessonmodules/data/moduleQuestions';
 import content from './content';
 
 // Fonts: Lato for headers, Georgia for body (fallbacks included)

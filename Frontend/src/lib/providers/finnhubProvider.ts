@@ -3,8 +3,8 @@
  * Free tier: 60 requests/minute
  */
 
-import { BaseProvider } from './baseProvider';
-import { QuoteData, RateLimitInfo } from '../types/stockData';
+import { BaseProvider } from '@/lib/providers/baseProvider';
+import { QuoteData, RateLimitInfo } from '@/lib/types/stockData';
 
 const API_KEY = process.env.FINNHUB_API_KEY;
 const BASE_URL = 'https://finnhub.io/api/v1';

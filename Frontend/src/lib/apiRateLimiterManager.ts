@@ -3,9 +3,11 @@
  * Coordinates rate limiting across multiple stock data providers
  */
 
-import { RateLimiter } from './rateLimiter';
-import { StockDataProvider } from './providers/baseProvider';
+import { RateLimiter } from '@/lib/rateLimiter';
+import { StockDataProvider } from '@/lib/providers/baseProvider';
 
+// Rate limiter configuration interface
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface ApiLimiterConfig {
   maxTokens: number;
   refillRate: number; // tokens per second

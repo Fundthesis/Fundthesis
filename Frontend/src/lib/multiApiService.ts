@@ -3,14 +3,14 @@
  * Routes requests through multiple stock data providers with intelligent fallback
  */
 
-import { StockDataProvider } from './providers/baseProvider';
-import { YahooFinanceProvider } from './providers/yahooFinanceProvider';
-import { AlphaVantageProvider } from './providers/alphaVantageProvider';
-import { FinnhubProvider } from './providers/finnhubProvider';
-import { TwelveDataProvider } from './providers/twelveDataProvider';
-import { FmpProvider } from './providers/fmpProvider';
-import { QuoteData } from './types/stockData';
-import { cacheManager } from './cacheManager';
+import { StockDataProvider } from '@/lib/providers/baseProvider';
+import { YahooFinanceProvider } from '@/lib/providers/yahooFinanceProvider';
+import { AlphaVantageProvider } from '@/lib/providers/alphaVantageProvider';
+import { FinnhubProvider } from '@/lib/providers/finnhubProvider';
+import { TwelveDataProvider } from '@/lib/providers/twelveDataProvider';
+import { FmpProvider } from '@/lib/providers/fmpProvider';
+import { QuoteData } from '@/lib/types/stockData';
+import { cacheManager } from '@/lib/cacheManager';
 
 class MultiApiService {
   private providers: StockDataProvider[] = [];
@@ -223,5 +223,5 @@ export async function fetchQuotes(
 }
 
 // Re-export types for backward compatibility
-export type { QuoteData } from './types/stockData';
+export type { QuoteData } from '@/lib/types/stockData';
 

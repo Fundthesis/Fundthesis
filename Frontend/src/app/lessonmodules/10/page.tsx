@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { StockModel } from '../lib/stockModel';
-import ModNav from '../components/ModNav';
-import Confetti from '../components/Confetti';
+import { StockModel } from '@/app/lessonmodules/lib/stockModel';
+import ModNav from '@/app/lessonmodules/components/ModNav';
+import Confetti from '@/app/lessonmodules/components/Confetti';
 // DecisionQuiz is defined in this file for the Module X assessment
 
 

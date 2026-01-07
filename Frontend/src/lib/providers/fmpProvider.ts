@@ -3,8 +3,8 @@
  * Free tier: 250 requests/day
  */
 
-import { BaseProvider } from './baseProvider';
-import { QuoteData, RateLimitInfo } from '../types/stockData';
+import { BaseProvider } from '@/lib/providers/baseProvider';
+import { QuoteData, RateLimitInfo } from '@/lib/types/stockData';
 
 const API_KEY = process.env.FMP_API_KEY;
 const BASE_URL = 'https://financialmodelingprep.com/api/v3';

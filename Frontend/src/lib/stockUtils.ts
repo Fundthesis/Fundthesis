@@ -2,7 +2,7 @@
  * Stock data utility functions
  */
 
-import { QuoteData } from './types/stockData';
+import { QuoteData } from '@/lib/types/stockData';
 
 export interface StockSummary {
   symbol: string;

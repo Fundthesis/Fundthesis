@@ -3,9 +3,9 @@
  */
 
 import YahooFinance from 'yahoo-finance2';
-import { BaseProvider } from './baseProvider';
-import { QuoteData, RateLimitInfo } from '../types/stockData';
-import { rateLimiter } from '../rateLimiter';
+import { BaseProvider } from '@/lib/providers/baseProvider';
+import { QuoteData, RateLimitInfo } from '@/lib/types/stockData';
+import { rateLimiter } from '@/lib/rateLimiter';
 
 const yahooFinance = new YahooFinance();
 

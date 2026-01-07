@@ -2,7 +2,7 @@
  * Base interface and utilities for stock data providers
  */
 
-import { QuoteData, RateLimitInfo, ProviderHealth } from '../types/stockData';
+import { QuoteData, RateLimitInfo, ProviderHealth } from '@/lib/types/stockData';
 
 export interface StockDataProvider {
   /** Provider name (e.g., 'yahoo', 'alphavantage') */

@@ -3,8 +3,8 @@
  * Free tier: 25 requests/day or 5 requests/minute
  */
 
-import { BaseProvider } from './baseProvider';
-import { QuoteData, RateLimitInfo } from '../types/stockData';
+import { BaseProvider } from '@/lib/providers/baseProvider';
+import { QuoteData, RateLimitInfo } from '@/lib/types/stockData';
 
 const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const BASE_URL = 'https://www.alphavantage.co/query';

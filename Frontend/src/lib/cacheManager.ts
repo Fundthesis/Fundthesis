@@ -5,8 +5,8 @@
  * Layer 3: Stale cache fallback (30min TTL)
  */
 
-import { prisma } from './prisma';
-import { QuoteData } from './types/stockData';
+import { prisma } from '@/lib/prisma';
+import { QuoteData } from '@/lib/types/stockData';
 
 interface CacheEntry {
   data: QuoteData;

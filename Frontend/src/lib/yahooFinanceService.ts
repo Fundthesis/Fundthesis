@@ -3,8 +3,8 @@
  */
 
 import YahooFinance from 'yahoo-finance2';
-import { rateLimiter } from './rateLimiter';
-import { prisma } from './prisma';
+import { rateLimiter } from '@/lib/rateLimiter';
+import { prisma } from '@/lib/prisma';
 
 const yahooFinance = new YahooFinance();
 
