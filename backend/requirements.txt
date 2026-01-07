@@ -12,7 +12,7 @@ newspaper3k
 finnhub-python
 lxml
 feedparser
-supabase
+prisma
 
 #forecasting
 prophet

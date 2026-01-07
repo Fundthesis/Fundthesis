@@ -148,8 +148,8 @@ const computePortfolioHistory = (
         sym === tx.symbol
           ? tx.price
           : stockDetails[sym]?.price ||
-            allStocks.find((s) => s.symbol === sym)?.price ||
-            0;
+          allStocks.find((s) => s.symbol === sym)?.price ||
+          0;
       return acc + qty * price;
     }, 0);
 
@@ -343,10 +343,10 @@ function PortfolioDashboardPageContent() {
       timeframe === "day"
         ? 24
         : timeframe === "month"
-        ? 30
-        : timeframe === "year"
-        ? 365
-        : 730;
+          ? 30
+          : timeframe === "year"
+            ? 365
+            : 730;
     const data = [];
     const basePrice = stock.price;
 
@@ -674,11 +674,10 @@ function PortfolioDashboardPageContent() {
                     }
                   }}
                   disabled={deleteConfirmText.trim().toLowerCase() !== "delete"}
-                  className={`px-3 py-2 rounded text-white ${
-                    deleteConfirmText.trim().toLowerCase() === "delete"
+                  className={`px-3 py-2 rounded text-white ${deleteConfirmText.trim().toLowerCase() === "delete"
                       ? "bg-red-600 hover:bg-red-700"
                       : "bg-red-300 cursor-not-allowed"
-                  }`}
+                    }`}
                 >
                   Confirm Delete
                 </button>

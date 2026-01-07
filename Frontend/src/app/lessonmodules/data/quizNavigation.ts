@@ -30,14 +30,14 @@ function getAnsweredQuestionIds(moduleIndex: number): string[] {
  */
 export function getStartingQuestionIndex(moduleIndex: number, questions: Question[]): number {
   const answeredIds = getAnsweredQuestionIds(moduleIndex);
-  
+
   // Find the first unanswered question
   for (let i = 0; i < questions.length; i++) {
     if (!answeredIds.includes(questions[i].id)) {
       return i;
     }
   }
-  
+
   // If all questions are answered, start at the beginning
   return 0;
 }
@@ -62,27 +62,27 @@ export function isQuestionAnswered(moduleIndex: number, questionId: string): boo
  * @returns true if navigation is allowed
  */
 export function canNavigateToQuestion(
-  moduleIndex: number, 
-  questions: Question[], 
+  moduleIndex: number,
+  questions: Question[],
   targetIndex: number
 ): boolean {
   if (targetIndex < 0 || targetIndex >= questions.length) {
     return false;
   }
-  
+
   const answeredIds = getAnsweredQuestionIds(moduleIndex);
-  
+
   // Can always go to an answered question
   if (answeredIds.includes(questions[targetIndex].id)) {
     return true;
   }
-  
+
   // Can go to the first unanswered question
   for (let i = 0; i < questions.length; i++) {
     if (!answeredIds.includes(questions[i].id)) {
       return i === targetIndex;
     }
   }
-  
+
   return false;
 }

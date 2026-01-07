@@ -11,7 +11,7 @@ interface CarouselProps<T> {
 }
 
 export function InfiniteCarousel<T>({ items, currentIndex, onIndexChange, renderCard }: CarouselProps<T>) {
-  
+
   const goToPrevious = () => {
     const newIndex = (currentIndex - 1 + items.length) % items.length
     onIndexChange(newIndex)
@@ -24,7 +24,7 @@ export function InfiniteCarousel<T>({ items, currentIndex, onIndexChange, render
 
   const getCardStyle = (itemIndex: number) => {
     let relativePosition = itemIndex - currentIndex
-    
+
     // Handle wrap around
     if (relativePosition > items.length / 2) {
       relativePosition -= items.length
@@ -33,16 +33,16 @@ export function InfiniteCarousel<T>({ items, currentIndex, onIndexChange, render
     }
 
     const distance = Math.abs(relativePosition)
-    
+
     // Position based on distance from center
     if (distance === 0) {
-  return { transform: 'translateX(0) scale(1)', zIndex: 30, filter: 'blur(0px)', opacity: 1 }
-} else if (distance === 1) {
-  return { transform: `translateX(${relativePosition > 0 ? '50px' : '-50px'}) scale(0.85)`, zIndex: 20, filter: 'blur(2px)', opacity: 0.6 }
-} else if (distance === 2) {
-  return { transform: `translateX(${relativePosition > 0 ? '50px' : '-50px'}) scale(0.7)`, zIndex: 10, filter: 'blur(4px)', opacity: 0.3 }
-} else {
-}
+      return { transform: 'translateX(0) scale(1)', zIndex: 30, filter: 'blur(0px)', opacity: 1 }
+    } else if (distance === 1) {
+      return { transform: `translateX(${relativePosition > 0 ? '50px' : '-50px'}) scale(0.85)`, zIndex: 20, filter: 'blur(2px)', opacity: 0.6 }
+    } else if (distance === 2) {
+      return { transform: `translateX(${relativePosition > 0 ? '50px' : '-50px'}) scale(0.7)`, zIndex: 10, filter: 'blur(4px)', opacity: 0.3 }
+    } else {
+    }
 
   }
 
@@ -75,7 +75,7 @@ export function InfiniteCarousel<T>({ items, currentIndex, onIndexChange, render
       <button onClick={goToNext} className="absolute right-0 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 group">
         <ChevronRight className="w-6 h-6 text-gray-900 group-hover:text-blue-600 transition-colors" />
       </button>
-        
+
     </div>
   )
 }

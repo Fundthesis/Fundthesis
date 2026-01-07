@@ -119,9 +119,8 @@ const RouletteStocks: React.FC = () => {
                   ${stock.price.toFixed(2)}
                 </div>
                 <div
-                  className={`text-sm font-medium ${
-                    stock.change >= 0 ? "text-green-600" : "text-red-500"
-                  }`}
+                  className={`text-sm font-medium ${stock.change >= 0 ? "text-green-600" : "text-red-500"
+                    }`}
                 >
                   {stock.change >= 0 ? "+" : ""}
                   {stock.change.toFixed(2)}%

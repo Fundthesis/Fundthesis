@@ -153,7 +153,7 @@ export default function EnviroPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => openSandbox(sb.id)} className="bg-blue-600 text-white px-3 py-1 rounded">Open</button>
-                    <button onClick={() => promptDeleteSandbox(sb.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded">Delete</button>
+                  <button onClick={() => promptDeleteSandbox(sb.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded">Delete</button>
                 </div>
               </div>
             ))}

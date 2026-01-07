@@ -73,12 +73,12 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     <div className="w-full">
       {confettiOn && <Confetti />}
       <div className="grid grid-cols-1 gap-4">
-  <QuestionCard question={questions[current]} onAnswer={onAnswer} showResult={showResult} locked={!!(showResult && showResult.correct)} />
+        <QuestionCard question={questions[current]} onAnswer={onAnswer} showResult={showResult} locked={!!(showResult && showResult.correct)} />
         <div className="grid grid-cols-3 items-center">
           <div className="justify-self-start flex items-center gap-3">
             {canGoBack && (
-              <button 
-                onClick={previous} 
+              <button
+                onClick={previous}
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
               >
                 Previous

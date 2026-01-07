@@ -37,7 +37,7 @@ const DecisionQuiz: React.FC = () => {
           <div className="font-semibold">{s.title}</div>
           <div className="text-sm text-gray-700 mb-2">{s.text}</div>
           <div className="flex gap-3">
-            {(['BUY','SELL','HOLD'] as Decision[]).map(opt => (
+            {(['BUY', 'SELL', 'HOLD'] as Decision[]).map(opt => (
               <button
                 key={opt || 'null'}
                 onClick={() => select(s.id, opt)}
@@ -80,7 +80,7 @@ const Module10: React.FC = () => {
   const [balance, setBalance] = useState<number>(10000);
   const [shares, setShares] = useState<number>(0);
   const [amount, setAmount] = useState<number>(1);
-  const [orderType, setOrderType] = useState<'market'|'limit'|'stop'>('market');
+  const [orderType, setOrderType] = useState<'market' | 'limit' | 'stop'>('market');
   const [limitPrice, setLimitPrice] = useState<string>('');
   const [history, setHistory] = useState<TradeResult[]>([]);
 
@@ -134,7 +134,7 @@ const Module10: React.FC = () => {
   const [decisionState, setDecisionState] = useState(() => ({
     scenarios: initialScenarios,
     currentIndex: 0,
-    answers: {} as Record<string, { choice: Decision; correct: boolean; feedback: string; recommendedOrder?: string }> ,
+    answers: {} as Record<string, { choice: Decision; correct: boolean; feedback: string; recommendedOrder?: string }>,
     answeredIds: new Set<string>()
   }));
 
@@ -179,11 +179,11 @@ const Module10: React.FC = () => {
           <div className="md:col-span-2 bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                  <div className="text-3xl font-bold text-black">NVDA</div>
+                <div className="text-3xl font-bold text-black">NVDA</div>
                 <div className="text-sm text-black">NVIDIA Corporation</div>
               </div>
               <div className="text-right">
-                  <div className="text-3xl font-bold text-black">${displayedPrice.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-black">${displayedPrice.toFixed(2)}</div>
               </div>
             </div>
 
@@ -213,7 +213,7 @@ const Module10: React.FC = () => {
           </div>
 
           <aside className="bg-white rounded-lg shadow p-6">
-              <h4 className="text-lg font-semibold mb-3 text-black">Market News</h4>
+            <h4 className="text-lg font-semibold mb-3 text-black">Market News</h4>
             <div className="space-y-4 text-sm text-black">
               {/* show only the current scenario here */}
               {decisionState.scenarios[decisionState.currentIndex] ? (
@@ -239,35 +239,35 @@ const Module10: React.FC = () => {
                   <div>
                     <div className="text-sm text-gray-700 mb-2">Read the news on the right, then use the trading panel to choose Buy or Sell for this scenario.</div>
                     <div className="mt-2">
-                              {decisionState.answeredIds.has(decisionState.scenarios[decisionState.currentIndex].id) ? (
-                                (() => {
-                                  const sid = decisionState.scenarios[decisionState.currentIndex].id;
-                                  const ans = decisionState.answers[sid];
-                                  const capitalizedOrderType = ans.recommendedOrder ? ans.recommendedOrder.charAt(0).toUpperCase() + ans.recommendedOrder.slice(1) : '';
-                                  return (
-                                    <div className={`p-3 border rounded ${ans.correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                      <div className={`font-semibold ${ans.correct ? 'text-green-700' : 'text-red-700'}`}>{ans.correct ? 'Correct' : 'Not quite'}</div>
-                                      <div className="text-sm text-gray-700 mt-1">{ans.feedback}</div>
-                                      <div className="text-sm text-gray-600 mt-2">Recommended Order Type: <span className="font-semibold">{capitalizedOrderType}</span></div>
-                                      <div className="mt-3 flex justify-end">
-                                        <button onClick={nextScenario} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">Next</button>
-                                      </div>
-                                    </div>
-                                  );
-                                })()
-                              ) : (
+                      {decisionState.answeredIds.has(decisionState.scenarios[decisionState.currentIndex].id) ? (
+                        (() => {
+                          const sid = decisionState.scenarios[decisionState.currentIndex].id;
+                          const ans = decisionState.answers[sid];
+                          const capitalizedOrderType = ans.recommendedOrder ? ans.recommendedOrder.charAt(0).toUpperCase() + ans.recommendedOrder.slice(1) : '';
+                          return (
+                            <div className={`p-3 border rounded ${ans.correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                              <div className={`font-semibold ${ans.correct ? 'text-green-700' : 'text-red-700'}`}>{ans.correct ? 'Correct' : 'Not quite'}</div>
+                              <div className="text-sm text-gray-700 mt-1">{ans.feedback}</div>
+                              <div className="text-sm text-gray-600 mt-2">Recommended Order Type: <span className="font-semibold">{capitalizedOrderType}</span></div>
+                              <div className="mt-3 flex justify-end">
+                                <button onClick={nextScenario} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">Next</button>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
                         <div className="p-3 border rounded bg-gray-50">
                           <div className="text-sm text-gray-700">Awaiting your Buy or Sell decision.</div>
                         </div>
                       )}
                     </div>
                   </div>
-                  ) : (
+                ) : (
                   <div className="text-center">
                     <div className="font-semibold mb-2">All scenarios completed</div>
                     <div className="text-sm text-gray-700 mb-4">You can retry the set to practice again.</div>
                     <button onClick={resetAssessment} aria-label="Retry" className="w-10 h-10 rounded-full bg-gray-700 text-white inline-flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block"><path d="M21 12a9 9 0 1 1-3-6.7" /><polyline points="21 3 21 9 15 9" /></svg>
                     </button>
                   </div>
                 )}

@@ -55,7 +55,7 @@ export async function fetchRecentNews(): Promise<NewsResponse> {
     }
 
     const data = await response.json();
-    
+
     // Ensure articles array exists and has proper structure
     if (!data || !Array.isArray(data.articles)) {
       console.warn('Unexpected API response format:', data);
@@ -102,8 +102,8 @@ export async function fetchArticleDetail(articleId: string): Promise<NewsArticle
   }
 }
 
-// New function to fetch articles from Supabase via the frontend API
-export async function fetchArticlesFromSupabase(params?: {
+// Function to fetch articles via the frontend API
+export async function fetchArticles(params?: {
   limit?: number;
   offset?: number;
   category?: string;
@@ -138,8 +138,8 @@ export async function fetchArticlesFromSupabase(params?: {
     }
 
     const data = await response.json();
-    
-    // Transform Supabase articles to match NewsArticle interface
+
+    // Transform articles to match NewsArticle interface
     const normalizedArticles: NewsArticle[] = ((data.articles || []) as RawArticle[]).map((article) => {
       // Parse tickers from text to array
       let tickersArray: string[] = [];
@@ -163,7 +163,7 @@ export async function fetchArticlesFromSupabase(params?: {
 
       // Derive sentiment from label field
       const label = article.label?.toLowerCase() || 'neutral';
-      const sentimentLabel = label === 'positive' || label === 'negative' || label === 'neutral' 
+      const sentimentLabel = label === 'positive' || label === 'negative' || label === 'neutral'
         ? label.charAt(0).toUpperCase() + label.slice(1)
         : 'Neutral';
 
@@ -197,9 +197,8 @@ export async function fetchArticlesFromSupabase(params?: {
       count: data.total || normalizedArticles.length,
     };
   } catch (error) {
-    console.error('Error fetching articles from Supabase:', error);
+    console.error('Error fetching articles:', error);
     // Return empty array instead of throwing to prevent page crash
     return { articles: [], count: 0 };
   }
 }
-

@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified Boolean?
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  userAccounts  UserAccount[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+model Article {
+  id            String    @id @default(uuid())
+  url           String    @unique
+  headline      String?
+  summary       String?
+  full_text     String?
+  published_at  DateTime?
+  source        String?
+  label         String?
+  related       String?
+  category      String?
+  tickers       String?
+  inserted_at   DateTime  @default(now())
+  fetch_status  String?
+  fetch_error   String?
+  source_domain String?
+  sqlite_id     String?
+  article_id    String?
+
+  @@map("articles")
+}
+
+model StockForecast {
+  id               String   @id @default(uuid())
+  symbol           String
+  price_series     Json?
+  forecast_results Json?
+  run_date         DateTime
+  updated_at       DateTime @default(now()) @updatedAt
+
+  @@index([symbol, run_date(sort: Desc)])
+  @@map("stock_forecasts")
+}
+
+model StockPriceSeries {
+  symbol           String   @id
+  price_series     Json?
+  forecast_results Json?
+  updated_at       DateTime @default(now()) @updatedAt
+
+  @@map("stock_price_series")
+}
+
+model UserAccount {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  stockTicker String   @map("stock_ticker")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stockTicker])
+  @@map("user_account")
+}

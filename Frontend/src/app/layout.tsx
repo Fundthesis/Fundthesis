@@ -51,11 +51,10 @@ function AppFrame({ children }: { children: ReactNode }) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                  pathname === item.href
-                    ? 'text-black border-b-2 border-black pb-1'
-                    : 'text-gray-500'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === item.href
+                  ? 'text-black border-b-2 border-black pb-1'
+                  : 'text-gray-500'
+                  }`}
               >
                 {item.name}
               </Link>
@@ -72,11 +71,10 @@ function AppFrame({ children }: { children: ReactNode }) {
                 </span>
                 <Link
                   href="/profile"
-                  className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                    pathname === '/profile'
-                      ? 'text-black border-b-2 border-black pb-1'
-                      : 'text-gray-500'
-                  }`}
+                  className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/profile'
+                    ? 'text-black border-b-2 border-black pb-1'
+                    : 'text-gray-500'
+                    }`}
                 >
                   Profile
                 </Link>
@@ -91,11 +89,10 @@ function AppFrame({ children }: { children: ReactNode }) {
             ) : (
               <Link
                 href="/auth"
-                className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                  pathname === '/auth'
-                    ? 'text-black border-b-2 border-black pb-1'
-                    : 'text-gray-500'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/auth'
+                  ? 'text-black border-b-2 border-black pb-1'
+                  : 'text-gray-500'
+                  }`}
               >
                 Sign in
               </Link>

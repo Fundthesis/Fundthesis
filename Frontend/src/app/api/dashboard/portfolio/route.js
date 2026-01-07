@@ -1,45 +1,29 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import YahooFinance from 'yahoo-finance2';
 
 const yahooFinance = new YahooFinance();
 const DEFAULT_LOOKBACK_DAYS = 90;
 
-async function createSupabaseRouteClient() {
-  const cookieStore = await cookies();
-  return createRouteHandlerClient({
-    cookies: () => cookieStore,
-  });
-}
-
-export async function GET() {
+export async function GET(request) {
   try {
-    const supabase = await createSupabaseRouteClient();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error('Error fetching authenticated user:', userError.message);
-      return NextResponse.json({ error: 'Failed to retrieve user session' }, { status: 500 });
-    }
-
-    if (!user) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const {
-      data: userAccountRows,
-      error: userAccountError,
-    } = await supabase.from('user_account').select('*').eq('user_id', user.id);
+    const user = session.user;
 
-    if (userAccountError) {
-      console.error('Error fetching user tickers:', userAccountError.message);
-      return NextResponse.json({ error: 'Failed to load user tickers' }, { status: 500 });
-    }
+    const userAccountRows = await prisma.userAccount.findMany({
+      where: {
+        userId: user.id
+      }
+    });
 
     if (!userAccountRows || userAccountRows.length === 0) {
       return NextResponse.json({ tickers: [], performance: [] });
@@ -51,10 +35,10 @@ export async function GET() {
       return NextResponse.json({ tickers: [], performance: [] });
     }
 
-    const histories = await loadHistories(supabase, tickers);
+    const histories = await loadHistories(tickers);
     const performance = computePortfolioPerformance(histories);
     const summary = buildSummary(performance);
-    
+
     // Build per-ticker stock data with current prices and changes
     const stockData = buildStockData(histories);
 
@@ -72,21 +56,15 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const supabase = await createSupabaseRouteClient();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error('Error fetching authenticated user:', userError.message);
-      return NextResponse.json({ error: 'Failed to retrieve user session' }, { status: 500 });
-    }
-
-    if (!user) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const user = session.user;
 
     const body = await request.json();
     const rawTicker = typeof body?.ticker === 'string' ? body.ticker : '';
@@ -96,36 +74,26 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ticker is required' }, { status: 400 });
     }
 
-    const {
-      data: existingRows,
-      error: existingError,
-    } = await supabase
-      .from('user_account')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .eq('stock_ticker', ticker)
-      .limit(1);
+    const existingRow = await prisma.userAccount.findFirst({
+      where: {
+        userId: user.id,
+        stockTicker: ticker
+      }
+    });
 
-    if (existingError) {
-      console.error('Error checking existing ticker:', existingError.message);
-      return NextResponse.json({ error: 'Failed to verify existing tickers' }, { status: 500 });
-    }
-
-    if (Array.isArray(existingRows) && existingRows.length > 0) {
+    if (existingRow) {
       return NextResponse.json(
         { success: true, ticker, message: 'Ticker already exists in portfolio' },
         { status: 200 },
       );
     }
 
-    const { error: insertError } = await supabase
-      .from('user_account')
-      .insert({ user_id: user.id, stock_ticker: ticker });
-
-    if (insertError) {
-      console.error('Error adding ticker to user_account:', insertError.message);
-      return NextResponse.json({ error: 'Failed to add ticker' }, { status: 500 });
-    }
+    await prisma.userAccount.create({
+      data: {
+        userId: user.id,
+        stockTicker: ticker
+      }
+    });
 
     return NextResponse.json({ success: true, ticker });
   } catch (error) {
@@ -136,21 +104,15 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const supabase = await createSupabaseRouteClient();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error('Error fetching authenticated user:', userError.message);
-      return NextResponse.json({ error: 'Failed to retrieve user session' }, { status: 500 });
-    }
-
-    if (!user) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const user = session.user;
 
     const body = await request.json();
     const rawTicker = typeof body?.ticker === 'string' ? body.ticker : '';
@@ -160,15 +122,12 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Ticker is required' }, { status: 400 });
     }
 
-    const { error: deleteError } = await supabase
-      .from('user_account')
-      .delete()
-      .match({ user_id: user.id, stock_ticker: ticker });
-
-    if (deleteError) {
-      console.error('Error deleting ticker from user_account:', deleteError.message);
-      return NextResponse.json({ error: 'Failed to delete ticker' }, { status: 500 });
-    }
+    await prisma.userAccount.deleteMany({
+      where: {
+        userId: user.id,
+        stockTicker: ticker
+      }
+    });
 
     return NextResponse.json({ success: true, ticker });
   } catch (error) {
@@ -181,34 +140,24 @@ function extractTickers(rows) {
   const tickerSet = new Set();
 
   rows.forEach((row) => {
-    if (typeof row.stock_ticker === 'string' && row.stock_ticker.trim().length > 0) {
-      tickerSet.add(row.stock_ticker.trim().toUpperCase());
-    }
-
-    if (typeof row.ticker === 'string' && row.ticker.trim().length > 0) {
-      tickerSet.add(row.ticker.trim().toUpperCase());
-    }
-
-    if (Array.isArray(row.tickers)) {
-      row.tickers
-        .filter((value) => typeof value === 'string' && value.trim().length > 0)
-        .forEach((value) => tickerSet.add(value.trim().toUpperCase()));
+    if (typeof row.stockTicker === 'string' && row.stockTicker.trim().length > 0) {
+      tickerSet.add(row.stockTicker.trim().toUpperCase());
     }
   });
 
   return Array.from(tickerSet.values());
 }
 
-async function loadHistories(supabase, tickers) {
+async function loadHistories(tickers) {
   const results = await Promise.all(
     tickers.map(async (ticker) => {
-      const cached = await fetchCachedPrices(supabase, ticker);
+      const cached = await fetchCachedPrices(ticker);
 
       if (cached.length > 0) {
         return [ticker, cached.sort((a, b) => a.date.localeCompare(b.date))];
       }
 
-      const downloaded = await downloadAndCachePrices(supabase, ticker);
+      const downloaded = await downloadAndCachePrices(ticker);
       return [ticker, downloaded];
     }),
   );
@@ -216,17 +165,15 @@ async function loadHistories(supabase, tickers) {
   return Object.fromEntries(results);
 }
 
-async function fetchCachedPrices(supabase, ticker) {
-  const { data, error } = await supabase
-    .from('stock_price_series')
-    .select('price_series')
-    .eq('symbol', ticker)
-    .single();
-
-  if (error) {
-    console.error(`Error fetching cached price data for ${ticker}:`, error.message);
-    return [];
-  }
+async function fetchCachedPrices(ticker) {
+  const data = await prisma.stockPriceSeries.findUnique({
+    where: {
+      symbol: ticker
+    },
+    select: {
+      price_series: true
+    }
+  });
 
   if (!data || !data.price_series || !Array.isArray(data.price_series)) {
     return [];
@@ -245,7 +192,7 @@ async function fetchCachedPrices(supabase, ticker) {
       }
 
       const close = typeof entry.Close === 'number' ? entry.Close : Number(entry.Close ?? 0);
-      
+
       if (!dateStr || Number.isNaN(close)) {
         return null;
       }
@@ -260,7 +207,7 @@ async function fetchCachedPrices(supabase, ticker) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-async function downloadAndCachePrices(supabase, ticker) {
+async function downloadAndCachePrices(ticker) {
   try {
     const historical = await yahooFinance.historical(ticker, {
       period1: new Date(Date.now() - DEFAULT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000),
@@ -302,7 +249,7 @@ async function downloadAndCachePrices(supabase, ticker) {
       .map((item) => {
         const date = normaliseDate(item.date);
         if (!date) return null;
-        
+
         return {
           Date: new Date(date).toISOString(), // ISO format to match Python script
           Open: item.open || 0,
@@ -315,21 +262,20 @@ async function downloadAndCachePrices(supabase, ticker) {
       .filter((row) => row !== null);
 
     // Save to stock_price_series table with UPSERT (matching Python script behavior)
-    const { error: insertError } = await supabase
-      .from('stock_price_series')
-      .upsert(
-        { 
-          symbol: ticker, 
-          price_series: ohlcvData 
-        },
-        { onConflict: 'symbol' }
-      );
+    await prisma.stockPriceSeries.upsert({
+      where: {
+        symbol: ticker
+      },
+      update: {
+        price_series: ohlcvData
+      },
+      create: {
+        symbol: ticker,
+        price_series: ohlcvData
+      }
+    });
 
-    if (insertError) {
-      console.error(`Failed to cache price data for ${ticker}:`, insertError.message);
-    } else {
-      console.log(`✅ Cached ${ohlcvData.length} price points for ${ticker}`);
-    }
+    console.log(`✅ Cached ${ohlcvData.length} price points for ${ticker}`);
 
     return priceRows;
   } catch (error) {
@@ -414,7 +360,7 @@ function buildStockData(histories) {
 
     // Sort by date to ensure we have the latest data
     const sortedRows = [...rows].sort((a, b) => a.date.localeCompare(b.date));
-    
+
     const latestRow = sortedRows[sortedRows.length - 1];
     const previousRow = sortedRows.length > 1 ? sortedRows[sortedRows.length - 2] : latestRow;
 
@@ -462,6 +408,3 @@ function normaliseDate(input) {
 
   return null;
 }
-
-
-

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { prisma } from '@/lib/prisma';
 import YahooFinance from 'yahoo-finance2';
 
 type PriceSeriesPoint = {
@@ -29,9 +28,9 @@ const yahooFinance = new YahooFinance();
 
 // Extended list of symbols (matching the Python server)
 const SYMBOLS = [
-  'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX', 
+  'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX',
   'JPM', 'BAC', 'GS', 'WFC', 'C', 'JNJ', 'UNH', 'PFE', 'ABBV', 'TMO',
-  'WMT', 'HD', 'DIS', 'NKE', 'SBUX', 'XOM', 'CVX', 'COP', 'BA', 'CAT', 
+  'WMT', 'HD', 'DIS', 'NKE', 'SBUX', 'XOM', 'CVX', 'COP', 'BA', 'CAT',
   'GE', 'T', 'VZ', 'CMCSA', 'INTC', 'AMD', 'QCOM', 'AVGO', 'TXN', 'MU',
   'V', 'MA', 'PYPL', 'AXP', 'SQ', 'BLK', 'SCHW', 'MS', 'SPGI', 'ICE',
   'KO', 'PEP', 'COST', 'MCD', 'MDLZ', 'PM', 'MO', 'CL', 'PG', 'UL',
@@ -221,7 +220,7 @@ async function fetchYahooSummary(symbol: string): Promise<StockSummary | null> {
       console.log(`⚠️ No quote returned for ${symbol}`);
       return null;
     }
-    
+
     if (quote.regularMarketPrice === undefined) {
       console.log(`⚠️ No regularMarketPrice for ${symbol}, quote:`, JSON.stringify(quote).slice(0, 200));
       return null;
@@ -264,15 +263,15 @@ export async function GET(request: NextRequest) {
 
     const customSymbols = symbolsParam
       ? Array.from(
-          new Set(
-            symbolsParam
-              .split(',')
-              .map((symbol) => symbol.trim().toUpperCase())
-              .filter((symbol) => symbol.length > 0),
-          ),
-        )
+        new Set(
+          symbolsParam
+            .split(',')
+            .map((symbol) => symbol.trim().toUpperCase())
+            .filter((symbol) => symbol.length > 0),
+        ),
+      )
       : null;
-    
+
     console.log(`📥 Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
 
     const paginatedSymbols =
@@ -295,22 +294,18 @@ export async function GET(request: NextRequest) {
     const responseTotal = customSymbols ? customSymbols.length : SYMBOLS.length;
     const responseHasMore = customSymbols ? false : offset + limit < SYMBOLS.length;
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore as unknown as ReturnType<typeof cookies>,
+    const cachedRows = await prisma.stockPriceSeries.findMany({
+      where: {
+        symbol: {
+          in: paginatedSymbols,
+        },
+      },
+      select: {
+        symbol: true,
+        price_series: true,
+        forecast_results: true,
+      },
     });
-
-    const {
-      data: cachedRows,
-      error: cachedError,
-    } = await supabase
-      .from('stock_price_series')
-      .select('symbol, price_series, forecast_results')
-      .in('symbol', paginatedSymbols);
-
-    if (cachedError) {
-      console.error('Error fetching cached stock price series:', cachedError.message);
-    }
 
     const cachedMap = new Map<string, StockPriceSeriesRow>();
     (cachedRows ?? []).forEach((row) => {
@@ -342,7 +337,7 @@ export async function GET(request: NextRequest) {
           console.log(`⚠️ Failed to build summary from cache for ${upperSymbol}, will try Yahoo`);
         }
       }
-      
+
       // Need to fetch from Yahoo
       symbolsNeedingYahoo.push(upperSymbol);
     });
@@ -378,4 +373,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch stocks' }, { status: 500 });
   }
 }
-

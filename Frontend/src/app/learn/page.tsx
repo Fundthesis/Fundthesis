@@ -27,17 +27,17 @@ const CircularRing: React.FC<{ percent: number; size?: number }> = ({ percent, s
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size/2} cy={size/2} r={radius} stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
+      <circle cx={size / 2} cy={size / 2} r={radius} stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
       <circle
-        cx={size/2}
-        cy={size/2}
+        cx={size / 2}
+        cy={size / 2}
         r={radius}
         stroke="#3b82f6"
         strokeWidth={stroke}
         strokeLinecap="round"
         fill="none"
         strokeDasharray={`${dash} ${circumference - dash}`}
-        transform={`rotate(-90 ${size/2} ${size/2})`}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
     </svg>
   );
@@ -50,7 +50,7 @@ const LearnPage: React.FC = () => {
     try {
       const p = moduleTitles.map((_, i) => getProgress(i + 1, 4));
       setProgress(p);
-    } catch (e) {/* ignore */}
+    } catch (e) {/* ignore */ }
   };
 
   useEffect(() => {
@@ -71,7 +71,7 @@ const LearnPage: React.FC = () => {
       try {
         resetAllProgress(); // triggers ft-progress-changed
         reloadProgress();
-      } catch (e) {/* ignore */}
+      } catch (e) {/* ignore */ }
     }
   };
 

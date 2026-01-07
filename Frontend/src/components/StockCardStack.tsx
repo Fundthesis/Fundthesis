@@ -98,7 +98,7 @@ export function StockCardStack({
 
   const getCardStyle = (stockIndex: number) => {
     let relativePosition = stockIndex - currentIndex
-    
+
     if (relativePosition > stocks.length / 2) {
       relativePosition -= stocks.length
     } else if (relativePosition < -stocks.length / 2) {
@@ -106,7 +106,7 @@ export function StockCardStack({
     }
 
     const distance = Math.abs(relativePosition)
-    
+
     if (distance === 0) {
       return { transform: 'translateX(0) scale(1)', zIndex: 30, filter: 'blur(0px)', opacity: 1 }
     } else if (distance === 1) {
@@ -136,11 +136,11 @@ export function StockCardStack({
             const detail = stockDetails[stock.symbol];
             const chartData = detail
               ? [
-                  ...(detail.chartData?.map((d) => ({ ...d, type: "historical" as const })) || []),
-                  ...(detail.forecastData?.map((d) => ({ ...d, type: "forecast" as const })) || []),
-                ]
+                ...(detail.chartData?.map((d) => ({ ...d, type: "historical" as const })) || []),
+                ...(detail.forecastData?.map((d) => ({ ...d, type: "forecast" as const })) || []),
+              ]
               : [];
-            
+
             return (
               <div key={`${stock.symbol}-${index}`} className="absolute w-full max-w-[650px] min-h-[900px] transition-all duration-500 ease-out cursor-pointer" style={getCardStyle(index)}>
                 <StockCard

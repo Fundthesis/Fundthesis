@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { prisma } from "@/lib/prisma";
 
 type Article = {
   headline: string | null;
   summary: string | null;
   label: string | null;
   source: string | null;
-  published_at: string | null;
+  published_at: Date | null;
   tickers: string | null;
 };
 
@@ -413,40 +412,54 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get("type") || "both";
 
-    // Fetch recent articles from Supabase
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore as unknown as ReturnType<typeof cookies>,
-    });
-
     // Get articles from last 24 hours, with fallback to last 7 days if needed
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    let { data: articles, error: articlesError } = await supabase
-      .from("articles")
-      .select("headline, summary, label, source, published_at, tickers")
-      .gte("published_at", twentyFourHoursAgo.toISOString())
-      .order("published_at", { ascending: false })
-      .limit(30);
+    let articles = await prisma.article.findMany({
+      where: {
+        published_at: {
+          gte: twentyFourHoursAgo,
+        },
+      },
+      orderBy: {
+        published_at: "desc",
+      },
+      take: 30,
+      select: {
+        headline: true,
+        summary: true,
+        label: true,
+        source: true,
+        published_at: true,
+        tickers: true,
+      },
+    });
 
     // If no articles in last 24 hours, try last 7 days
-    if ((!articles || articles.length === 0) && !articlesError) {
+    if (!articles || articles.length === 0) {
       console.log("No articles in last 24 hours, trying last 7 days...");
-      const result = await supabase
-        .from("articles")
-        .select("headline, summary, label, source, published_at, tickers")
-        .gte("published_at", sevenDaysAgo.toISOString())
-        .order("published_at", { ascending: false })
-        .limit(30);
-      articles = result.data;
-      articlesError = result.error;
-    }
-
-    if (articlesError) {
-      console.error("Error fetching articles:", articlesError);
+      articles = await prisma.article.findMany({
+        where: {
+          published_at: {
+            gte: sevenDaysAgo,
+          },
+        },
+        orderBy: {
+          published_at: "desc",
+        },
+        take: 30,
+        select: {
+          headline: true,
+          summary: true,
+          label: true,
+          source: true,
+          published_at: true,
+          tickers: true,
+        },
+      });
     }
 
     const articlesList = (articles || []) as Article[];

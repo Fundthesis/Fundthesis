@@ -4,12 +4,19 @@ import os
 import time
 import sqlite3
 from urllib.parse import urlparse, urljoin
+#This is the newscraper functions that Im testing out to see if I can get more optimal scraping 
+
+import os
+import time
+import sqlite3
+from urllib.parse import urlparse, urljoin
 from pathlib import Path
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from readability import Document
 import re
+import asyncio
 
 
 import requests
@@ -35,6 +42,7 @@ load_dotenv()
 API_KEY = os.getenv("FINNHUB_KEY")
 
 # Common stock tickers for major exchanges (NYSE, NASDAQ)
+# This is a simplified list - in production, you'd want a comprehensive ticker database
 MAJOR_TICKERS = {
     'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B', 'V', 'JNJ',
     'WMT', 'JPM', 'MA', 'PG', 'UNH', 'HD', 'DIS', 'BAC', 'VZ', 'ADBE', 'NFLX',
@@ -48,12 +56,8 @@ MAJOR_TICKERS = {
 # Extended list of common ticker patterns (1-5 letters)
 TICKER_PATTERN = re.compile(r'\b([A-Z]{1,5})\b')
 
-#SUPABASE setup
-from supabase import create_client, Client
-
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_SERVICE_ROLE = os.environ["SUPABASE_SERVICE_ROLE"]  # DO NOT expose this to frontend
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
+# PRISMA setup
+from db_client import db
 
 
 # ---------- HTTP session with headers & retries ----------
@@ -296,8 +300,8 @@ def get_fulltext(url: str) -> tuple[str|None, str|None, str|None, int|None, dict
 
 
 # ---------- Insert ----------
-#Inserting articles into supabase
-def insert_into_supabase(article_db: dict,
+#Inserting articles into Prisma
+async def insert_into_db(article_db: dict,
                          text: str | None,
                          status: str,
                          error: str | None,
@@ -328,13 +332,17 @@ def insert_into_supabase(article_db: dict,
 
     # Case 1: it's epoch-like (e.g. 1698432000)
     if isinstance(published_raw, (int, float)) or (isinstance(published_raw, str) and published_raw.isdigit()):
-        published_iso = epoch_to_iso(published_raw)
+        # Convert to datetime object, not ISO string yet for Prisma
+        try:
+            ts = int(published_raw)
+            published_iso = datetime.fromtimestamp(ts, timezone.utc)
+        except:
+            published_iso = None
 
     # Case 2: it's already ISO-ish string like "2025-10-27T13:12:00+00:00" or "...Z"
     elif isinstance(published_raw, str):
         try:
-            dt = datetime.fromisoformat(published_raw.replace("Z", "+00:00"))
-            published_iso = dt.astimezone(timezone.utc).isoformat()
+            published_iso = datetime.fromisoformat(published_raw.replace("Z", "+00:00"))
         except Exception:
             published_iso = None
 
@@ -349,7 +357,8 @@ def insert_into_supabase(article_db: dict,
     tickers_str = ','.join(tickers) if tickers else None
 
     # --- 5. Build payload base ---
-    payload = {
+    # Prisma create/update data
+    data = {
         "category": article_db.get('category'),
         "published_at": published_iso,
         "headline": article_db.get('headline'),
@@ -359,27 +368,43 @@ def insert_into_supabase(article_db: dict,
         "full_text": text,
         "url": meta.get("best_url") or article_db.get('url'),
         "label": into_label,
-        "inserted_at": datetime.now(timezone.utc).isoformat(),
+        "inserted_at": datetime.now(timezone.utc),
         "fetch_status": f"{status}:{http_status}|{meta.get('used_extractor')}|html={meta.get('html_len')}",
         "fetch_error": error,
         "source_domain": domain,
-        "tickers": tickers_str  # Add extracted tickers as comma-separated string
+        "tickers": tickers_str
     }
 
     # --- 5. ONLY add sqlite_id/article_id if they look numeric ---
     art_id = article_db.get('id')
     if isinstance(art_id, (int, float)) or (isinstance(art_id, str) and art_id.isdigit()):
-        payload["sqlite_id"] = art_id
-        payload["article_id"] = art_id
+        data["sqlite_id"] = str(art_id)
+        data["article_id"] = str(art_id)
     # else: skip those fields so Postgres doesn't try to coerce
 
     # --- 6. Upsert ---
-    res = supabase.table("articles").upsert(payload, on_conflict="url").execute()
-    return res
+    if not db.is_connected():
+        await db.connect()
+
+    try:
+        # Upsert based on URL
+        res = await db.article.upsert(
+            where={
+                'url': data['url']
+            },
+            data={
+                'create': data,
+                'update': data
+            }
+        )
+        return res
+    except Exception as e:
+        print(f"Error inserting article: {e}")
+        return None
 
 
 # ---------- Pipeline ----------
-def articleToSupabase():
+async def articleToSupabase(): # Renaming this might be good, but keeping for now
     finc = finn_client()
     news = finc.general_news('general', min_id=0)
 
@@ -388,8 +413,8 @@ def articleToSupabase():
         # get article body by scraping the URL
         text, status, error, http_status, meta = get_fulltext(art['url'])
 
-        # push 1 row into Supabase
-        insert_into_supabase(
+        # push 1 row into DB
+        await insert_into_db(
             article_db=art,
             text=text,
             status=status,
@@ -400,7 +425,7 @@ def articleToSupabase():
 
         inserted += 1
 
-    print(f"Inserted {inserted} articles into Supabase")
+    print(f"Inserted {inserted} articles into DB")
 
 
 #-------------FinBert-------------
@@ -410,18 +435,27 @@ def run_finbert(summ_of_article):
     return label
 
 
-def quick_dbcheck():
+async def quick_dbcheck():
+    if not db.is_connected():
+        await db.connect()
+        
     # total rows
-    total_res = supabase.table("articles").select("id").execute()
-    total_rows = len(total_res.data)
+    total_rows = await db.article.count()
 
     # rows with missing/blank full_text
-    empty_res = supabase.table("articles") \
-        .select("id, full_text") \
-        .or_("full_text.is.null,full_text.eq.") \
-        .execute()
-    empty_rows = len(empty_res.data)
+    # Prisma doesn't have direct OR for null/empty string in one go easily like supabase .or_
+    # But we can do count with OR
+    empty_rows = await db.article.count(
+        where={
+            'OR': [
+                {'full_text': None},
+                {'full_text': ''}
+            ]
+        }
+    )
 
-    print(f"Total rows in Supabase: {total_rows} | Empty full_text: {empty_rows}")
+    print(f"Total rows in DB: {total_rows} | Empty full_text: {empty_rows}")
 
-
+if __name__ == "__main__":
+    # If run as script
+    asyncio.run(articleToSupabase())

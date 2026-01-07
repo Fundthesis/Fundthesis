@@ -13,6 +13,17 @@ from app.news_routes import router as news_router
 
 app = FastAPI()
 
+from db_client import db
+
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db.disconnect()
+
+
 # Add CORS middleware to allow frontend to access the API
 app.add_middleware(
     CORSMiddleware,

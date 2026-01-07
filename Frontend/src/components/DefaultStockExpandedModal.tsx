@@ -49,20 +49,20 @@ export function DefaultStockExpandedModal({
       </button>
 
       <div className="flex items-start justify-center min-h-screen p-8" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] p-8 relative overflow-y-auto">
-          <div className="space-y-6">
-            <div className="flex items-start justify-between pb-6 border-b">
+        <div classNa m e="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] p-8 relative overflow-y-auto">
+          <div classNa m e="space-y-6">
+            <div classNa m e="flex items-start justify-between pb-6 border-b">
               <div>
-                <h2 className="text-5xl font-bold text-gray-900">{stock.symbol}</h2>
+                <h2 classNa m e="text-5xl font-bold text-gray-900" >{stock.symb ol}</ h2>
                 <p className="text-xl text-gray-600 mt-2">{stock.company}</p>
-              </div>
+              </d iv>
               <div className="text-right">
                 <p className="text-5xl font-bold text-gray-900">${stock.price.toFixed(2)}</p>
                 <p className={`text-2xl font-semibold mt-2 ${stock.change >= 0 ? 'text-[#9DB38A]' : 'text-[#c17b7b]'}`}>
                   {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
                 </p>
               </div>
-            </div>
+            </d iv>
 
             <div className="w-full h-96 rounded-xl bg-gray-50 border-2 border-gray-200 overflow-hidden">
               {stock.chartData && stock.chartData.length > 0 ? (
@@ -79,13 +79,13 @@ export function DefaultStockExpandedModal({
               )}
             </div>
 
-              <div className="flex gap-3 justify-center">
-                {['day', 'month', 'year', 'all'].map((tf) => (
-                  <button key={tf} onClick={async (e) => { e.stopPropagation(); const newTimeframe = tf as 'day' | 'month' | 'year' | 'all'; setTimeframe(newTimeframe); await fetchStockDetail(stock.symbol) }} className={`py-3 px-6 rounded-lg text-base font-medium transition-colors ${timeframe === tf ? 'bg-[#9DB38A] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    {tf.charAt(0).toUpperCase() + tf.slice(1)}
-                  </button>
-                ))}
-              </div>
+            <div className="flex gap-3 justify-center">
+              {['day', 'month', 'year', 'all'].map((tf) => (
+                <button key={tf} onClick={async (e) => { e.stopPropagation(); const newTimeframe = tf as 'day' | 'month' | 'year' | 'all'; setTimeframe(newTimeframe); await fetchStockDetail(stock.symbol) }} className={`py-3 px-6 rounded-lg text-base font-medium transition-colors ${timeframe === tf ? 'bg-[#9DB38A] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                  {tf.charAt(0).toUpperCase() + tf.slice(1)}
+                </button>
+              ))}
+            </div>
 
             <div className="grid grid-cols-5 gap-4">
               <div className="col-span-2 grid grid-rows-2 gap-4">
@@ -133,9 +133,9 @@ export function DefaultStockExpandedModal({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </d iv>
+        </d iv>
+      </d iv>
+    </d iv >
   )
 }

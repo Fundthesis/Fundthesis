@@ -5,20 +5,11 @@ from typing import List, Optional
 import re
 import os
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from db_client import db
 
 load_dotenv()
 
 router = APIRouter()
-
-# Initialize Supabase client
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE = os.environ.get("SUPABASE_SERVICE_ROLE")
-
-# Initialize Supabase client if credentials are available
-supabase: Client | None = None
-if SUPABASE_URL and SUPABASE_SERVICE_ROLE:
-    supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
 
 # Common stock tickers for major exchanges (NYSE, NASDAQ)
 # This is a simplified list - in production, you'd want a comprehensive ticker database
@@ -101,50 +92,76 @@ async def get_recent_news():
     Get recent financial news articles from the past 24 hours.
     Returns articles that mention retail-tradeable stocks.
     """
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE environment variables.")
+    if not db.is_connected():
+        await db.connect()
     
     try:
         # Calculate timestamp for 24 hours ago
+        # Prisma expects datetime objects
         twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
-        timestamp_str = twenty_four_hours_ago.isoformat()
         
-        # Query Supabase for articles from the last 24 hours
-        # Order by published_at descending to get newest first
-        # If no articles in last 24h, try last 48 hours to be more lenient
-        response = supabase.table("articles").select(
-            "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-        ).gte("published_at", timestamp_str).order("published_at", desc=True).limit(100).execute()
+        # Query Prisma for articles from the last 24 hours
+        articles = await db.article.find_many(
+            where={
+                'published_at': {
+                    'gte': twenty_four_hours_ago
+                }
+            },
+            order={
+                'published_at': 'desc'
+            },
+            take=100
+        )
         
         # If no articles in last 24h, try last 48 hours
-        if not response.data or len(response.data) == 0:
+        if not articles:
             forty_eight_hours_ago = datetime.now(timezone.utc) - timedelta(hours=48)
-            timestamp_str_48h = forty_eight_hours_ago.isoformat()
-            response = supabase.table("articles").select(
-                "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-            ).gte("published_at", timestamp_str_48h).order("published_at", desc=True).limit(100).execute()
+            articles = await db.article.find_many(
+                where={
+                    'published_at': {
+                        'gte': forty_eight_hours_ago
+                    }
+                },
+                order={
+                    'published_at': 'desc'
+                },
+                take=100
+            )
         
         # If still no articles, try last 7 days
-        if not response.data or len(response.data) == 0:
+        if not articles:
             seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-            timestamp_str_7d = seven_days_ago.isoformat()
-            response = supabase.table("articles").select(
-                "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-            ).gte("published_at", timestamp_str_7d).order("published_at", desc=True).limit(100).execute()
+            articles = await db.article.find_many(
+                where={
+                    'published_at': {
+                        'gte': seven_days_ago
+                    }
+                },
+                order={
+                    'published_at': 'desc'
+                },
+                take=100
+            )
         
         # If still no articles, get the most recent 20 articles regardless of date
-        if not response.data or len(response.data) == 0:
-            response = supabase.table("articles").select(
-                "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-            ).order("published_at", desc=True).limit(20).execute()
+        if not articles:
+            articles = await db.article.find_many(
+                order={
+                    'published_at': 'desc'
+                },
+                take=20
+            )
         
-        if not response.data or len(response.data) == 0:
+        if not articles:
             return {"articles": [], "count": 0}
         
         articles_with_tickers = []
         
         # Process articles and add recommendations
-        for article in response.data:
+        for article_obj in articles:
+            # Convert Prisma object to dict
+            article = article_obj.model_dump()
+            
             # Get tickers from database (stored as comma-separated string)
             tickers_str = article.get('tickers', '')
             tickers = tickers_str.split(',') if tickers_str else []
@@ -164,12 +181,8 @@ async def get_recent_news():
             # Calculate sentiment percentage (default to 85% if not available)
             # The label field contains the sentiment (Positive/Negative/Neutral)
             sentiment_label = article.get('label', '').capitalize() if article.get('label') else 'Neutral'
-            sentiment_score = article.get('sentiment_score')  # If stored in DB
-            if sentiment_score is not None:
-                sentiment_percentage = int(sentiment_score * 100)
-            else:
-                # Default confidence percentages based on label
-                sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
+            # sentiment_score is not in our schema currently, so we use default logic
+            sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
             
             # Add tickers, recommendation, and sentiment info to article
             article['tickers'] = tickers if tickers else []
@@ -189,6 +202,7 @@ async def get_recent_news():
         }
         
     except Exception as e:
+        print(f"Error fetching news: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching news: {str(e)}")
 
 
@@ -197,16 +211,20 @@ async def get_article_detail(article_id: str):
     """
     Get detailed information about a specific article by ID.
     """
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE environment variables.")
+    if not db.is_connected():
+        await db.connect()
     
     try:
-        response = supabase.table("articles").select("*").eq("id", article_id).execute()
+        article_obj = await db.article.find_unique(
+            where={
+                'id': article_id
+            }
+        )
         
-        if not response.data:
+        if not article_obj:
             raise HTTPException(status_code=404, detail="Article not found")
         
-        article = response.data[0]
+        article = article_obj.model_dump()
         
         # Get tickers from database or extract them
         tickers_str = article.get('tickers', '')
@@ -223,11 +241,7 @@ async def get_article_detail(article_id: str):
         
         # Calculate sentiment percentage
         sentiment_label = article.get('label', '').capitalize() if article.get('label') else 'Neutral'
-        sentiment_score = article.get('sentiment_score')
-        if sentiment_score is not None:
-            sentiment_percentage = int(sentiment_score * 100)
-        else:
-            sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
+        sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
         
         article['tickers'] = tickers
         article['recommendation'] = recommendation
@@ -246,17 +260,9 @@ async def get_article_detail(article_id: str):
 async def get_articles_by_ticker(ticker: str, hours: int = 24, limit: int = 50):
     """
     Get all articles mentioning a specific stock ticker.
-    
-    Args:
-        ticker: Stock ticker symbol (e.g., "AAPL", "NVDA", "TSLA")
-        hours: Number of hours to look back (default: 24, max: 168 for 7 days)
-        limit: Maximum number of articles to return (default: 50, max: 100)
-    
-    Returns:
-        List of articles containing the specified ticker with recommendations
     """
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE environment variables.")
+    if not db.is_connected():
+        await db.connect()
     
     # Validate and sanitize inputs
     ticker = ticker.upper().strip()
@@ -270,25 +276,52 @@ async def get_articles_by_ticker(ticker: str, hours: int = 24, limit: int = 50):
     try:
         # Calculate timestamp
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-        timestamp_str = time_threshold.isoformat()
         
         # Search for ticker in the tickers column (comma-separated) and other text fields
-        # Using ilike for case-insensitive pattern matching
-        response = supabase.table("articles").select(
-            "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-        ).or_(
-            f"tickers.ilike.%{ticker}%,headline.ilike.%{ticker}%,summary.ilike.%{ticker}%,full_text.ilike.%{ticker}%"
-        ).gte("published_at", timestamp_str).order("published_at", desc=True).limit(limit).execute()
+        # Prisma 'contains' is case-insensitive by default in Postgres usually, but we can use mode='insensitive'
+        
+        articles = await db.article.find_many(
+            where={
+                'AND': [
+                    {
+                        'published_at': {
+                            'gte': time_threshold
+                        }
+                    },
+                    {
+                        'OR': [
+                            {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'headline': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'summary': {'contains': ticker, 'mode': 'insensitive'}},
+                            {'full_text': {'contains': ticker, 'mode': 'insensitive'}}
+                        ]
+                    }
+                ]
+            },
+            order={
+                'published_at': 'desc'
+            },
+            take=limit
+        )
         
         # If no articles found in time range, try without time constraint but limit to recent
-        if not response.data or len(response.data) == 0:
-            response = supabase.table("articles").select(
-                "id, headline, summary, published_at, url, source, label, related, full_text, tickers"
-            ).or_(
-                f"tickers.ilike.%{ticker}%,headline.ilike.%{ticker}%,summary.ilike.%{ticker}%,full_text.ilike.%{ticker}%"
-            ).order("published_at", desc=True).limit(limit).execute()
+        if not articles:
+            articles = await db.article.find_many(
+                where={
+                    'OR': [
+                        {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
+                        {'headline': {'contains': ticker, 'mode': 'insensitive'}},
+                        {'summary': {'contains': ticker, 'mode': 'insensitive'}},
+                        {'full_text': {'contains': ticker, 'mode': 'insensitive'}}
+                    ]
+                },
+                order={
+                    'published_at': 'desc'
+                },
+                take=limit
+            )
         
-        if not response.data:
+        if not articles:
             return {
                 "ticker": ticker,
                 "articles": [],
@@ -299,7 +332,9 @@ async def get_articles_by_ticker(ticker: str, hours: int = 24, limit: int = 50):
         articles_list = []
         
         # Process each article
-        for article in response.data:
+        for article_obj in articles:
+            article = article_obj.model_dump()
+            
             # Get tickers from database
             tickers_str = article.get('tickers', '')
             tickers = tickers_str.split(',') if tickers_str else []
@@ -319,11 +354,7 @@ async def get_articles_by_ticker(ticker: str, hours: int = 24, limit: int = 50):
                 
                 # Calculate sentiment percentage
                 sentiment_label = article.get('label', '').capitalize() if article.get('label') else 'Neutral'
-                sentiment_score = article.get('sentiment_score')
-                if sentiment_score is not None:
-                    sentiment_percentage = int(sentiment_score * 100)
-                else:
-                    sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
+                sentiment_percentage = 85 if sentiment_label.lower() in ['positive', 'negative'] else 70
                 
                 article['tickers'] = tickers
                 article['recommendation'] = recommendation
@@ -340,4 +371,5 @@ async def get_articles_by_ticker(ticker: str, hours: int = 24, limit: int = 50):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching articles for ticker: {str(e)}")
+
 

@@ -3,9 +3,9 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 import os
 from datetime import datetime, timedelta, timezone
-from supabase import create_client, Client
 import sys
 from pathlib import Path
+from db_client import db
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -16,30 +16,31 @@ from rag.rag import RAG
 
 router = APIRouter()
 
-# Initialize Supabase client
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE = os.environ.get("SUPABASE_SERVICE_ROLE")
-
-if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE:
-    raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE must be set in environment variables")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE)
-
 # Initialize RAG instance
 rag = RAG()
 
 
-def get_recent_articles(limit: int = 50, hours: int = 24) -> list:
-    """Fetch recent articles from Supabase for analysis."""
+async def get_recent_articles(limit: int = 50, hours: int = 24) -> list:
+    """Fetch recent articles from DB for analysis."""
+    if not db.is_connected():
+        await db.connect()
+        
     try:
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
-        timestamp_str = time_threshold.isoformat()
         
-        response = supabase.table("articles").select(
-            "headline, summary, label, source, published_at, tickers"
-        ).gte("published_at", timestamp_str).order("published_at", desc=True).limit(limit).execute()
+        articles = await db.article.find_many(
+            where={
+                'published_at': {
+                    'gte': time_threshold
+                }
+            },
+            order={
+                'published_at': 'desc'
+            },
+            take=limit
+        )
         
-        return response.data if response.data else []
+        return [a.model_dump() for a in articles] if articles else []
     except Exception as e:
         print(f"Error fetching articles: {e}")
         return []
@@ -75,7 +76,7 @@ async def get_market_summary():
     """Generate a market summary using LangChain based on recent articles."""
     try:
         # Fetch recent articles
-        articles = get_recent_articles(limit=30, hours=24)
+        articles = await get_recent_articles(limit=30, hours=24)
         
         if not articles:
             return {
@@ -115,7 +116,7 @@ async def get_ai_recommendations():
     """Generate AI-powered investment recommendations using LangChain based on recent articles."""
     try:
         # Fetch recent articles
-        articles = get_recent_articles(limit=30, hours=24)
+        articles = await get_recent_articles(limit=30, hours=24)
         
         if not articles:
             return {
@@ -166,4 +167,5 @@ async def get_both_insights():
     except Exception as e:
         print(f"Error generating insights: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
+
 

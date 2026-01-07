@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 import YahooFinance from 'yahoo-finance2';
 import path from 'path';
 import { spawn } from 'child_process';
@@ -124,7 +122,7 @@ function normaliseSeries(series: unknown): PriceSeriesPoint[] {
     .map((point) => {
       // First try to extract price from the point directly
       let price = extractPriceFromPoint(point);
-      
+
       // If that fails, try to get it from OHLCV format (your data format)
       if (price === null && point && typeof point === 'object') {
         const obj = point as Record<string, unknown>;
@@ -132,7 +130,7 @@ function normaliseSeries(series: unknown): PriceSeriesPoint[] {
         if (typeof obj.Close === 'number') price = obj.Close;
         else if (typeof obj.close === 'number') price = obj.close;
       }
-      
+
       if (price === null) {
         return null;
       }
@@ -140,8 +138,8 @@ function normaliseSeries(series: unknown): PriceSeriesPoint[] {
       const rawDate =
         point && typeof point === 'object'
           ? ((point as Record<string, unknown>).date ??
-              (point as Record<string, unknown>).Date ??
-              null)
+            (point as Record<string, unknown>).Date ??
+            null)
           : null;
       const dateValue = rawDate ? new Date(rawDate as string | number | Date) : null;
 
@@ -274,7 +272,6 @@ async function runPythonForecast(symbol: string): Promise<PriceSeriesPoint[] | n
 }
 
 async function generateAndCacheForecast(
-  supabase: SupabaseClient,
   symbol: string,
   hasExistingRow: boolean,
 ): Promise<PriceSeriesPoint[] | null> {
@@ -286,22 +283,16 @@ async function generateAndCacheForecast(
 
   try {
     if (hasExistingRow) {
-      const { error } = await supabase
-        .from('stock_price_series')
-        .update({ forecast_results: forecast })
-        .eq('symbol', symbol);
-
-      if (error) {
-        console.error(`Failed to update forecast cache for ${symbol}:`, error.message);
-      }
+      await prisma.stockPriceSeries.update({
+        where: { symbol },
+        data: { forecast_results: forecast },
+      });
     } else {
-      const { error } = await supabase
-        .from('stock_price_series')
-        .upsert({ symbol, forecast_results: forecast }, { onConflict: 'symbol' });
-
-      if (error) {
-        console.error(`Failed to upsert forecast cache for ${symbol}:`, error.message);
-      }
+      await prisma.stockPriceSeries.upsert({
+        where: { symbol },
+        update: { forecast_results: forecast },
+        create: { symbol, forecast_results: forecast },
+      });
     }
   } catch (error) {
     console.error(`Unexpected error caching forecast for ${symbol}:`, error);
@@ -311,7 +302,6 @@ async function generateAndCacheForecast(
 }
 
 async function ensureForecastData(
-  supabase: SupabaseClient,
   symbol: string,
   row: StockPriceSeriesRow | null,
 ): Promise<PriceSeriesPoint[] | null> {
@@ -320,7 +310,7 @@ async function ensureForecastData(
     return existing;
   }
 
-  return generateAndCacheForecast(supabase, symbol, Boolean(row));
+  return generateAndCacheForecast(symbol, Boolean(row));
 }
 
 function extractCompanyName(row: StockPriceSeriesRow, fallbackSymbol: string): string {
@@ -489,27 +479,24 @@ export async function GET(
 
     console.log(`📊 Fetching stock detail for ${symbol}...`);
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore as unknown as ReturnType<typeof cookies>,
+    const cachedRows = await prisma.stockPriceSeries.findMany({
+      where: {
+        symbol: {
+          in: [symbol, rawSymbol],
+        },
+      },
+      select: {
+        symbol: true,
+        price_series: true,
+        forecast_results: true,
+      },
     });
-    const {
-      data: cachedRows,
-      error: cachedError,
-    } = await supabase
-      .from('stock_price_series')
-      .select('symbol, price_series, forecast_results')
-      .in('symbol', [symbol, rawSymbol]);
-
-    if (cachedError) {
-      console.error(`Error loading cached stock series for ${symbol}:`, cachedError.message);
-    }
 
     const cachedRow =
       Array.isArray(cachedRows) && cachedRows.length > 0 ? (cachedRows[0] as unknown) : null;
 
     let row: StockPriceSeriesRow | null = cachedRow ? (cachedRow as StockPriceSeriesRow) : null;
-    const ensuredForecast = await ensureForecastData(supabase, symbol, row);
+    const ensuredForecast = await ensureForecastData(symbol, row);
 
     if (row && ensuredForecast) {
       row = { ...row, forecast_results: ensuredForecast };
@@ -642,4 +629,3 @@ export async function GET(
     );
   }
 }
-
