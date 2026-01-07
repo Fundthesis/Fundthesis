@@ -1,5 +1,5 @@
 {
   "platform": {
-    "apiRuntime": "node:20.19.0"
+    "apiRuntime": "node:20.19.1"
   }
 }
