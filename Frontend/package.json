@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev",
-    "build": "next build --turbopack",
+    "build": "prisma generate && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "clean": "node -e \"const fs = require('fs'); const path = require('path'); const dir = '.next'; if (fs.existsSync(dir)) { fs.rmSync(dir, { recursive: true, force: true }); console.log('Cleaned .next directory'); } else { console.log('.next directory does not exist'); }\""
   },
   "dependencies": {
