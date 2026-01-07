@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import YahooFinance from 'yahoo-finance2';
+import { fetchHistorical } from '@/lib/yahooFinanceService';
 
-const yahooFinance = new YahooFinance();
 const DEFAULT_LOOKBACK_DAYS = 90;
 
 export async function GET() {
@@ -209,11 +208,12 @@ async function fetchCachedPrices(ticker) {
 
 async function downloadAndCachePrices(ticker) {
   try {
-    const historical = await yahooFinance.historical(ticker, {
-      period1: new Date(Date.now() - DEFAULT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000),
-      period2: new Date(),
-      interval: '1d',
-    });
+    const historical = await fetchHistorical(
+      ticker,
+      new Date(Date.now() - DEFAULT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000),
+      new Date(),
+      '1d',
+    );
 
     if (!Array.isArray(historical) || historical.length === 0) {
       console.warn(`No historical data returned for ${ticker}`);

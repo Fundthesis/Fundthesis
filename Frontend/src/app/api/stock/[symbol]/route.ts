@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import YahooFinance from 'yahoo-finance2';
+import { fetchQuote, fetchHistorical } from '@/lib/yahooFinanceService';
 import path from 'path';
 import { spawn } from 'child_process';
 
@@ -16,8 +16,6 @@ type StockPriceSeriesRow = {
   metadata?: Record<string, unknown> | null;
 };
 
-// Create a singleton instance
-const yahooFinance = new YahooFinance();
 const PYTHON_EXECUTABLE = process.env.PYTHON_PATH || 'python';
 const FORECAST_SCRIPT_PATH = path.join(
   process.cwd(),
@@ -521,39 +519,23 @@ export async function GET(
     }
 
     // Fallback to Yahoo Finance if cache is missing or invalid
-    const quoteResult = await yahooFinance.quote(symbol);
+    const quoteResult = await fetchQuote(symbol, true);
 
     if (!quoteResult) {
       return NextResponse.json({ error: 'No data available for this symbol' }, { status: 404 });
     }
 
-    const quote = quoteResult as {
-      regularMarketPrice?: number;
-      regularMarketOpen?: number;
-      regularMarketDayHigh?: number;
-      regularMarketDayLow?: number;
-      regularMarketVolume?: number;
-      averageVolume?: number;
-      fiftyTwoWeekHigh?: number;
-      fiftyTwoWeekLow?: number;
-      marketCap?: number;
-      trailingPE?: number;
-      dividendYield?: number;
-      sector?: string;
-      industry?: string;
-      longName?: string;
-      shortName?: string;
-    };
+    const quote = quoteResult;
 
     let historical: Array<{ date?: Date | string; close?: number; volume?: number }> = [];
     try {
       const interval = days <= 30 ? '1d' : days <= 365 ? '1d' : '1wk';
-      const historicalResult = await yahooFinance.historical(symbol, {
-        period1: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
-        period2: new Date(),
-        interval: interval as '1d' | '1wk' | '1mo',
-      });
-      historical = Array.isArray(historicalResult) ? historicalResult : [];
+      historical = await fetchHistorical(
+        symbol,
+        new Date(Date.now() - days * 24 * 60 * 60 * 1000),
+        new Date(),
+        interval as '1d' | '1wk' | '1mo',
+      );
     } catch (error) {
       console.error(`Error fetching historical data for ${symbol}:`, error);
       historical = [];
