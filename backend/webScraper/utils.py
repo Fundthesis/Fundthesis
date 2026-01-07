@@ -56,7 +56,9 @@ MAJOR_TICKERS = {
 # Extended list of common ticker patterns (1-5 letters)
 TICKER_PATTERN = re.compile(r'\b([A-Z]{1,5})\b')
 
-# PRISMA setup
+# PRISMA setup - add parent directory to path for db_client
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from db_client import db
 
 

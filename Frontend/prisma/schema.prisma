@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String        @unique
-  emailVerified Boolean?
-  image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  userAccounts  UserAccount[]
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String              @unique
+  emailVerified      Boolean?
+  image              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  sessions           Session[]
+  accounts           Account[]
+  userAccounts       UserAccount[]
+  simulationAccounts SimulationAccount[]
 
   @@map("user")
 }
@@ -101,6 +102,7 @@ model StockPriceSeries {
   symbol           String   @id
   price_series     Json?
   forecast_results Json?
+  r2Value          Float?   @map("r2_value")
   updated_at       DateTime @default(now()) @updatedAt
 
   @@map("stock_price_series")
@@ -109,11 +111,67 @@ model StockPriceSeries {
 model UserAccount {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
-  stockTicker String   @map("stock_ticker")
+  stockTicker String?  @map("stock_ticker")
+  shares      Int      @default(1)
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, stockTicker])
   @@map("user_account")
+}
+
+// ============= SIMULATION/PAPER TRADING MODELS =============
+
+model SimulationAccount {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  balance   Decimal  @default(0)
+  settings  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positions Position[]
+  trades    Trade[]
+
+  @@map("simulation_accounts")
+}
+
+model Position {
+  id        String    @id @default(uuid())
+  accountId String    @map("account_id")
+  ticker    String
+  quantity  Decimal
+  avgPrice  Decimal   @map("avg_price")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("positions")
+}
+
+model Trade {
+  id         String    @id @default(uuid())
+  accountId  String    @map("account_id")
+  ticker     String
+  side       String // 'buy' or 'sell'
+  price      Decimal
+  quantity   Decimal
+  executedAt DateTime? @default(now()) @map("executed_at")
+
+  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("trades")
+}
+
+// ============= STOCK PRICE CACHE =============
+
+model StockPriceCache {
+  id           String    @id @default(uuid())
+  symbol       String    @unique
+  priceHistory Json      @map("price_history")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+  createdAt    DateTime? @default(now()) @map("created_at")
+
+  @@map("stock_price_cache")
 }
