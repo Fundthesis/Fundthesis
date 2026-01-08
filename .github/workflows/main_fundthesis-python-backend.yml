@@ -33,6 +33,35 @@ jobs:
           source antenv/bin/activate
           pip install -r requirements.txt
 
+      - name: Clean up for Azure deployment
+        working-directory: backend
+        run: |
+          # Remove virtual environments (Azure creates its own)
+          rm -rf antenv/ venv/ .venv/ __pypackages__/ 2>/dev/null || true
+
+          # Remove test files and configs
+          rm -rf tests/ 2>/dev/null || true
+          rm -f pytest.ini .pytest.ini conftest.py 2>/dev/null || true
+
+          # Remove job runners (keep only xgboost_model.py needed by API)
+          rm -rf jobs/scraper/ jobs/sentiment/ 2>/dev/null || true
+          rm -f jobs/forecasting/runner.py 2>/dev/null || true
+
+          # Remove extra requirements files
+          rm -f requirements-test.txt requirements-ml.txt 2>/dev/null || true
+
+          # Remove environment files
+          rm -f .env .env.* .env.local 2>/dev/null || true
+
+          # Remove cache and build artifacts
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+          find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+          # Remove dev files
+          rm -f test_*.py .gitignore .dockerignore 2>/dev/null || true
+
       # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size.
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -41,6 +70,10 @@ jobs:
           path: |
             backend/*
             !backend/antenv/
+            !backend/venv/
+            !backend/.venv/
+            !backend/tests/
+            !backend/**/__pycache__/
 
       # 🚫 Opting Out of Oryx Build
       # If you prefer to disable the Oryx build process during deployment, follow these steps:
