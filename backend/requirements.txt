@@ -34,8 +34,8 @@ sentence-transformers>=2.2.0,<3.0.0
 finnhub-python>=2.4.0
 
 # RAG & LLM
-langchain-ollama>=0.3.8
-ollama>=0.6.0
+openai>=1.0.0
+httpx>=0.25.0
 
 # PDF Processing (for RAG)
 PyMuPDF>=1.23.0

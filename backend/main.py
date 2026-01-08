@@ -38,6 +38,13 @@ app.include_router(news.router, prefix="/api")
 app.include_router(stocks.router, prefix="/api")
 app.include_router(insights.router, prefix="/api")
 
+# Include education routes for Education Track features
+try:
+    from app.api.education import router as education_router
+    app.include_router(education_router, prefix="/api")
+except ImportError as e:
+    print(f"Warning: education routes not available. Education Track features may not work. Error: {e}")
+
 @app.get("/")
 def read_root():
     return {"Welcome to fundthesis"}
