@@ -19,10 +19,10 @@ function findRelevantModules(query: string): string[] {
     const lowerQuery = query.toLowerCase();
     const matches: string[] = [];
 
-    for (const module of LEARNING_MODULES) {
-        const hasMatch = module.topics.some((topic) => lowerQuery.includes(topic.toLowerCase()));
+    for (const learningModule of LEARNING_MODULES) {
+        const hasMatch = learningModule.topics.some((topic) => lowerQuery.includes(topic.toLowerCase()));
         if (hasMatch) {
-            matches.push(`Module ${module.id}: ${module.title}`);
+            matches.push(`Module ${learningModule.id}: ${learningModule.title}`);
         }
     }
 

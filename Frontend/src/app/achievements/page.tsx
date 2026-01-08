@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { archetypes, getArchetypeById, InvestorArchetype } from '@/data/archetypes';
-import { ranks, getXPProgress, KnowledgeRank } from '@/data/ranks';
+import { ranks, getXPProgress } from '@/data/ranks';
 
 const STORAGE_KEY_XP = 'ft_user_xp';
 const STORAGE_KEY_ARCHETYPE = 'ft_user_archetype';
@@ -142,8 +142,8 @@ export default function AchievementsPage() {
                                     <div
                                         key={a.id}
                                         className={`p-3 ${a.id === displayArchetype.id
-                                                ? 'bg-stone-100 border-l-2 border-black'
-                                                : 'opacity-60'
+                                            ? 'bg-stone-100 border-l-2 border-black'
+                                            : 'opacity-60'
                                             }`}
                                     >
                                         <p className="font-serif font-bold text-sm text-black">
@@ -225,8 +225,8 @@ export default function AchievementsPage() {
                                     <div
                                         key={rank.id}
                                         className={`text-center p-3 ${rank.level <= currentRank.level
-                                                ? 'bg-stone-100'
-                                                : 'opacity-40'
+                                            ? 'bg-stone-100'
+                                            : 'opacity-40'
                                             }`}
                                     >
                                         <p className="font-serif text-xs font-bold text-black">
@@ -255,8 +255,8 @@ export default function AchievementsPage() {
                                         <div
                                             key={achievement.id}
                                             className={`p-4 border ${isEarned
-                                                    ? 'border-stone-400 bg-stone-50'
-                                                    : 'border-stone-200 opacity-50'
+                                                ? 'border-stone-400 bg-stone-50'
+                                                : 'border-stone-200 opacity-50'
                                                 }`}
                                         >
                                             <h4 className="font-serif font-bold text-sm text-black mb-1">

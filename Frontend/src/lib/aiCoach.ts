@@ -81,7 +81,7 @@ export async function getCoachResponse(
 /**
  * Coach's Next Move prompts
  */
-export function getCoachNextMove(context: CoachContext): string {
+export function getCoachNextMove(_context: CoachContext): string {
     return "What would you like to explore today? I'm here to guide your learning journey.";
 }
 

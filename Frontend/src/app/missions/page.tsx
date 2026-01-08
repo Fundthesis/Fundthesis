@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { missions, Mission, getUnlockedMissions } from '@/data/missions';
+import { Mission, getUnlockedMissions } from '@/data/missions';
 
 const STORAGE_KEY = 'ft_completed_missions';
 
@@ -104,8 +104,8 @@ export default function MissionsPage() {
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`text-xs uppercase tracking-widest font-medium transition-colors ${selectedCategory === cat
-                                        ? 'text-black border-b-2 border-black pb-1'
-                                        : 'text-stone-400 hover:text-stone-600'
+                                    ? 'text-black border-b-2 border-black pb-1'
+                                    : 'text-stone-400 hover:text-stone-600'
                                     }`}
                             >
                                 {cat === 'all' ? 'All Sections' : cat}
