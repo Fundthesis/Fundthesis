@@ -2,6 +2,7 @@
 import json
 from datetime import datetime, timedelta
 from prisma import Prisma
+from prisma import types
 import uuid
 
 # Initialize Prisma client
@@ -43,23 +44,62 @@ async def get_cached_forecast(symbol: str):
 
 
 async def insert_cached_forecast(symbol: str, price_series, forecast_results):
-    """Insert a new cached forecast row. Returns response or None on failure."""
+    """
+    Insert or update a cached forecast row.
+    If a forecast exists for today, update it. Otherwise, insert a new one.
+    Returns response or None on failure.
+    """
     try:
-        # price_series and forecast_results are likely dicts or lists.
-        # Prisma Json type handles them.
+        # Prisma Python's Json type expects Python objects (dict/list), not JSON strings
+        # Pass the objects directly - Prisma will handle serialization internally
         # Use camelCase field names for Prisma Python client
         
-        payload = {
-            'id': str(uuid.uuid4()),
-            'symbol': symbol,
-            'priceSeries': json.dumps(price_series) if not isinstance(price_series, (dict, list)) else price_series,
-            'forecastResults': json.dumps(forecast_results) if not isinstance(forecast_results, (dict, list)) else forecast_results,
-            'runDate': datetime.utcnow(),
+        now = datetime.utcnow()
+        today_start = datetime(now.year, now.month, now.day)
+        today_end = today_start + timedelta(days=1)
+        
+        # Check if there's an existing forecast for today
+        existing_forecast = await db.stockforecast.find_first(
+            where={
+                'symbol': symbol,
+                'runDate': {
+                    'gte': today_start,
+                    'lt': today_end
+                }
+            },
+            order={
+                'runDate': 'desc'
+            }
+        )
+        
+        # Wrap JSON data with types.Json for Prisma Python
+        update_data = {
+            'priceSeries': types.Json(price_series) if price_series is not None else None,
+            'forecastResults': types.Json(forecast_results) if forecast_results is not None else None,
+            'runDate': now,
         }
-
-        resp = await db.stockforecast.create(data=payload)
+        
+        if existing_forecast:
+            # Update existing forecast
+            resp = await db.stockforecast.update(
+                where={'id': existing_forecast.id},
+                data=update_data
+            )
+            print(f"✅ Updated existing forecast for {symbol} (ID: {existing_forecast.id[:8]}...)")
+        else:
+            # Insert new forecast
+            payload = {
+                'id': str(uuid.uuid4()),
+                'symbol': symbol,
+                **update_data
+            }
+            resp = await db.stockforecast.create(data=payload)
+            print(f"✅ Created new forecast for {symbol} (ID: {resp.id[:8]}...)")
+        
         return resp
     except Exception as e:
-        print(f"⚠️ Prisma insert error for {symbol}: {e}")
+        print(f"⚠️ Prisma insert/update error for {symbol}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
