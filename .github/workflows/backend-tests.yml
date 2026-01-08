@@ -2,14 +2,14 @@ name: Backend Tests
 
 on:
   push:
-    branches: [main, dev]
+    branches: []
   pull_request:
-    branches: [main, dev]
+    branches: []
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -24,24 +24,24 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-test.txt
-      
+
       - name: Enable pgvector extension
         env:
           PGPASSWORD: test
@@ -55,7 +55,7 @@ jobs:
         run: |
           prisma generate
           prisma db push --skip-generate
-      
+
       - name: Run Tests
         working-directory: ./backend
         env:
@@ -63,7 +63,7 @@ jobs:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
         run: |
           pytest tests/ -v --tb=short
-      
+
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,4 +71,3 @@ jobs:
           name: coverage-report
           path: backend/htmlcov/
           if-no-files-found: ignore
-
