@@ -1,5 +1,6 @@
 import React from 'react'
-import { NewsCard } from '@/components/news/NewsCard'
+import { Card, CardContent } from '@/components/ui/Card'
+import { NewsCard } from '@/components/ui/NewsCard'
 
 interface Stock {
   symbol: string
