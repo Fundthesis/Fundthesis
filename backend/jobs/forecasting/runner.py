@@ -27,15 +27,17 @@ async def run_forecast_job():
     if not db.is_connected():
         await db.connect()
     
-    # Load symbols
+    # Load symbols - fail if unable to load
     try:
         with open(SYMBOLS_FILE, 'r') as f:
             symbols_data = json.load(f)
             symbols = symbols_data.get('symbols', [])
+            if not symbols:
+                raise ValueError("No symbols found in stock_symbols.json")
     except Exception as e:
-        print(f"⚠️ Error loading symbols file: {e}")
-        # Fallback to a small set of major stocks
-        symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA']
+        print(f"❌ Fatal error loading symbols file: {e}")
+        await db.disconnect()
+        raise
     
     print(f"📊 Processing {len(symbols)} symbols...")
     
@@ -92,14 +94,20 @@ async def run_forecast_job():
                 print(f"✅ Successfully saved forecast for {symbol}")
                 successful += 1
             else:
-                print(f"⚠️ Failed to save forecast for {symbol}")
+                print(f"❌ Failed to save forecast for {symbol}")
                 failed += 1
+                # Fail immediately on database save errors
+                await db.disconnect()
+                raise RuntimeError(f"Database save failed for {symbol}")
                 
         except Exception as e:
             print(f"❌ Error processing {symbol}: {e}")
             import traceback
             traceback.print_exc()
             failed += 1
+            await db.disconnect()
+            # Fail immediately on errors
+            raise
     
     print(f"\n{'='*60}")
     print(f"📊 Job Summary:")
@@ -110,6 +118,10 @@ async def run_forecast_job():
     
     # Disconnect from database
     await db.disconnect()
+    
+    # Exit with error if any failures occurred
+    if failed > 0:
+        raise RuntimeError(f"Forecasting job completed with {failed} failures")
 
 if __name__ == "__main__":
     asyncio.run(run_forecast_job())

@@ -3,10 +3,16 @@ import sys
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+
+# Add backend to path
+backend_path = Path(__file__).parent.parent.parent
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
+
 import finnhub
 
-from .extractors import get_fulltext
-from .article_inserter import insert_article
+from jobs.scraper.extractors import get_fulltext
+from jobs.scraper.article_inserter import insert_article
 
 load_dotenv()
 API_KEY = os.getenv("FINNHUB_KEY")

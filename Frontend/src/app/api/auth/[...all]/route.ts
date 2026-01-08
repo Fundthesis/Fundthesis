@@ -8,7 +8,7 @@ const handler = toNextJsHandler(auth);
 // Helper to get allowed origins - automatically detects from request
 function getAllowedOrigins(request?: NextRequest): string[] {
   const baseURL = request ? getBaseUrlFromRequest(request) : getBaseUrl();
-  
+
   return [
     baseURL,
     "http://localhost:3000",
@@ -22,13 +22,13 @@ function getAllowedOrigins(request?: NextRequest): string[] {
 function withCORS(
   routeHandler: (request: Request) => Promise<Response>
 ) {
-  return async (request: NextRequest, _context: { params: Promise<{ all: string[] }> }) => {
+  return async (request: NextRequest) => {
     const origin = request.headers.get("origin");
     const allowedOrigins = getAllowedOrigins(request);
 
     // Convert NextRequest to Request for better-auth handler
     const response = await routeHandler(request as unknown as Request);
-    
+
     // Copy response body and status
     const responseBody = await response.text();
     const finalResponse = new NextResponse(responseBody, {
@@ -36,14 +36,14 @@ function withCORS(
       statusText: response.statusText,
       headers: response.headers,
     });
-    
+
     // Add CORS headers - allow the request origin if it matches our base URL pattern
     if (origin) {
       const baseURL = getBaseUrlFromRequest(request);
-      const isAllowed = origin === baseURL || 
-                       origin.startsWith(baseURL.replace(/^https?:\/\/([^.]+)/, 'https://')) ||
-                       allowedOrigins.some(allowed => origin.includes(allowed) || allowed === "*");
-      
+      const isAllowed = origin === baseURL ||
+        origin.startsWith(baseURL.replace(/^https?:\/\/([^.]+)/, 'https://')) ||
+        allowedOrigins.some(allowed => origin.includes(allowed) || allowed === "*");
+
       if (isAllowed) {
         finalResponse.headers.set("Access-Control-Allow-Origin", origin);
         finalResponse.headers.set("Access-Control-Allow-Credentials", "true");
@@ -63,15 +63,15 @@ export const POST = withCORS(handler.POST);
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get("origin");
   const baseURL = getBaseUrlFromRequest(request);
-  
+
   const response = new NextResponse(null, { status: 204 });
-  
+
   if (origin) {
-    const isAllowed = origin === baseURL || 
-                     origin.includes('localhost') ||
-                     origin.includes('127.0.0.1') ||
-                     origin.includes(baseURL.replace(/^https?:\/\//, '').split('.')[0]);
-    
+    const isAllowed = origin === baseURL ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.includes(baseURL.replace(/^https?:\/\//, '').split('.')[0]);
+
     if (isAllowed) {
       response.headers.set("Access-Control-Allow-Origin", origin);
       response.headers.set("Access-Control-Allow-Credentials", "true");

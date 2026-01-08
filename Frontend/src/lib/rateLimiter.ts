@@ -9,6 +9,11 @@ type QueuedRequest<T> = {
   fn: () => Promise<T>;
 };
 
+// Debug logging helper - set DEBUG_LOGS=true in .env to enable
+const debugLog = (...args: unknown[]) => {
+  if (process.env.DEBUG_LOGS === 'true') console.log(...args);
+};
+
 export class RateLimiter {
   private tokens: number;
   private maxTokens: number;
@@ -33,7 +38,7 @@ export class RateLimiter {
     this.refillRate = refillRate;
     this.maxConcurrent = maxConcurrent;
     this.lastRefill = Date.now();
-    
+
     // Start with reduced tokens to avoid immediate burst
     this.tokens = Math.min(3, maxTokens);
   }
@@ -109,7 +114,7 @@ export class RateLimiter {
       );
     } else if (this.circuitBreakerOpen && now >= this.circuitBreakerOpenUntil) {
       // Reset circuit breaker
-      console.log('🔄 Circuit breaker reset, attempting requests again...');
+      debugLog('🔄 Circuit breaker reset, attempting requests again...');
       this.circuitBreakerOpen = false;
       this.consecutiveFailures = 0;
     }
@@ -134,7 +139,7 @@ export class RateLimiter {
     const delay = Math.min(1000 * Math.pow(2, attempt - 1), maxDelay);
     this.backoffDelay = delay;
     this.lastBackoffTime = Date.now();
-    console.log(`⏳ Rate limiter applying backoff: ${delay}ms (attempt ${attempt})`);
+    debugLog(`⏳ Rate limiter applying backoff: ${delay}ms (attempt ${attempt})`);
 
     // Track consecutive failures for circuit breaker
     this.consecutiveFailures++;
@@ -150,9 +155,9 @@ export class RateLimiter {
     const breakerDuration = 60000; // 1 minute
     this.circuitBreakerOpen = true;
     this.circuitBreakerOpenUntil = Date.now() + breakerDuration;
-    console.log(
+    debugLog(
       `🚫 Circuit breaker OPENED due to ${this.consecutiveFailures} consecutive failures. ` +
-        `Blocking requests for ${breakerDuration / 1000} seconds.`,
+      `Blocking requests for ${breakerDuration / 1000} seconds.`,
     );
   }
 
@@ -161,7 +166,7 @@ export class RateLimiter {
    */
   resetFailures(): void {
     if (this.consecutiveFailures > 0) {
-      console.log('✅ Request successful, resetting failure counter');
+      debugLog('✅ Request successful, resetting failure counter');
       this.consecutiveFailures = 0;
     }
   }

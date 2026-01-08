@@ -1,10 +1,12 @@
 generator client {
     provider                    = "prisma-client-py"
     enable_experimental_decimal = true
+    previewFeatures             = ["multiSchema"]
 }
 
 datasource db {
     provider = "postgresql"
+    url      = env("DATABASE_URL")
     schemas  = ["public", "auth", "vault"]
 }
 
@@ -88,6 +90,7 @@ model Article {
     sqliteId     String?                  @map("sqlite_id")
     articleId    String?                  @map("article_id")
     tsv          Unsupported("tsvector")? @default(dbgenerated())
+    embedding    Unsupported("vector(1536)")? // pgvector for RAG
 
     @@map("articles")
     @@schema("public")

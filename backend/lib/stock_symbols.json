@@ -1,6 +1,6 @@
 {
   "symbols": [
-    "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA", "BRK.B", "UNH",
+    "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA", "BRK-B", "UNH",
     "XOM", "JNJ", "JPM", "V", "PG", "MA", "HD", "CVX", "ABBV", "LLY",
     "MRK", "AVGO", "KO", "PEP", "COST", "ADBE", "TMO", "WMT", "MCD", "CSCO",
     "ACN", "CRM", "ABT", "ORCL", "DHR", "VZ", "NKE", "CMCSA", "NEE", "DIS",

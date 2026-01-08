@@ -12,6 +12,17 @@ import { FmpProvider } from '@/lib/providers/fmpProvider';
 import { QuoteData } from '@/lib/types/stockData';
 import { cacheManager } from '@/lib/cacheManager';
 
+// Debug logging helper - set DEBUG_LOGS=true in .env to enable
+const debugLog = (...args: unknown[]) => {
+  if (process.env.DEBUG_LOGS === 'true') console.log(...args);
+};
+const debugWarn = (...args: unknown[]) => {
+  if (process.env.DEBUG_LOGS === 'true') console.warn(...args);
+};
+const debugError = (...args: unknown[]) => {
+  if (process.env.DEBUG_LOGS === 'true') console.error(...args);
+};
+
 class MultiApiService {
   private providers: StockDataProvider[] = [];
 
@@ -50,7 +61,7 @@ class MultiApiService {
     const availableProviders = this.getAvailableProviders();
 
     if (availableProviders.length === 0) {
-      console.error(`❌ No available providers for ${upperSymbol}`);
+      debugError(`❌ No available providers for ${upperSymbol}`);
       // Try stale cache as last resort
       if (useCache) {
         const staleCache = await cacheManager.getQuote(upperSymbol, true);
@@ -64,22 +75,22 @@ class MultiApiService {
     // Try each provider in priority order
     for (const provider of availableProviders) {
       try {
-        console.log(`🔍 Trying ${provider.name} for ${upperSymbol}`);
+        debugLog(`🔍 Trying ${provider.name} for ${upperSymbol}`);
         const quote = await provider.fetchQuote(upperSymbol);
 
         if (quote && quote.symbol) {
-          console.log(`✅ Successfully fetched ${upperSymbol} from ${provider.name}`);
+          debugLog(`✅ Successfully fetched ${upperSymbol} from ${provider.name}`);
           // Cache the result
           await cacheManager.setQuote(upperSymbol, quote);
           return quote;
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn(`⚠️ ${provider.name} failed for ${upperSymbol}: ${errorMessage}`);
+        debugWarn(`⚠️ ${provider.name} failed for ${upperSymbol}: ${errorMessage}`);
 
         // If this is a rate limit error, continue to next provider
         if (provider.isRateLimitError(error)) {
-          console.log(`🔄 ${provider.name} rate-limited, trying next provider...`);
+          debugLog(`🔄 ${provider.name} rate-limited, trying next provider...`);
           continue;
         }
 
@@ -88,7 +99,7 @@ class MultiApiService {
       }
     }
 
-    console.error(`❌ All providers failed for ${upperSymbol}`);
+    debugError(`❌ All providers failed for ${upperSymbol}`);
     // Try stale cache as last resort
     if (useCache) {
       const staleCache = await cacheManager.getQuote(upperSymbol, true);
@@ -133,7 +144,7 @@ class MultiApiService {
     const availableProviders = this.getAvailableProviders();
 
     if (availableProviders.length === 0) {
-      console.error('❌ No available providers');
+      debugError('❌ No available providers');
       // Try stale cache for remaining symbols
       if (useCache) {
         const staleCacheMap = await cacheManager.getQuotes(symbolsToFetch, true);
@@ -150,11 +161,11 @@ class MultiApiService {
     // Try to fetch all symbols from the first available provider
     for (const provider of availableProviders) {
       try {
-        console.log(`🔍 Trying ${provider.name} for ${symbolsToFetch.length} symbols`);
+        debugLog(`🔍 Trying ${provider.name} for ${symbolsToFetch.length} symbols`);
         const quotes = await provider.fetchQuotes(symbolsToFetch);
 
         if (quotes && quotes.length > 0) {
-          console.log(`✅ Successfully fetched ${quotes.length} quotes from ${provider.name}`);
+          debugLog(`✅ Successfully fetched ${quotes.length} quotes from ${provider.name}`);
           // Cache all results
           for (const quote of quotes) {
             await cacheManager.setQuote(quote.symbol, quote);
@@ -164,11 +175,11 @@ class MultiApiService {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn(`⚠️ ${provider.name} batch failed: ${errorMessage}`);
+        debugWarn(`⚠️ ${provider.name} batch failed: ${errorMessage}`);
 
         // If rate-limited, try next provider
         if (provider.isRateLimitError(error)) {
-          console.log(`🔄 ${provider.name} rate-limited, trying next provider...`);
+          debugLog(`🔄 ${provider.name} rate-limited, trying next provider...`);
           continue;
         }
 
@@ -178,7 +189,7 @@ class MultiApiService {
     }
 
     // If batch failed, try individual symbols with fallback
-    console.log(`📊 Batch fetch failed, trying individual symbols...`);
+    debugLog(`📊 Batch fetch failed, trying individual symbols...`);
     for (const symbol of symbolsToFetch) {
       const quote = await this.fetchQuote(symbol, useCache);
       if (quote) {
