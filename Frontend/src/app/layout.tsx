@@ -3,8 +3,6 @@
 import './globals.css'
 import { Toaster } from 'sonner'
 import type { ReactNode } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import StockTicker from '@/components/StockTicker'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'

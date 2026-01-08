@@ -57,6 +57,15 @@ const setCachedInsights = (
   }
 };
 
+// Mover type for market movers
+interface Mover {
+  symbol: string;
+  company?: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
+
 export default function InsightsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +78,8 @@ export default function InsightsPage() {
   const [aiRecommendations, setAiRecommendations] = useState<string>("");
   const [insightsLoading, setInsightsLoading] = useState(true);
 
-  // New state for movers
-  const [movers, setMovers] = useState<any[]>([]);
+  // State for movers
+  const [movers, setMovers] = useState<Mover[]>([]);
 
   useEffect(() => {
     const loadNews = async () => {
@@ -190,17 +199,11 @@ export default function InsightsPage() {
     setSelectedArticle(null);
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
+  // formatDate helper available if needed for future use
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // };
 
   return (
     <div className="min-h-screen bg-[#fcfbf9] text-[#1a1a1a] font-serif">
@@ -231,7 +234,7 @@ export default function InsightsPage() {
             {/* Lead Story / Market Summary */}
             <div className="pb-8 border-b-2 border-black/10">
               <h2 className="text-4xl font-bold mb-4 leading-tight">
-                Market Pulse: Today's AI Synthesis
+                Market Pulse: Today&apos;s AI Synthesis
               </h2>
               {insightsLoading ? (
                 <div className="py-12 flex justify-center">
@@ -258,7 +261,7 @@ export default function InsightsPage() {
                     <div key={article.id} className="group cursor-pointer" onClick={() => handleArticleClick(article)}>
                       <div className="mb-2 flex items-center gap-2">
                         <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${(article.sentiment_label || "").toLowerCase() === 'positive' ? 'border-green-600 text-green-700 bg-green-50' :
-                            (article.sentiment_label || "").toLowerCase() === 'negative' ? 'border-red-600 text-red-700 bg-red-50' : 'border-gray-400 text-gray-600 bg-gray-50'
+                          (article.sentiment_label || "").toLowerCase() === 'negative' ? 'border-red-600 text-red-700 bg-red-50' : 'border-gray-400 text-gray-600 bg-gray-50'
                           }`}>
                           {article.sentiment_label || "Neutral"}
                         </span>
@@ -274,7 +277,10 @@ export default function InsightsPage() {
                   ))}
                 </div>
               )}
-              {!loading && articles.length === 0 && (
+              {!loading && error && (
+                <p className="py-8 text-center text-red-600">{error}</p>
+              )}
+              {!loading && !error && articles.length === 0 && (
                 <p className="py-8 text-center italic text-gray-500">No headlines available at this moment.</p>
               )}
             </div>
@@ -325,7 +331,7 @@ export default function InsightsPage() {
             {/* Quote of the Day */}
             <div className="border-l-4 border-black pl-4 py-2">
               <p className="italic text-lg text-gray-800 font-serif leading-relaxed">
-                "In the short run, the market is a voting machine but in the long run, it is a weighing machine."
+                &quot;In the short run, the market is a voting machine but in the long run, it is a weighing machine.&quot;
               </p>
               <p className="text-sm font-bold mt-2 uppercase tracking-wide">— Benjamin Graham</p>
             </div>

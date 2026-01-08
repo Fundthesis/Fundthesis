@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
                 });
             }
             console.log('[AI Coach] Backend RAG returned:', ragResponse.status);
-        } catch (ragError) {
-            console.log('[AI Coach] Backend RAG unavailable, falling back to Azure OpenAI');
+        } catch (_ragError) {
+            console.log('[AI Coach] Backend RAG unavailable, falling back to Azure OpenAI:', _ragError instanceof Error ? _ragError.message : 'Unknown error');
         }
 
         // Fallback to direct Azure OpenAI

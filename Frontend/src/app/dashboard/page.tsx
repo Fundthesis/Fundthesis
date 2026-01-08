@@ -1,17 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { PortfolioOverview } from '@/components/dashboard/PortfolioOverview';
 import { NewsSection } from '@/components/dashboard/NewsSection';
 import { PerformersSection } from '@/components/dashboard/PerformersSection';
-import { PortfolioPerformanceChart } from '@/components/dashboard/PortfolioPerformanceChart';
 import { EditorsDesk } from '@/components/dashboard/EditorsDesk';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Newspaper } from 'lucide-react';
 import Link from 'next/link';
-import { fetchArticles, NewsArticle } from '@/lib/api';
+import { fetchArticles } from '@/lib/api';
 
 // Curated list to simulate "Market Movers" until backend has a dedicated mover endpoint
 const MARKET_MOVERS_SYMBOLS = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMD', 'AMZN', 'GOOGL', 'META', 'NFLX'];
@@ -25,13 +22,36 @@ interface Performer {
     percent: string;
 }
 
+// News item type for NewsSection
+interface NewsItemStock {
+    symbol: string;
+    change: string;
+    positive: boolean;
+}
+
+interface NewsItem {
+    title: string;
+    source: string;
+    text: string;
+    stocks: NewsItemStock[];
+}
+
+// Stock data from API
+interface StockData {
+    symbol: string;
+    company: string;
+    price: number;
+    change: number;
+    changePercent: number;
+}
+
 export default function DashboardPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
-    // Safe access for user properties with explicit any cast
-    const displayName = (user as any)?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Investor';
+    // Note: displayName will be used later for personalization
+    // const displayName = user?.email?.split('@')[0] || 'Investor';
 
-    const [newsItems, setNewsItems] = useState<any[]>([]); // Using any for compatibility with NewsSection props for now
+    const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [performers, setPerformers] = useState<Performer[]>([]);
     const [loadingNews, setLoadingNews] = useState(true);
     const [loadingStocks, setLoadingStocks] = useState(true);
@@ -74,12 +94,12 @@ export default function DashboardPage() {
                 const data = await res.json();
 
                 // Sort by absolute change percent to find biggest movers (active market)
-                const stocks = data.stocks || [];
+                const stocks: StockData[] = data.stocks || [];
                 const sorted = [...stocks].sort((a, b) =>
                     Math.abs(b.changePercent) - Math.abs(a.changePercent)
                 ).slice(0, 5); // Top 5
 
-                const formatted: Performer[] = sorted.map((s: any, index: number) => ({
+                const formatted: Performer[] = sorted.map((s: StockData, index: number) => ({
                     rank: index + 1,
                     symbol: s.symbol,
                     name: s.company,
@@ -114,7 +134,7 @@ export default function DashboardPage() {
                                 <BookOpen className="w-4 h-4 mr-2" />
                                 Learning Corner
                             </h3>
-                            <p className="font-serif text-sm italic mb-4">"Volatility is the price of admission for long-term growth."</p>
+                            <p className="font-serif text-sm italic mb-4">&quot;Volatility is the price of admission for long-term growth.&quot;</p>
                             <Link href="/learn" className="block text-center bg-black text-white px-4 py-2 font-serif text-sm font-bold hover:bg-gray-800 transition-colors">
                                 RESUME LEARNING
                             </Link>
@@ -124,7 +144,7 @@ export default function DashboardPage() {
                         <div className="border-t-4 border-black pt-2">
                             <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-2">Daily Wisdom</h3>
                             <blockquote className="font-serif text-xl italic leading-relaxed text-gray-800">
-                                "The individual investor should act consistently as an investor and not as a speculator."
+                                &quot;The individual investor should act consistently as an investor and not as a speculator.&quot;
                             </blockquote>
                             <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-500">— Benjamin Graham</p>
                         </div>

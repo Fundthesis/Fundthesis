@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Loader2 } from 'lucide-react';
+import { Send, Bot, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/button'; // Assuming this exists or using standard button
 import { getCoachResponse, type ChatMessage } from '@/lib/aiCoach';
@@ -21,6 +21,7 @@ export function EditorsDesk({ className }: { className?: string }) {
                 },
             ]);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -71,7 +72,7 @@ export function EditorsDesk({ className }: { className?: string }) {
             <CardHeader className="bg-[#fcfbf9] border-b border-black/10 py-3">
                 <CardTitle className="font-serif text-xl italic flex items-center">
                     <Bot className="w-5 h-5 mr-2" />
-                    The Editor's Desk
+                    The Editor&apos;s Desk
                 </CardTitle>
                 <p className="text-xs text-gray-500 font-serif italic">A Socratic Dialogue on Markets & Money</p>
             </CardHeader>

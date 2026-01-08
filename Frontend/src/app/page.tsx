@@ -43,7 +43,7 @@ export default function Home() {
 
               <p className="text-2xl leading-relaxed text-gray-800 mb-8 font-serif">
                 <span className="float-left text-7xl font-black mr-4 mt-[-10px] leading-none">F</span>
-                undThesis isn't just a platform; it's a paradigm shift. In a world awash with noise, we provide the signal. By combining institutional-grade data with next-generation AI, we empower the individual investor to compete with the giants.
+                undThesis isn&apos;t just a platform; it&apos;s a paradigm shift. In a world awash with noise, we provide the signal. By combining institutional-grade data with next-generation AI, we empower the individual investor to compete with the giants.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-12">
@@ -103,7 +103,7 @@ export default function Home() {
             </div>
 
             <div className="mt-auto bg-black text-white p-6 text-center">
-              <p className="font-serif italic text-lg mb-4">"The best investment you can make is in yourself."</p>
+              <p className="font-serif italic text-lg mb-4">&quot;The best investment you can make is in yourself.&quot;</p>
               <Link href="/learn" className="inline-block border-b border-white hover:opacity-80">
                 Visit Learning Corner &rarr;
               </Link>
