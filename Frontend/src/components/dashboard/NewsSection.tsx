@@ -22,21 +22,18 @@ interface NewsSectionProps {
 
 export function NewsSection({ newsItems, className = "" }: NewsSectionProps) {
   return (
-    <Card className={className}>
-      <CardContent>
-        <h2 className="text-xl font-bold mb-3">Market News & Signals</h2>
-        {newsItems.map((news, index) => (
-          <NewsCard
-            key={index}
-            title={news.title}
-            source={news.source}
-            text={news.text}
-            stocks={news.stocks}
-            className={index < newsItems.length - 1 ? 'mb-4 pb-4 border-b' : ''}
-          />
-        ))}
-      </CardContent>
-    </Card>
+    <div className={className}>
+      {newsItems.map((news, index) => (
+        <NewsCard
+          key={index}
+          title={news.title}
+          source={news.source}
+          text={news.text}
+          stocks={news.stocks}
+          className="bg-white p-6 border border-black/10 shadow-sm"
+        />
+      ))}
+    </div>
   )
 }
 

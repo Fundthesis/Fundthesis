@@ -45,6 +45,13 @@ try:
 except ImportError as e:
     print(f"Warning: education routes not available. Education Track features may not work. Error: {e}")
 
+# Include RAG routes for AI Coach
+try:
+    from app.api.rag import router as rag_router
+    app.include_router(rag_router, prefix="/api")
+except ImportError as e:
+    print(f"Warning: RAG routes not available. AI Coach RAG features may not work. Error: {e}")
+
 @app.get("/")
 def read_root():
     return {"Welcome to fundthesis"}

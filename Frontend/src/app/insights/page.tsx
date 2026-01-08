@@ -69,6 +69,9 @@ export default function InsightsPage() {
   const [aiRecommendations, setAiRecommendations] = useState<string>("");
   const [insightsLoading, setInsightsLoading] = useState(true);
 
+  // New state for movers
+  const [movers, setMovers] = useState<any[]>([]);
+
   useEffect(() => {
     const loadNews = async () => {
       try {
@@ -102,7 +105,19 @@ export default function InsightsPage() {
       }
     };
 
+    // Fetch market movers
+    const fetchMovers = async () => {
+      try {
+        const res = await fetch('/api/stocks?limit=6&orderBy=changePercent&orderDirection=desc');
+        const data = await res.json();
+        if (data.stocks) setMovers(data.stocks);
+      } catch (e) {
+        console.error("Failed to fetch movers", e);
+      }
+    };
+
     loadNews();
+    fetchMovers();
   }, []);
 
   useEffect(() => {
@@ -175,194 +190,146 @@ export default function InsightsPage() {
     setSelectedArticle(null);
   };
 
-  const getRecommendationBadgeColor = (recommendation: string) => {
-    switch (recommendation) {
-      case "Buy":
-        return "bg-green-100 text-green-800";
-      case "Sell":
-        return "bg-red-100 text-red-800";
-      case "Hold":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-      if (diffHours < 1) {
-        const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins}m ago`;
-      } else if (diffHours < 24) {
-        return `${diffHours}h ago`;
-      } else {
-        return date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
-      }
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
     } catch {
       return dateString;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fcfbf9] text-[#1a1a1a] font-serif">
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Insights</h1>
-            <p className="text-xl text-gray-600">
-              AI-powered market analysis and stock recommendations
-            </p>
+
+        {/* Newspaper Header */}
+        <div className="border-b-4 border-black pb-4 mb-8">
+          <div className="flex justify-between items-end mb-2">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-black uppercase leading-none">
+              Market Insights
+            </h1>
+            <div className="text-right hidden md:block">
+              <p className="italic text-lg text-gray-500">AI-Powered Analysis & RAG Engine</p>
+              <p className="font-bold text-xs uppercase tracking-widest mt-1">Vol. 1 • Section C</p>
+            </div>
+          </div>
+          <div className="border-t border-black/20 pt-2 flex justify-between items-center text-sm font-bold uppercase tracking-widest text-gray-400">
+            <span>Daily Briefing</span>
+            <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span>Est. 2025</span>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Market Summary
-            </h3>
-            {insightsLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                <p className="text-gray-600">Generating market summary...</p>
-              </div>
-            ) : (
-              <MarkdownContent content={marketSummary} />
-            )}
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-8">
+          {/* Main Content (Left 8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-8">
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              AI Recommendations
-            </h3>
-            {insightsLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                <p className="text-gray-600">
-                  Generating AI recommendations...
-                </p>
-              </div>
-            ) : (
-              <MarkdownContent content={aiRecommendations} />
-            )}
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 mb-4">
-              <svg
-                className="w-5 h-5 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Recent News & Sentiment
-              </h3>
+            {/* Lead Story / Market Summary */}
+            <div className="pb-8 border-b-2 border-black/10">
+              <h2 className="text-4xl font-bold mb-4 leading-tight">
+                Market Pulse: Today's AI Synthesis
+              </h2>
+              {insightsLoading ? (
+                <div className="py-12 flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+                </div>
+              ) : (
+                <div className="text-xl leading-relaxed text-gray-800 columns-1 md:columns-2 gap-8">
+                  <MarkdownContent content={marketSummary} />
+                </div>
+              )}
             </div>
 
-            {loading && (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                <p className="mt-2 text-gray-600">Loading news...</p>
-              </div>
-            )}
+            {/* News Grid (Dynamic Panels) */}
+            <div>
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-6 border-b border-black pb-2">
+                Headlines & Sentiment
+              </h3>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">{error}</p>
-              </div>
-            )}
-
-            {!loading && !error && articles.length === 0 && (
-              <div className="text-center py-8 space-y-4">
-                <p className="text-gray-600">No recent news articles found.</p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
-                  <p className="text-sm text-blue-800">
-                    Articles are loaded from your database. Make sure
-                    articles have been populated in the{" "}
-                    <code className="bg-blue-100 px-1 rounded">articles</code>{" "}
-                    table.
-                  </p>
+              {loading ? (
+                <div className="py-12 text-center text-gray-500 italic">Loading headlines...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {articles.slice(0, 6).map((article) => (
+                    <div key={article.id} className="group cursor-pointer" onClick={() => handleArticleClick(article)}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${(article.sentiment_label || "").toLowerCase() === 'positive' ? 'border-green-600 text-green-700 bg-green-50' :
+                            (article.sentiment_label || "").toLowerCase() === 'negative' ? 'border-red-600 text-red-700 bg-red-50' : 'border-gray-400 text-gray-600 bg-gray-50'
+                          }`}>
+                          {article.sentiment_label || "Neutral"}
+                        </span>
+                        <span className="text-xs text-gray-400 uppercase">{article.source}</span>
+                      </div>
+                      <h4 className="text-2xl font-bold leading-tight mb-2 group-hover:underline decoration-2 underline-offset-4">
+                        {article.headline}
+                      </h4>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                        {article.summary}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            )}
+              )}
+              {!loading && articles.length === 0 && (
+                <p className="py-8 text-center italic text-gray-500">No headlines available at this moment.</p>
+              )}
+            </div>
+          </div>
 
-            {!loading && !error && articles.length > 0 && (
-              <div className="space-y-3">
-                {articles.map((article) => {
-                  const sentiment =
-                    article.sentiment_label || article.label || "Neutral";
-                  const sentimentLower = sentiment.toLowerCase();
-                  const percentage = article.sentiment_percentage || 85;
-                  const isPositive = sentimentLower === "positive";
-                  const isNegative = sentimentLower === "negative";
-                  const dotColor = isPositive
-                    ? "bg-green-600"
-                    : isNegative
-                      ? "bg-amber-700"
-                      : "bg-gray-500";
-                  const sentimentColor = isPositive
-                    ? "text-green-600"
-                    : isNegative
-                      ? "text-amber-700"
-                      : "text-gray-600";
+          {/* Sidebar (Right 4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-8">
 
-                  return (
-                    <div
-                      key={article.id}
-                      onClick={() => handleArticleClick(article)}
-                      className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2.5 shrink-0 ${dotColor}`}
-                        ></div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 mb-2 hover:text-blue-600">
-                            {article.headline}
-                          </h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                            <span>{article.source}</span>
-                            <span>•</span>
-                            <span>{formatDate(article.published_at)}</span>
-                            <span>•</span>
-                            <span className={`font-medium ${sentimentColor}`}>
-                              {sentiment} ({percentage}%)
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">
-                              Recommendation:
-                            </span>
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getRecommendationBadgeColor(
-                                article.recommendation
-                              )}`}
-                            >
-                              {article.recommendation}
-                            </span>
-                          </div>
-                        </div>
+            {/* AI Stratagem Panel */}
+            <div className="bg-stone-100 p-6 border-t-8 border-black">
+              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tighter">
+                AI Stratagem
+              </h3>
+              {insightsLoading ? (
+                <div className="py-4 text-center italic text-gray-500">Analyzing market data...</div>
+              ) : (
+                <div className="text-base leading-relaxed text-gray-700 space-y-4">
+                  <MarkdownContent content={aiRecommendations} />
+                </div>
+              )}
+            </div>
+
+            {/* Top Movers Panel (Dynamic) */}
+            <div className="border border-black/10 p-6">
+              <h3 className="text-lg font-bold uppercase tracking-widest mb-4 border-b border-black/20 pb-2">
+                Market Movers
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {movers.length > 0 ? movers.map((mover, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-white p-3 border border-black/5">
+                      <div>
+                        <div className="text-xs text-gray-500 uppercase">{mover.company || mover.symbol}</div>
+                        <div className="font-bold text-lg">{mover.symbol}</div>
+                      </div>
+                      <div className={`text-right font-bold ${mover.change >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {mover.change >= 0 ? '+' : ''}{mover.changePercent?.toFixed(2)}%
+                        <div className="text-xs text-gray-400 font-normal">${mover.price?.toFixed(2)}</div>
                       </div>
                     </div>
-                  );
-                })}
+                  )) : (
+                    <p className="text-sm italic text-gray-500">Loading movers...</p>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Quote of the Day */}
+            <div className="border-l-4 border-black pl-4 py-2">
+              <p className="italic text-lg text-gray-800 font-serif leading-relaxed">
+                "In the short run, the market is a voting machine but in the long run, it is a weighing machine."
+              </p>
+              <p className="text-sm font-bold mt-2 uppercase tracking-wide">— Benjamin Graham</p>
+            </div>
+
           </div>
         </div>
       </main>

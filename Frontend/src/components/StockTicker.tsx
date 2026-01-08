@@ -12,7 +12,12 @@ interface StockData {
 const formatNumber = (value?: number, decimals = 2) =>
   typeof value === "number" ? value.toFixed(decimals) : "-";
 
-const StockTicker = () => {
+interface StockTickerProps {
+  symbols?: string[];
+  isStatic?: boolean;
+}
+
+const StockTicker: React.FC<StockTickerProps> = ({ symbols = [], isStatic = false }) => {
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +27,11 @@ const StockTicker = () => {
 
     const fetchStocks = async () => {
       try {
-        const response = await fetch(`/api/stocks?limit=30&offset=0`);
+        const query = symbols.length > 0
+          ? `?symbols=${symbols.join(',')}`
+          : `?limit=30&offset=0`;
+
+        const response = await fetch(`/api/stocks${query}`);
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         const data = await response.json();
         if (!isMounted) return;
@@ -34,7 +43,8 @@ const StockTicker = () => {
       } catch (err) {
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : String(err);
-        setError(`Failed to load stock data: ${message}`);
+        // Silently fail for ticker to avoid ugliness in header, or just log
+        console.error(`Failed to load stock data: ${message}`);
         setLoading(false);
       }
     };
@@ -45,63 +55,53 @@ const StockTicker = () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [symbols]);
 
   if (loading) {
     return (
-      <div className="ticker-bg text-black py-0.5 overflow-hidden">
-        <div className="text-center text-sm h-6"></div>
+      <div className={`ticker-bg text-black py-0.5 overflow-hidden ${isStatic ? 'flex justify-center' : ''}`}>
+        <div className={`text-center ${isStatic ? 'text-xs' : 'text-sm'} h-8`}></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="ticker-bg text-black py-0.5 overflow-hidden">
-        <div className="text-center text-sm text-red-600">{error}</div>
+      <div className={`ticker-bg text-black py-0.5 overflow-hidden ${isStatic ? 'flex justify-center' : ''}`}>
+        <div className={`text-center ${isStatic ? 'text-xs' : 'text-sm'} text-red-600`}></div>
       </div>
     );
   }
 
   return (
-    <div className="ticker-bg text-black py-0.5 overflow-hidden">
-      <div className="animate-marquee-fast whitespace-nowrap">
-        <div className="inline-flex space-x-8">
-          {stocks.concat(stocks).map((stock, index) => (
-            <div
-              key={`${stock.symbol}-${index}`}
-              className="inline-flex items-center space-x-2 text-sm"
-            >
-              <span className="font-semibold">{stock.symbol}</span>
-              <span>${formatNumber(stock.price)}</span>
-              <span
-                className={
-                  stock.change && stock.change >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }
+    <div className={`ticker-bg text-black py-0.5 overflow-hidden ${isStatic ? 'flex justify-center items-center w-full h-full' : ''}`}>
+      <div className={isStatic ? "flex justify-evenly w-full items-center px-4" : "animate-marquee-fast whitespace-nowrap"}>
+        <div className={isStatic ? "contents" : "inline-flex space-x-8"}>
+          {(isStatic ? stocks : stocks.concat(stocks)).map((stock, index) => {
+            const displaySymbol = stock.symbol === 'GLD' ? 'GOLD' : stock.symbol === 'USO' ? 'OIL' : stock.symbol;
+            return (
+              <div
+                key={`${stock.symbol}-${index}`}
+                className={`inline-flex items-center space-x-2 ${isStatic ? 'text-xs' : 'text-sm'}`}
               >
-                {stock.change
-                  ? (stock.change >= 0 ? "+" : "") + formatNumber(stock.change)
-                  : "-"}
-              </span>
-              <span
-                className={
-                  stock.changePercent && stock.changePercent >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }
-              >
-                (
-                {stock.changePercent
-                  ? (stock.changePercent >= 0 ? "+" : "") +
-                  formatNumber(stock.changePercent) +
-                  "%"
-                  : "-"}
-                )
-              </span>
-            </div>
-          ))}
+                <span className="font-bold">{displaySymbol}</span>
+                <span>${formatNumber(stock.price)}</span>
+                <span
+                  className={
+                    stock.change && stock.change >= 0
+                      ? "text-green-600 font-bold"
+                      : "text-red-600 font-bold"
+                  }
+                >
+                  {stock.changePercent
+                    ? (stock.changePercent >= 0 ? "+" : "") +
+                    formatNumber(stock.changePercent) +
+                    "%"
+                    : "-"}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
