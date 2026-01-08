@@ -1,17 +1,15 @@
 """API routes for generating market insights using LangChain."""
-from fastapi import APIRouter, HTTPException
-from typing import Optional
-import os
-from datetime import datetime, timedelta, timezone
 import sys
 from pathlib import Path
-from db_client import db
+from fastapi import APIRouter, HTTPException
+from datetime import datetime, timedelta, timezone
 
-# Add project root to Python path
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+# Add backend to path
+backend_path = Path(__file__).parent.parent.parent
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
 
+from app.core.database import db
 from rag.rag import RAG
 
 router = APIRouter()
@@ -29,14 +27,8 @@ async def get_recent_articles(limit: int = 50, hours: int = 24) -> list:
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         articles = await db.article.find_many(
-            where={
-                'published_at': {
-                    'gte': time_threshold
-                }
-            },
-            order={
-                'published_at': 'desc'
-            },
+            where={'published_at': {'gte': time_threshold}},
+            order={'published_at': 'desc'},
             take=limit
         )
         
@@ -75,7 +67,6 @@ def format_articles_for_prompt(articles: list) -> str:
 async def get_market_summary():
     """Generate a market summary using LangChain based on recent articles."""
     try:
-        # Fetch recent articles
         articles = await get_recent_articles(limit=30, hours=24)
         
         if not articles:
@@ -84,10 +75,8 @@ async def get_market_summary():
                 "generated_at": datetime.now(timezone.utc).isoformat()
             }
         
-        # Format articles for prompt
         articles_text = format_articles_for_prompt(articles)
         
-        # Create prompt for market summary
         prompt = f"""Based on the following recent financial news articles, provide a concise market summary (2-3 sentences) that highlights:
 1. Overall market trends and momentum
 2. Key sectors or stocks showing significant movement
@@ -98,7 +87,6 @@ Recent Articles:
 
 Provide a clear, professional market summary:"""
 
-        # Generate summary using LangChain
         summary = await rag.a_call(prompt)
         
         return {
@@ -115,7 +103,6 @@ Provide a clear, professional market summary:"""
 async def get_ai_recommendations():
     """Generate AI-powered investment recommendations using LangChain based on recent articles."""
     try:
-        # Fetch recent articles
         articles = await get_recent_articles(limit=30, hours=24)
         
         if not articles:
@@ -124,10 +111,8 @@ async def get_ai_recommendations():
                 "generated_at": datetime.now(timezone.utc).isoformat()
             }
         
-        # Format articles for prompt
         articles_text = format_articles_for_prompt(articles)
         
-        # Create prompt for AI recommendations
         prompt = f"""Based on the following recent financial news articles, provide personalized investment recommendations (2-3 sentences) that include:
 1. Portfolio diversification suggestions
 2. Sectors or themes to consider
@@ -138,7 +123,6 @@ Recent Articles:
 
 Provide clear, actionable investment recommendations:"""
 
-        # Generate recommendations using LangChain
         recommendations = await rag.a_call(prompt)
         
         return {
@@ -167,5 +151,4 @@ async def get_both_insights():
     except Exception as e:
         print(f"Error generating insights: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
-
 

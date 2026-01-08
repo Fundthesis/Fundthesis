@@ -1,26 +1,19 @@
+"""Database client and utilities using Prisma."""
 import json
 from datetime import datetime, timedelta
-from db_client import db
+from prisma import Prisma
 import uuid
 
-# Keep the name supabase_client.py for compatibility, or we should rename it.
-# Implementing the same functions using Prisma.
+# Initialize Prisma client
+db = Prisma()
 
-async def get_cached_forecast(symbol):
+
+async def get_cached_forecast(symbol: str):
     """Return the most recent cached forecast row for `symbol` if within last 24 hours, else None."""
     if not db.is_connected():
-        # In case it's called outside of request context where db is not connected
-        # But usually it should be connected.
-        # For safety we could connect, but better to rely on app lifecycle.
-        pass
+        await db.connect()
 
     try:
-        # Prisma query
-        # stock_forecasts table maps to StockForecast model
-        # We need to check the schema mapping. 
-        # In schema.prisma: model StockForecast { ... @@map("stock_forecasts") }
-        # So we use db.stockforecast
-        
         # Find first matching symbol, ordered by run_date desc
         forecast = await db.stockforecast.find_first(
             where={
@@ -36,9 +29,6 @@ async def get_cached_forecast(symbol):
 
         run_date = forecast.run_date
         # Check if within 24 hours
-        # run_date is datetime object (timezone aware or naive depending on DB/Driver)
-        # Prisma usually returns timezone aware if DB has it.
-        
         now = datetime.now(run_date.tzinfo) if run_date.tzinfo else datetime.utcnow()
         
         if now - run_date <= timedelta(hours=24):
@@ -52,7 +42,7 @@ async def get_cached_forecast(symbol):
         return None
 
 
-async def insert_cached_forecast(symbol, price_series, forecast_results):
+async def insert_cached_forecast(symbol: str, price_series, forecast_results):
     """Insert a new cached forecast row. Returns response or None on failure."""
     try:
         # price_series and forecast_results are likely dicts or lists.

@@ -1,24 +1,43 @@
+"""
+XGBoost forecasting model for stock price predictions.
+"""
 import sys
 import os
+from pathlib import Path
 import yfinance as yf
 from sklearn.preprocessing import RobustScaler
 from sklearn.metrics import mean_squared_error, r2_score
 from xgboost import XGBRegressor
-from datetime import date, timedelta
+from datetime import timedelta
 import pandas as pd
 import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from lib.stock_data import get_stock_history
+
 
 def train_test_split(data, perc):
     """Split data into train/test - trains with the first (1-perc) and tests with the rest"""
     n = int(len(data) * (1 - perc))
     return data.iloc[:n].copy(), data.iloc[n:].copy()
 
+
 def get_next_30_day_predictions(ticker, num_past_days_to_use="1y", forecast_days=30):
     """
     Improved forecasting using the test set approach instead of iterative prediction.
     Returns predictions for the next N days based on historical patterns.
+    
+    Args:
+        ticker: Stock ticker symbol (e.g., 'AAPL')
+        num_past_days_to_use: Period string for yfinance (default: "1y")
+        forecast_days: Number of days to forecast (default: 30)
+    
+    Returns:
+        tuple: (forecast_df, mse, r2) or (None, None, None) on error
     """
     
     print(f"📊 Fetching data for {ticker}...")
@@ -117,16 +136,3 @@ def get_next_30_day_predictions(ticker, num_past_days_to_use="1y", forecast_days
     
     return forecast_df, mse, r2
 
-if __name__ == "__main__":
-    # Test the function
-    ticker = 'AAPL'
-    print(f"Testing forecast for {ticker}...\n")
-    
-    forecast_df, mse, r2 = get_next_30_day_predictions(ticker)
-    
-    if forecast_df is not None:
-        print("\n📊 Forecast Results:")
-        print(forecast_df.head(10))
-        print("\n📈 Summary:")
-        print(f"MSE: {mse:.2f}")
-        print(f"R2 Score: {r2:.4f}")
