@@ -90,10 +90,10 @@ export default function MentorPage() {
     });
 
     return (
-        <div className="min-h-screen bg-stone-50 flex flex-col">
-            <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 flex flex-col">
+        <div className="h-[calc(100vh-140px)] bg-stone-50 flex flex-col overflow-hidden">
+            <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-4 flex flex-col h-full">
                 {/* Masthead */}
-                <header className="text-center border-b-2 border-black pb-4 mb-6">
+                <header className="text-center border-b-2 border-black pb-4 mb-4 shrink-0">
                     <p className="text-xs tracking-widest text-stone-500 uppercase mb-1">
                         {dateString}
                     </p>
@@ -106,9 +106,9 @@ export default function MentorPage() {
                 </header>
 
                 {/* Conversation Container */}
-                <div className="flex-1 border border-stone-200 bg-white flex flex-col">
+                <div className="flex-1 border border-stone-200 bg-white flex flex-col min-h-0">
                     {/* Messages Area */}
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
                         <div className="max-w-2xl mx-auto space-y-6">
                             {messages.map((msg, i) => (
                                 <div key={i} className={msg.role === 'user' ? 'text-right' : ''}>
@@ -124,8 +124,8 @@ export default function MentorPage() {
                                     )}
                                     <div
                                         className={`inline-block max-w-[85%] ${msg.role === 'user'
-                                                ? 'bg-stone-100 text-stone-800'
-                                                : 'bg-white border-l-2 border-stone-300 pl-4'
+                                            ? 'bg-stone-100 text-stone-800'
+                                            : 'bg-white border-l-2 border-stone-300 pl-4'
                                             } py-3 px-4`}
                                     >
                                         <p className="font-serif text-base leading-relaxed whitespace-pre-wrap">
@@ -173,7 +173,7 @@ export default function MentorPage() {
 
                     {/* Suggested Actions */}
                     {lastResponse?.suggestedActions && lastResponse.suggestedActions.length > 0 && (
-                        <div className="px-6 py-3 bg-stone-50 border-t border-stone-200">
+                        <div className="px-6 py-3 bg-stone-50 border-t border-stone-200 shrink-0">
                             <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">
                                 Suggested Next Steps
                             </p>
@@ -192,7 +192,7 @@ export default function MentorPage() {
 
                     {/* Suggested Topics (only if few messages) */}
                     {messages.length <= 2 && (
-                        <div className="px-6 py-4 bg-stone-50 border-t border-stone-200">
+                        <div className="px-6 py-4 bg-stone-50 border-t border-stone-200 shrink-0">
                             <p className="text-xs uppercase tracking-widest text-stone-500 mb-3">
                                 Topics to Explore
                             </p>
@@ -211,7 +211,7 @@ export default function MentorPage() {
                     )}
 
                     {/* Input Area */}
-                    <div className="p-4 border-t border-stone-200 bg-white">
+                    <div className="p-4 border-t border-stone-200 bg-white shrink-0">
                         <div className="max-w-2xl mx-auto">
                             <div className="flex items-end gap-3">
                                 <div className="flex-1">
@@ -232,8 +232,8 @@ export default function MentorPage() {
                                     onClick={sendMessage}
                                     disabled={!input.trim() || isTyping}
                                     className={`px-6 py-3 text-sm uppercase tracking-widest font-medium transition-colors ${input.trim() && !isTyping
-                                            ? 'bg-black text-white hover:bg-stone-800'
-                                            : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                                        ? 'bg-black text-white hover:bg-stone-800'
+                                        : 'bg-stone-200 text-stone-400 cursor-not-allowed'
                                         }`}
                                 >
                                     Submit

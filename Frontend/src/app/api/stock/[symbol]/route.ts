@@ -548,10 +548,8 @@ export async function GET(
     }
 
     if (historical.length === 0) {
-      return NextResponse.json(
-        { error: 'No historical data available for this symbol' },
-        { status: 404 },
-      );
+      console.warn(`⚠️ No historical data available for ${symbol}, returning quote only.`);
+      // Do not return 404, just proceed with empty historical data
     }
 
     const currentPrice = quote.regularMarketPrice || 0;
@@ -581,7 +579,7 @@ export async function GET(
       console.log(`⚠️ No Supabase cache row found for ${symbol}; served Yahoo Finance data`);
     } else {
       console.log(
-        `⚠️ Supabase cache for ${symbol} missing price series; served Yahoo Finance data`,
+        `⚠️ Supabase cache for ${symbol} missing price series; served Yahoo Finance data (history: ${historical.length} points)`,
       );
     }
 
