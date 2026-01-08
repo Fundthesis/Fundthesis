@@ -26,11 +26,12 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
     const symbolsParam = searchParams.get("symbols");
+    const search = searchParams.get("search");
 
     debugLog(
       `Proxying stocks request to Python backend: limit=${limit}, offset=${offset}, symbols=${
         symbolsParam || "none"
-      }`
+      }, search=${search || "none"}`
     );
 
     // Validate and limit custom symbols to prevent abuse
@@ -65,6 +66,10 @@ export async function GET(request: NextRequest) {
 
     if (symbols) {
       params.symbols = symbols;
+    }
+
+    if (search) {
+      params.search = search;
     }
 
     try {

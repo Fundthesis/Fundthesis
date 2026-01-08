@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get("source");
     const tickers = searchParams.get("tickers");
     const search = searchParams.get("search");
-    const orderBy = searchParams.get("orderBy") || "published_at";
+    const orderBy = searchParams.get("orderBy") || "publishedAt";
     const orderDirection = searchParams.get("orderDirection") || "desc";
 
     const where: Prisma.ArticleWhereInput = {};
@@ -51,12 +51,12 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { headline: { contains: search, mode: 'insensitive' } },
         { summary: { contains: search, mode: 'insensitive' } },
-        { full_text: { contains: search, mode: 'insensitive' } }
+        { fullText: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    const validOrderBy = ["published_at", "inserted_at", "headline", "source"];
-    const orderByField = validOrderBy.includes(orderBy) ? orderBy : "published_at";
+    const validOrderBy = ["publishedAt", "insertedAt", "headline", "source"];
+    const orderByField = validOrderBy.includes(orderBy) ? orderBy : "publishedAt";
     const orderDir = orderDirection.toLowerCase() === "asc" ? "asc" : "desc";
 
     const [articles, count] = await Promise.all([

@@ -21,15 +21,7 @@ const merriweather = Merriweather({
 
 function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { user, isLoading, signOut } = useAuth()
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Error signing out of Supabase', error)
-    }
-  }
+  const { isLoading } = useAuth()
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -80,7 +72,7 @@ function AppFrame({ children }: { children: ReactNode }) {
 
       <StockTicker />
 
-      <main className="flex-grow">{children}</main>
+      <main className="grow">{children}</main>
 
       <Footer />
     </div>

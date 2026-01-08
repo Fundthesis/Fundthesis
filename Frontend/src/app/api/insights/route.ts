@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
 
     let articles = await prisma.article.findMany({
       where: {
-        published_at: {
+        publishedAt: {
           gte: twentyFourHoursAgo,
         },
       },
       orderBy: {
-        published_at: "desc",
+        publishedAt: "desc",
       },
       take: 30,
       select: {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         summary: true,
         label: true,
         source: true,
-        published_at: true,
+        publishedAt: true,
         tickers: true,
       },
     });
@@ -51,12 +51,12 @@ export async function GET(request: NextRequest) {
       console.log("No articles in last 24 hours, trying last 7 days...");
       articles = await prisma.article.findMany({
         where: {
-          published_at: {
+          publishedAt: {
             gte: sevenDaysAgo,
           },
         },
         orderBy: {
-          published_at: "desc",
+          publishedAt: "desc",
         },
         take: 30,
         select: {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           summary: true,
           label: true,
           source: true,
-          published_at: true,
+          publishedAt: true,
           tickers: true,
         },
       });

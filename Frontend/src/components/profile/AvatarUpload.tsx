@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, X } from "lucide-react";
+import { Camera } from "lucide-react";
 import Image from "next/image";
 
 interface AvatarUploadProps {

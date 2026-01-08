@@ -16,7 +16,6 @@ export function StockCard({
   symbol,
   company,
   price,
-  change,
   changePercent,
   sector,
   onClick,
@@ -64,4 +63,3 @@ export function StockCard({
     </div>
   );
 }
-

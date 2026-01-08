@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/button";
 
 export function NotificationSettings() {
   const [emailNotifications, setEmailNotifications] = useState(true);

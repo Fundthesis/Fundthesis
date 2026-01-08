@@ -221,6 +221,7 @@ async def get_stocks(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     symbols: Optional[str] = Query(default=None, description="Comma-separated list of custom symbols"),
+    search: Optional[str] = Query(default=None, description="Search by symbol or company name"),
     sector: Optional[str] = Query(default=None, description="Filter by sector"),
     industry: Optional[str] = Query(default=None, description="Filter by industry"),
     min_price: Optional[float] = Query(default=None, description="Minimum price"),
@@ -230,7 +231,7 @@ async def get_stocks(
 ):
     """Get paginated list of stocks with current prices. Supports caching and batch operations."""
     # Check cache first
-    cache_key = f"stocks_{limit}_{offset}_{symbols or ''}"
+    cache_key = f"stocks_{limit}_{offset}_{symbols or ''}_{search or ''}_{sector or ''}_{industry or ''}_{min_price or ''}_{max_price or ''}_{min_market_cap or ''}_{max_market_cap or ''}"
     cached_result = get_cached(cache_key, CACHE_TTL_SECONDS)
     if cached_result:
         print(f"✅ Cache hit for stocks list")
@@ -263,7 +264,16 @@ async def get_stocks(
     
     # Apply filters
     filtered_data = []
+    search_lower = search.lower() if search else None
+    
     for stock in stock_data:
+        # Search filter (by symbol or company name)
+        if search_lower:
+            stock_symbol = stock.get('symbol', '').lower()
+            stock_company = stock.get('company', '').lower() if stock.get('company') else ''
+            if search_lower not in stock_symbol and search_lower not in stock_company:
+                continue
+        
         # Sector filter
         if sector and stock.get('sector') != sector:
             continue
@@ -289,7 +299,7 @@ async def get_stocks(
     
     result = {
         'stocks': filtered_data,
-        'total': len(filtered_data) if (sector or industry or min_price or max_price) else total_symbols,
+        'total': len(filtered_data) if (search or sector or industry or min_price or max_price or min_market_cap or max_market_cap) else total_symbols,
         'offset': offset,
         'limit': limit,
         'hasMore': (offset + limit) < total_symbols if not symbols else False

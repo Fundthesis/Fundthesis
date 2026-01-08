@@ -47,9 +47,11 @@ export default function DiscoverPage() {
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
 
   // Fetch stocks list and metadata using React Query
+  // Pass search to backend for server-side filtering
   const { data: stocksData, isLoading: isLoadingStocks } = useStocks({
     limit: 100,
     offset: 0,
+    search: filters.search || undefined,
   });
   const { data: metadataData } = useStockMetadata();
 
@@ -99,19 +101,12 @@ export default function DiscoverPage() {
   
   const isLoadingDetail = isLoadingStockInfo;
 
-  // Filter and sort stocks
+  // Filter and sort stocks (search is now handled by backend)
   useEffect(() => {
     let filtered = [...stocks];
 
-    // Apply search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (stock) =>
-          stock.symbol.toLowerCase().includes(searchLower) ||
-          stock.company?.toLowerCase().includes(searchLower)
-      );
-    }
+    // Note: Search filtering is now done on the backend via useStocks hook
+    // Only apply client-side filters that aren't supported by backend yet
 
     // Apply sector filter
     if (filters.sector) {

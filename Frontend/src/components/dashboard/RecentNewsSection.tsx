@@ -27,11 +27,6 @@ export function RecentNewsSection() {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  const truncateText = (text: string | null, maxLength: number) => {
-    if (!text) return "";
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-  };
-
   return (
     <NewspaperSection title="Recent Market News">
       {isLoading ? (

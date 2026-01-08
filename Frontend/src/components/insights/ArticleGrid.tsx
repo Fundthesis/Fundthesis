@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ExternalLink, Clock } from "lucide-react";
 import NewsArticleModal from "@/components/NewsArticleModal";
-import { NewsArticle } from "@/lib/api";
 
 interface Article {
   id: string;

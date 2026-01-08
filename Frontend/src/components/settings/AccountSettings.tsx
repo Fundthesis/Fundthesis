@@ -20,7 +20,7 @@ export function AccountSettings() {
       // TODO: Implement email change
       toast.success("Email change request sent! Please check your new email.");
       setNewEmail("");
-    } catch (error) {
+    } catch {
       toast.error("Failed to change email");
     } finally {
       setIsChangingEmail(false);
@@ -44,7 +44,7 @@ export function AccountSettings() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error) {
+    } catch {
       toast.error("Failed to change password");
     } finally {
       setIsChangingPassword(false);

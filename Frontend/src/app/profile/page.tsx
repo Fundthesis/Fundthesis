@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuth } from "@/providers/AuthProvider";
-import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleAvatarUpload = async (file: File) => {
+  const handleAvatarUpload = async () => {
     try {
       setIsUploading(true);
       // TODO: Implement avatar upload to backend
@@ -36,8 +35,12 @@ export default function ProfilePage() {
   const formatDate = (dateString?: string | Date) => {
     if (!dateString) return "Recently";
     try {
-      const date = typeof dateString === "string" ? new Date(dateString) : dateString;
-      return date.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+      const date =
+        typeof dateString === "string" ? new Date(dateString) : dateString;
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
     } catch {
       return "Recently";
     }
@@ -64,7 +67,9 @@ export default function ProfilePage() {
               name={user?.name || undefined}
               email={user?.email || undefined}
               avatar={user?.image || undefined}
-              memberSince={user?.createdAt ? formatDate(user.createdAt) : undefined}
+              memberSince={
+                user?.createdAt ? formatDate(user.createdAt) : undefined
+              }
               onAvatarUpload={handleAvatarUpload}
               isLoading={isUploading}
             />
@@ -79,11 +84,15 @@ export default function ProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Name</span>
-                  <span className="font-medium text-gray-900">{user?.name || "Not set"}</span>
+                  <span className="font-medium text-gray-900">
+                    {user?.name || "Not set"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Email</span>
-                  <span className="font-medium text-gray-900">{user?.email || "Not set"}</span>
+                  <span className="font-medium text-gray-900">
+                    {user?.email || "Not set"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Account Created</span>
@@ -114,12 +123,16 @@ export default function ProfilePage() {
                       <div>
                         <div className="font-medium">Google</div>
                         <div className="text-sm text-gray-500">
-                          {user?.email?.includes("@gmail.com") ? "Connected" : "Not connected"}
+                          {user?.email?.includes("@gmail.com")
+                            ? "Connected"
+                            : "Not connected"}
                         </div>
                       </div>
                     </div>
                     <button className="text-sm text-[#9DB38A] hover:underline">
-                      {user?.email?.includes("@gmail.com") ? "Disconnect" : "Connect"}
+                      {user?.email?.includes("@gmail.com")
+                        ? "Disconnect"
+                        : "Connect"}
                     </button>
                   </div>
                 </div>

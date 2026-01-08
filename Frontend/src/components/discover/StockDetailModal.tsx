@@ -52,8 +52,6 @@ export function StockDetailModal({
   timeframe,
   onTimeframeChange,
 }: StockDetailModalProps) {
-  if (!isOpen) return null;
-
   // Show loading skeleton if loading stock info or no stock data
   const showSkeleton = isLoading || !stock;
   // Chart loading is separate - only chart area shows loading when switching timeframes
@@ -72,41 +70,49 @@ export function StockDetailModal({
 
   const formatMarketCap = (cap: number | undefined | null) => {
     if (!cap) return "-";
-    if (cap >= 1_000_000_000_000) return "$" + (cap / 1_000_000_000_000).toFixed(2) + "T";
-    if (cap >= 1_000_000_000) return "$" + (cap / 1_000_000_000).toFixed(2) + "B";
+    if (cap >= 1_000_000_000_000)
+      return "$" + (cap / 1_000_000_000_000).toFixed(2) + "T";
+    if (cap >= 1_000_000_000)
+      return "$" + (cap / 1_000_000_000).toFixed(2) + "B";
     if (cap >= 1_000_000) return "$" + (cap / 1_000_000).toFixed(2) + "M";
     return "$" + cap.toString();
   };
 
+  // Hooks must be called before any early returns
   const combinedChartData = useMemo(() => {
     if (!stock) return [];
     return [
       ...stock.chartData.map((d) => ({ ...d, type: "historical" as const })),
-      ...(stock.forecastData || []).map((d) => ({ ...d, type: "forecast" as const })),
+      ...(stock.forecastData || []).map((d) => ({
+        ...d,
+        type: "forecast" as const,
+      })),
     ];
   }, [stock]);
 
   // Calculate Y-axis domain with padding for better visualization
   const yAxisDomain = useMemo(() => {
     if (combinedChartData.length === 0) return [0, 100];
-    const prices = combinedChartData.map((d) => d.price).filter((p) => p != null) as number[];
+    const prices = combinedChartData
+      .map((d) => d.price)
+      .filter((p) => p != null) as number[];
     if (prices.length === 0) return [0, 100];
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
     const padding = range * 0.1; // 10% padding on each side
-    return [
-      Math.max(0, minPrice - padding),
-      maxPrice + padding,
-    ];
+    return [Math.max(0, minPrice - padding), maxPrice + padding];
   }, [combinedChartData]);
 
   const forecastPoints = useMemo(
     () => combinedChartData.filter((point) => point.type === "forecast"),
-    [combinedChartData],
+    [combinedChartData]
   );
 
   const hasForecastData = forecastPoints.length > 0;
+
+  // Early return after all hooks
+  if (!isOpen) return null;
 
   return (
     <div
@@ -125,7 +131,9 @@ export function StockDetailModal({
             </div>
           ) : (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{stock!.symbol}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {stock!.symbol}
+              </h2>
               <p className="text-gray-600">{stock!.company}</p>
             </div>
           )}
@@ -188,12 +196,12 @@ export function StockDetailModal({
             <div className="space-y-3">
               <div className="h-72 bg-gray-50 rounded-lg p-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart 
+                  <LineChart
                     data={combinedChartData}
                     margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
+                    <XAxis
                       dataKey="date"
                       tickFormatter={(date) =>
                         new Date(date).toLocaleDateString("en-US", {
@@ -205,7 +213,7 @@ export function StockDetailModal({
                       axisLine={{ stroke: "#d1d5db" }}
                       tickLine={{ stroke: "#d1d5db" }}
                     />
-                    <YAxis 
+                    <YAxis
                       domain={yAxisDomain}
                       tickFormatter={(value) => `$${value.toFixed(0)}`}
                       tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -213,23 +221,30 @@ export function StockDetailModal({
                       tickLine={{ stroke: "#d1d5db" }}
                       width={60}
                     />
-                    <Tooltip 
+                    <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
                           return (
                             <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm">
-                              <p className="font-bold text-lg">${data.price?.toFixed(2) || "-"}</p>
+                              <p className="font-bold text-lg">
+                                ${data.price?.toFixed(2) || "-"}
+                              </p>
                               <p className="text-gray-500 text-xs">
-                                {new Date(data.date).toLocaleDateString("en-US", {
-                                  weekday: "short",
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                })}
+                                {new Date(data.date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                )}
                               </p>
                               {data.type === "forecast" && (
-                                <p className="text-blue-600 text-xs font-medium mt-1">📈 Predicted</p>
+                                <p className="text-blue-600 text-xs font-medium mt-1">
+                                  📈 Predicted
+                                </p>
                               )}
                             </div>
                           );
@@ -251,13 +266,20 @@ export function StockDetailModal({
                     {hasForecastData && (
                       <Line
                         type="monotone"
-                        dataKey={(d: { type: string; price: number }) => d.type === "forecast" ? d.price : null}
+                        dataKey={(d: { type: string; price: number }) =>
+                          d.type === "forecast" ? d.price : null
+                        }
                         stroke="#3b82f6"
                         strokeWidth={3}
                         strokeDasharray="6 4"
                         dot={false}
                         connectNulls={true}
-                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: "#3b82f6" }}
+                        activeDot={{
+                          r: 6,
+                          stroke: "#fff",
+                          strokeWidth: 2,
+                          fill: "#3b82f6",
+                        }}
                       />
                     )}
                   </LineChart>
@@ -266,10 +288,11 @@ export function StockDetailModal({
               {/* Legend */}
               <div className="flex items-center justify-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-6 h-0.5 rounded" 
-                    style={{ 
-                      backgroundColor: stock!.changePercent >= 0 ? "#9DB38A" : "#c17b7b" 
+                  <div
+                    className="w-6 h-0.5 rounded"
+                    style={{
+                      backgroundColor:
+                        stock!.changePercent >= 0 ? "#9DB38A" : "#c17b7b",
                     }}
                   />
                   <span className="text-gray-600">Historical Price</span>
@@ -277,9 +300,19 @@ export function StockDetailModal({
                 {hasForecastData && (
                   <div className="flex items-center gap-2">
                     <svg width="24" height="2" className="text-blue-500">
-                      <line x1="0" y1="1" x2="24" y2="1" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" />
+                      <line
+                        x1="0"
+                        y1="1"
+                        x2="24"
+                        y2="1"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeDasharray="6 4"
+                      />
                     </svg>
-                    <span className="text-blue-600 font-medium">Predicted Price</span>
+                    <span className="text-blue-600 font-medium">
+                      Predicted Price
+                    </span>
                   </div>
                 )}
               </div>
@@ -300,11 +333,15 @@ export function StockDetailModal({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-600">Open</div>
-                <div className="font-semibold">${formatNumber(stock!.open)}</div>
+                <div className="font-semibold">
+                  ${formatNumber(stock!.open)}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">High</div>
-                <div className="font-semibold">${formatNumber(stock!.high)}</div>
+                <div className="font-semibold">
+                  ${formatNumber(stock!.high)}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">Low</div>
@@ -312,15 +349,21 @@ export function StockDetailModal({
               </div>
               <div>
                 <div className="text-sm text-gray-600">Volume</div>
-                <div className="font-semibold">{formatVolume(stock!.volume)}</div>
+                <div className="font-semibold">
+                  {formatVolume(stock!.volume)}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">Market Cap</div>
-                <div className="font-semibold">{formatMarketCap(stock!.marketCap)}</div>
+                <div className="font-semibold">
+                  {formatMarketCap(stock!.marketCap)}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">P/E Ratio</div>
-                <div className="font-semibold">{formatNumber(stock!.peRatio)}</div>
+                <div className="font-semibold">
+                  {formatNumber(stock!.peRatio)}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">Sector</div>
@@ -353,4 +396,3 @@ export function StockDetailModal({
     </div>
   );
 }
-
