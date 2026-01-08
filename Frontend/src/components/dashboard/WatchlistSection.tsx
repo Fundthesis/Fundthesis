@@ -1,0 +1,19 @@
+"use client";
+
+import { NewspaperSection } from "@/components/ui/NewspaperSection";
+
+export function WatchlistSection() {
+  return (
+    <NewspaperSection title="Watchlist">
+      <div className="text-center py-12 text-stone-500">
+        <p className="font-serif italic text-base text-stone-600">
+          Watchlist coming soon
+        </p>
+        <p className="text-sm text-stone-500 mt-3">
+          Add stocks to track their performance
+        </p>
+      </div>
+    </NewspaperSection>
+  );
+}
+

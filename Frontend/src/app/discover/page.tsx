@@ -9,6 +9,7 @@ import {
   useStocks,
   useStockMetadata,
   useStockDetail,
+  useStockChart,
   type Stock,
 } from "@/lib/hooks/useStocks";
 
@@ -79,9 +80,24 @@ export default function DiscoverPage() {
     return Array.from(uniqueIndustries).sort();
   }, [metadataData?.industries, stocks]);
 
-  // Fetch stock detail when modal opens
+  // Fetch stock detail (info only - cached, doesn't change with timeframe)
+  const { data: stockInfo, isLoading: isLoadingStockInfo } = useStockDetail(selectedStockSymbol);
+  
+  // Fetch chart data separately (refetches when timeframe changes)
   const days = timeframe === "day" ? 7 : timeframe === "month" ? 30 : 365;
-  const { data: selectedStock } = useStockDetail(selectedStockSymbol, days);
+  const { data: chartData, isLoading: isLoadingChart } = useStockChart(selectedStockSymbol, days);
+  
+  // Combine stock info and chart data
+  const selectedStock = useMemo(() => {
+    if (!stockInfo) return null;
+    return {
+      ...stockInfo,
+      chartData: chartData?.chartData || [],
+      forecastData: chartData?.forecastData,
+    } as typeof stockInfo & { chartData: Array<{ date: string; price: number }>; forecastData?: Array<{ date: string; price: number }> };
+  }, [stockInfo, chartData]);
+  
+  const isLoadingDetail = isLoadingStockInfo;
 
   // Filter and sort stocks
   useEffect(() => {
@@ -240,6 +256,8 @@ export default function DiscoverPage() {
         <StockDetailModal
           stock={selectedStock}
           isOpen={isModalOpen}
+          isLoading={isLoadingDetail}
+          isLoadingChart={isLoadingChart}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedStockSymbol(null);

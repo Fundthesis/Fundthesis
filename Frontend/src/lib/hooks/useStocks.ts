@@ -82,18 +82,46 @@ export function useStocks(params: UseStocksParams = {}) {
 }
 
 /**
- * Hook to fetch individual stock details
+ * Hook to fetch individual stock details (without chart data - use useStockChart for that)
  */
-export function useStockDetail(symbol: string | null, days: number = 30) {
-  return useQuery<StockDetail>({
-    queryKey: ['stock', symbol, days],
+export function useStockDetail(symbol: string | null) {
+  return useQuery<Omit<StockDetail, 'chartData' | 'forecastData'>>({
+    queryKey: ['stock', symbol],
     queryFn: async () => {
       if (!symbol) {
         throw new Error('Symbol is required')
       }
-      const response = await fetch(`/api/stock/${symbol}?days=${days}`)
+      // Fetch with default days=30, but we'll only use the non-chart data
+      const response = await fetch(`/api/stock/${symbol}?days=30`)
       if (!response.ok) {
         throw new Error('Failed to fetch stock details')
+      }
+      const data = await response.json()
+      // Remove chart data - that's fetched separately
+      const { chartData, forecastData, ...rest } = data
+      return rest
+    },
+    enabled: !!symbol,
+    staleTime: 60 * 1000, // 1 minute
+  })
+}
+
+/**
+ * Hook to fetch chart data only (refetches when timeframe changes)
+ */
+export function useStockChart(symbol: string | null, days: number = 30) {
+  return useQuery<{
+    chartData: Array<{ date: string; price: number }>
+    forecastData?: Array<{ date: string; price: number }>
+  }>({
+    queryKey: ['stock', symbol, 'chart', days],
+    queryFn: async () => {
+      if (!symbol) {
+        throw new Error('Symbol is required')
+      }
+      const response = await fetch(`/api/stock/${symbol}/chart?days=${days}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data')
       }
       return response.json()
     },

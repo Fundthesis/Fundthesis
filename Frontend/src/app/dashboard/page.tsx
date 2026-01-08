@@ -1,31 +1,45 @@
 "use client";
 
 import React from "react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { NewspaperLayout } from "@/components/ui/NewspaperLayout";
 import { RecentNewsSection } from "@/components/dashboard/RecentNewsSection";
 import { PerformersSection } from "@/components/dashboard/PerformersSection";
 import { SentimentHeatMap } from "@/components/dashboard/SentimentHeatMap";
+import { WatchlistSection } from "@/components/dashboard/WatchlistSection";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <PageHeader title="Dashboard" />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Left Column - News */}
-          <div className="lg:col-span-2 space-y-6">
-            <RecentNewsSection />
-            <SentimentHeatMap />
-          </div>
-          
-          {/* Right Column - Best Performers */}
-          <div className="lg:col-span-1">
-            <PerformersSection />
-          </div>
-        </div>
-      </main>
-    </div>
+    <NewspaperLayout
+      title="The Market Chronicle"
+      subtitle="All the News Fit to Trade"
+      maxWidth="max-w-7xl"
+    >
+      {/* Three-column layout: News sidebar (360px) | Main content (fluid) | Watchlist sidebar (380px) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr_380px] gap-6">
+        {/* Left Sidebar - News */}
+        <aside className="hidden lg:block">
+          <RecentNewsSection />
+        </aside>
+
+        {/* Main Content - Heat Map and Performers */}
+        <main className="space-y-6">
+          <SentimentHeatMap />
+          <PerformersSection />
+        </main>
+
+        {/* Right Sidebar - Watchlist */}
+        <aside className="hidden lg:block">
+          <WatchlistSection />
+        </aside>
+      </div>
+
+      {/* Mobile/Tablet: Stack layout */}
+      <div className="lg:hidden space-y-6">
+        <RecentNewsSection />
+        <SentimentHeatMap />
+        <PerformersSection />
+      </div>
+    </NewspaperLayout>
   );
 }
 

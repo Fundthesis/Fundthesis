@@ -7,6 +7,7 @@ import yfinance as yf
 import json
 import traceback
 import time
+import asyncio
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent.parent
@@ -40,8 +41,13 @@ def set_cached(key: str, value: Any):
     _cache[key] = (time.time(), value)
 
 
-def batch_fetch_stocks(symbols: List[str]) -> List[Dict]:
-    """Fetch multiple stocks efficiently using batch operations."""
+async def async_batch_fetch_stocks(symbols: List[str]) -> List[Dict]:
+    """Fetch multiple stocks efficiently using batch operations (async wrapper)."""
+    return await asyncio.to_thread(batch_fetch_stocks_sync, symbols)
+
+
+def batch_fetch_stocks_sync(symbols: List[str]) -> List[Dict]:
+    """Fetch multiple stocks efficiently using batch operations (synchronous implementation)."""
     stock_data = []
     
     # Use yfinance's download for batch fetching (more efficient)
@@ -143,6 +149,24 @@ def batch_fetch_stocks(symbols: List[str]) -> List[Dict]:
     return stock_data
 
 
+# Keep original function name for backward compatibility
+def batch_fetch_stocks(symbols: List[str]) -> List[Dict]:
+    """Synchronous wrapper - use async_batch_fetch_stocks in async contexts."""
+    return batch_fetch_stocks_sync(symbols)
+
+
+async def fetch_ticker_info(symbol: str) -> Optional[Dict]:
+    """Fetch ticker info asynchronously."""
+    try:
+        def _fetch():
+            ticker = yf.Ticker(symbol)
+            return ticker.info
+        return await asyncio.to_thread(_fetch)
+    except Exception as e:
+        print(f"Error fetching metadata for {symbol}: {e}")
+        return None
+
+
 @router.get("/stocks/metadata")
 async def get_stock_metadata():
     """Get unique sectors, industries, and price ranges for filtering."""
@@ -157,20 +181,22 @@ async def get_stock_metadata():
         # Sample a subset for performance (or use cached data)
         sample_symbols = symbols[:100]  # Sample first 100 for metadata
         
-        for symbol in sample_symbols:
-            try:
-                ticker = yf.Ticker(symbol)
-                info = ticker.info
-                
-                if info.get('sector'):
-                    sectors.add(info['sector'])
-                if info.get('industry'):
-                    industries.add(info['industry'])
-                if info.get('currentPrice'):
-                    prices.append(float(info['currentPrice']))
-            except Exception as e:
-                print(f"Error fetching metadata for {symbol}: {e}")
+        # Fetch all ticker info in parallel
+        tasks = [fetch_ticker_info(symbol) for symbol in sample_symbols]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for info in results:
+            if isinstance(info, Exception):
                 continue
+            if not info:
+                continue
+            
+            if info.get('sector'):
+                sectors.add(info['sector'])
+            if info.get('industry'):
+                industries.add(info['industry'])
+            if info.get('currentPrice'):
+                prices.append(float(info['currentPrice']))
         
         return {
             'sectors': sorted(list(sectors)),
@@ -232,8 +258,8 @@ async def get_stocks(
         set_cached(cache_key, result)
         return result
     
-    # Use batch fetching for better performance
-    stock_data = batch_fetch_stocks(paginated_symbols)
+    # Use async batch fetching for better performance (non-blocking)
+    stock_data = await async_batch_fetch_stocks(paginated_symbols)
     
     # Apply filters
     filtered_data = []
@@ -294,7 +320,6 @@ async def get_stock_detail(
         print(f"📊 Fetching stock detail for {symbol_upper}...")
         
         ticker = yf.Ticker(symbol_upper)
-        info = ticker.info
         
         # Get historical data based on timeframe
         if days <= 7:
@@ -313,10 +338,21 @@ async def get_stock_detail(
             period = 'max'
             interval = '1wk'
         
-        history = ticker.history(period=period, interval=interval)
+        # Fetch info, history, and today_history in parallel
+        async def fetch_info():
+            return await asyncio.to_thread(lambda: ticker.info)
         
-        # Get current day data
-        today_history = ticker.history(period='1d')
+        async def fetch_history():
+            return await asyncio.to_thread(lambda: ticker.history(period=period, interval=interval))
+        
+        async def fetch_today():
+            return await asyncio.to_thread(lambda: ticker.history(period='1d'))
+        
+        info, history, today_history = await asyncio.gather(
+            fetch_info(),
+            fetch_history(),
+            fetch_today()
+        )
         
         if today_history.empty:
             raise HTTPException(status_code=404, detail="No data available for this symbol")
@@ -402,6 +438,97 @@ async def get_stock_detail(
         raise
     except Exception as e:
         print(f"❌ Error fetching {symbol_upper}: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/stock/{symbol}/chart")
+async def get_stock_chart(
+    symbol: str,
+    days: int = Query(default=30, ge=1, le=3650)
+):
+    """Get chart data only for a stock. Optimized for timeframe switching."""
+    symbol_upper = symbol.upper().strip()
+    
+    # Check cache first
+    cache_key = f"stock_chart_{symbol_upper}_{days}"
+    cached_result = get_cached(cache_key, DETAIL_CACHE_TTL_SECONDS)
+    if cached_result:
+        print(f"✅ Cache hit for stock chart: {symbol_upper} ({days} days)")
+        return cached_result
+    
+    try:
+        print(f"📊 Fetching chart data for {symbol_upper} ({days} days)...")
+        
+        ticker = yf.Ticker(symbol_upper)
+        
+        # Get historical data based on timeframe
+        if days <= 7:
+            period = '5d'
+            interval = '1h'
+        elif days <= 30:
+            period = '1mo'
+            interval = '1d'
+        elif days <= 90:
+            period = '3mo'
+            interval = '1d'
+        elif days <= 365:
+            period = '1y'
+            interval = '1d'
+        else:
+            period = 'max'
+            interval = '1wk'
+        
+        # Fetch history in thread pool
+        history = await asyncio.to_thread(lambda: ticker.history(period=period, interval=interval))
+        
+        # Format historical data for chart
+        chart_data = []
+        for index, row in history.iterrows():
+            chart_data.append({
+                'date': index.strftime('%Y-%m-%d'),
+                'price': round(float(row['Close']), 2),
+                'volume': int(row['Volume'])
+            })
+        
+        print(f"✅ Chart data: {len(chart_data)} points")
+        
+        # Get forecast data (forecast doesn't change with timeframe, but include it for consistency)
+        forecast_data = []
+        try:
+            predict_df, mse, r2 = get_next_30_day_predictions(symbol_upper)
+            
+            if predict_df is not None and not predict_df.empty:
+                forecast_data_raw = json.loads(predict_df.to_json(orient='records', date_format='iso'))
+                
+                for item in forecast_data_raw:
+                    date_val = item.get('Date', item.get('date', ''))
+                    price_val = item.get('Predicted_Close', item.get('predicted_price', item.get('price', 0)))
+                    
+                    if isinstance(date_val, (int, float)):
+                        from datetime import datetime
+                        date_val = datetime.fromtimestamp(date_val / 1000).strftime('%Y-%m-%d')
+                    
+                    forecast_data.append({
+                        'date': date_val,
+                        'price': round(float(price_val), 2)
+                    })
+        except Exception as e:
+            print(f"⚠️ Error generating forecast: {e}")
+            forecast_data = []
+        
+        result = {
+            'chartData': chart_data,
+            'forecastData': forecast_data
+        }
+        
+        # Cache the result
+        set_cached(cache_key, result)
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Error fetching chart for {symbol_upper}: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 

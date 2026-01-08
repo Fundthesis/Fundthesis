@@ -6,6 +6,7 @@ from typing import Optional, Dict, List, Any, Tuple
 from datetime import datetime, timedelta
 import time
 import traceback
+import asyncio
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent.parent
@@ -124,11 +125,12 @@ async def get_sentiment_heatmap(
             if article_label:
                 sentiment_score = sentiment_to_score(str(article_label))
             else:
-                # Analyze sentiment if not already stored
+                # Analyze sentiment if not already stored (run CPU-bound work in thread pool)
                 text = (article.summary if article.summary else "") or (article.headline if article.headline else "")
                 if text:
                     analyze_sentiment = get_sentiment_analyzer()
-                    sentiment_label = analyze_sentiment(str(text))
+                    # Run CPU-bound sentiment analysis in thread pool to avoid blocking
+                    sentiment_label = await asyncio.to_thread(analyze_sentiment, str(text))
                     sentiment_score = sentiment_to_score(sentiment_label)
             
             # Extract tickers from article

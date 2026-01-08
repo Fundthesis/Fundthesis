@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fundthesis Dashboard - UI Redesign Specification</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0a0a0b;
+        --bg-secondary: #111113;
+        --bg-tertiary: #18181b;
+        --bg-card: #141416;
+        --border: #27272a;
+        --border-subtle: #1f1f23;
+        --text-primary: #fafafa;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --accent-green: #22c55e;
+        --accent-green-dim: #15803d;
+        --accent-red: #ef4444;
+        --accent-red-dim: #b91c1c;
+        --accent-gold: #f59e0b;
+        --accent-blue: #3b82f6;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+
+      /* Specification Document Styles */
+      .spec-doc {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 60px 40px;
+      }
+
+      .spec-header {
+        margin-bottom: 80px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .spec-header h1 {
+        font-family: "Instrument Serif", serif;
+        font-size: 3.5rem;
+        font-weight: 400;
+        margin-bottom: 16px;
+        letter-spacing: -0.02em;
+      }
+
+      .spec-header p {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+      }
+
+      .spec-section {
+        margin-bottom: 80px;
+      }
+
+      .spec-section h2 {
+        font-family: "Instrument Serif", serif;
+        font-size: 2rem;
+        font-weight: 400;
+        margin-bottom: 24px;
+        color: var(--text-primary);
+      }
+
+      .spec-section h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent-gold);
+        margin-bottom: 16px;
+        margin-top: 40px;
+      }
+
+      .spec-section p {
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        max-width: 800px;
+      }
+
+      .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      .spec-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .spec-card h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+      }
+
+      .spec-card p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .color-swatch {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+      }
+
+      .swatch {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .swatch-color {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+
+      .swatch-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      /* Mockup Styles */
+      .mockup-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin: 40px 0;
+      }
+
+      .mockup-label {
+        background: var(--bg-tertiary);
+        padding: 12px 20px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* ============================================
+       DASHBOARD MOCKUP - THE ACTUAL REDESIGN
+       ============================================ */
+
+      .dashboard {
+        background: var(--bg-primary);
+        min-height: 900px;
+      }
+
+      /* Top Navigation */
+      .top-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 32px;
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--bg-primary);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 48px;
+      }
+
+      .logo {
+        font-family: "Instrument Serif", serif;
+        font-size: 1.5rem;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+      }
+
+      .logo span {
+        color: var(--accent-gold);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 8px;
+      }
+
+      .nav-link {
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .nav-link:hover {
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+      }
+
+      .nav-link.active {
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+      }
+
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        width: 240px;
+      }
+
+      .search-bar input {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        width: 100%;
+        outline: none;
+      }
+
+      .search-bar input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .search-icon {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          var(--accent-gold),
+          var(--accent-green)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+
+      /* Ticker Strip */
+      .ticker-strip {
+        display: flex;
+        gap: 32px;
+        padding: 12px 32px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-subtle);
+        overflow-x: auto;
+      }
+
+      .ticker-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+      }
+
+      .ticker-symbol {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .ticker-price {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+
+      .ticker-change {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .ticker-change.up {
+        color: var(--accent-green);
+        background: rgba(34, 197, 94, 0.1);
+      }
+
+      .ticker-change.down {
+        color: var(--accent-red);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      /* Main Content Area */
+      .main-content {
+        display: grid;
+        grid-template-columns: 320px 1fr 340px;
+        gap: 1px;
+        background: var(--border-subtle);
+        min-height: calc(100vh - 120px);
+      }
+
+      /* Left Sidebar - News */
+      .sidebar-left {
+        background: var(--bg-primary);
+        padding: 24px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .section-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+      }
+
+      .section-action {
+        font-size: 0.75rem;
+        color: var(--accent-gold);
+        text-decoration: none;
+      }
+
+      .news-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .news-item {
+        padding: 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .news-item:hover {
+        border-color: var(--border);
+        background: var(--bg-tertiary);
+      }
+
+      .news-source {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .news-source-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-gold);
+      }
+
+      .news-source-name {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+      }
+
+      .news-time {
+        font-size: 0.6875rem;
+        color: var(--text-muted);
+        margin-left: auto;
+      }
+
+      .news-headline {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        line-height: 1.4;
+        margin-bottom: 8px;
+      }
+
+      .news-tickers {
+        display: flex;
+        gap: 6px;
+      }
+
+      .news-ticker-tag {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.6875rem;
+        padding: 2px 6px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        color: var(--text-secondary);
+      }
+
+      /* Center - Main Dashboard */
+      .main-center {
+        background: var(--bg-primary);
+        padding: 24px 32px;
+      }
+
+      /* Portfolio Summary */
+      .portfolio-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      .summary-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 20px;
+      }
+
+      .summary-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .summary-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .summary-change {
+        font-size: 0.75rem;
+        margin-top: 4px;
+      }
+
+      .summary-change.up {
+        color: var(--accent-green);
+      }
+
+      .summary-change.down {
+        color: var(--accent-red);
+      }
+
+      /* Heat Map */
+      .heatmap-section {
+        margin-bottom: 32px;
+      }
+
+      .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 4px;
+        margin-top: 16px;
+      }
+
+      .heatmap-cell {
+        aspect-ratio: 1.5;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+        padding: 8px;
+      }
+
+      .heatmap-cell:hover {
+        transform: scale(1.05);
+        z-index: 10;
+      }
+
+      .heatmap-cell.gain-high {
+        background: var(--accent-green);
+      }
+      .heatmap-cell.gain-med {
+        background: rgba(34, 197, 94, 0.6);
+      }
+      .heatmap-cell.gain-low {
+        background: rgba(34, 197, 94, 0.3);
+      }
+      .heatmap-cell.neutral {
+        background: var(--bg-tertiary);
+      }
+      .heatmap-cell.loss-low {
+        background: rgba(239, 68, 68, 0.3);
+      }
+      .heatmap-cell.loss-med {
+        background: rgba(239, 68, 68, 0.6);
+      }
+      .heatmap-cell.loss-high {
+        background: var(--accent-red);
+      }
+
+      .heatmap-symbol {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .heatmap-change {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.625rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Top Movers */
+      .movers-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .movers-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 20px;
+      }
+
+      .movers-list {
+        margin-top: 16px;
+      }
+
+      .mover-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .mover-item:last-child {
+        border-bottom: none;
+      }
+
+      .mover-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mover-rank {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        width: 20px;
+      }
+
+      .mover-details h5 {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .mover-details span {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .mover-stats {
+        text-align: right;
+      }
+
+      .mover-price {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+      }
+
+      .mover-change {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+      }
+
+      .mover-change.up {
+        color: var(--accent-green);
+      }
+      .mover-change.down {
+        color: var(--accent-red);
+      }
+
+      /* Right Sidebar - Watchlist & Activity */
+      .sidebar-right {
+        background: var(--bg-primary);
+        padding: 24px;
+      }
+
+      .watchlist-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .watchlist-item:hover {
+        border-color: var(--border);
+      }
+
+      .watchlist-info h5 {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .watchlist-info span {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .watchlist-stats {
+        text-align: right;
+      }
+
+      .watchlist-price {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+      }
+
+      .watchlist-change {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+      }
+
+      .watchlist-change.up {
+        color: var(--accent-green);
+      }
+      .watchlist-change.down {
+        color: var(--accent-red);
+      }
+
+      .mini-chart {
+        width: 60px;
+        height: 24px;
+        margin-left: 12px;
+      }
+
+      .mini-chart svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Activity Feed */
+      .activity-section {
+        margin-top: 32px;
+      }
+
+      .activity-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+      }
+
+      .activity-content {
+        flex: 1;
+      }
+
+      .activity-text {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+      }
+
+      .activity-text strong {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .activity-time {
+        font-size: 0.6875rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      /* Annotations */
+      .annotation {
+        position: relative;
+        margin: 40px 0;
+        padding: 24px;
+        background: var(--bg-tertiary);
+        border-left: 3px solid var(--accent-gold);
+        border-radius: 0 8px 8px 0;
+      }
+
+      .annotation h4 {
+        color: var(--accent-gold);
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .annotation p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
+      .annotation code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+        background: var(--bg-secondary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--accent-green);
+      }
+
+      /* Comparison Section */
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin: 40px 0;
+      }
+
+      .comparison-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .comparison-item h4 {
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .comparison-item h4 .badge {
+        font-size: 0.6875rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+      }
+
+      .badge.before {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--accent-red);
+      }
+
+      .badge.after {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--accent-green);
+      }
+
+      .comparison-list {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+
+      .comparison-list li {
+        margin-bottom: 8px;
+        padding-left: 16px;
+        position: relative;
+      }
+
+      .comparison-list li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--text-muted);
+      }
+
+      /* Layout Diagram */
+      .layout-diagram {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px;
+        margin: 24px 0;
+      }
+
+      .layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-rows: auto auto 1fr;
+        gap: 8px;
+        height: 400px;
+      }
+
+      .layout-cell {
+        background: var(--bg-tertiary);
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      .layout-cell.nav {
+        grid-column: 1 / -1;
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+      }
+
+      .layout-cell.ticker {
+        grid-column: 1 / -1;
+        border-color: var(--accent-gold);
+        color: var(--accent-gold);
+      }
+
+      .layout-cell.sidebar-l {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+      }
+
+      .layout-cell.main {
+        border-color: var(--text-primary);
+        color: var(--text-primary);
+      }
+
+      .layout-cell.sidebar-r {
+        border-color: #a855f7;
+        color: #a855f7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spec-doc">
+      <!-- Header -->
+      <header class="spec-header">
+        <h1>Fundthesis Dashboard Redesign</h1>
+        <p>
+          A comprehensive UI specification for transforming the Market Chronicle
+          dashboard into a modern, professional-grade financial interface with
+          improved information hierarchy, visual polish, and user experience.
+        </p>
+      </header>
+
+      <!-- Design Direction -->
+      <section class="spec-section">
+        <h2>Design Direction</h2>
+        <p>
+          Moving from the current light-themed newspaper aesthetic to a
+          <strong>dark, professional trading terminal</strong> aesthetic. This
+          direction is better suited for financial applications because it
+          reduces eye strain during extended use, makes numerical data and
+          color-coded changes more readable, and aligns with industry standards
+          (Bloomberg, TradingView, etc.).
+        </p>
+
+        <h3>Color Palette</h3>
+        <div class="color-swatch">
+          <div class="swatch">
+            <div class="swatch-color" style="background: #0a0a0b"></div>
+            <span class="swatch-label">BG Primary</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #111113"></div>
+            <span class="swatch-label">BG Secondary</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #18181b"></div>
+            <span class="swatch-label">BG Tertiary</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #27272a"></div>
+            <span class="swatch-label">Border</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #22c55e"></div>
+            <span class="swatch-label">Green (Gain)</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #ef4444"></div>
+            <span class="swatch-label">Red (Loss)</span>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background: #f59e0b"></div>
+            <span class="swatch-label">Gold (Accent)</span>
+          </div>
+        </div>
+
+        <h3>Typography</h3>
+        <div class="spec-grid">
+          <div class="spec-card">
+            <h4>Instrument Serif</h4>
+            <p>
+              Display font for headings, logo, and editorial elements. Provides
+              sophistication while maintaining readability.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>DM Sans</h4>
+            <p>
+              Primary UI font for body text, labels, and interface elements.
+              Clean and modern with excellent legibility.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>JetBrains Mono</h4>
+            <p>
+              Monospace font for all numerical data, stock symbols, prices, and
+              percentages. Ensures consistent character width for easy scanning.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Layout Specification -->
+      <section class="spec-section">
+        <h2>Layout Architecture</h2>
+        <p>
+          The new layout uses a three-column design with a fixed navigation
+          header and scrolling ticker. This maximizes information density while
+          maintaining clear visual hierarchy.
+        </p>
+
+        <div class="layout-diagram">
+          <div class="layout-grid">
+            <div class="layout-cell nav">
+              TOP NAVIGATION<br /><small
+                >Logo • Nav Links • Search • Profile</small
+              >
+            </div>
+            <div class="layout-cell ticker">
+              STOCK TICKER STRIP<br /><small
+                >Horizontally scrolling real-time prices</small
+              >
+            </div>
+            <div class="layout-cell sidebar-l">
+              LEFT SIDEBAR<br /><small>320px fixed</small><br /><br />News
+              Feed<br />Filtered Headlines
+            </div>
+            <div class="layout-cell main">
+              MAIN CONTENT AREA<br /><small>Fluid width</small
+              ><br /><br />Portfolio Summary Cards<br />Market Heat Map<br />Top
+              Gainers/Losers
+            </div>
+            <div class="layout-cell sidebar-r">
+              RIGHT SIDEBAR<br /><small>340px fixed</small
+              ><br /><br />Watchlist<br />Activity Feed<br />Quick Actions
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">
+          <h4>Key Layout Changes</h4>
+          <p>
+            Grid template: <code>grid-template-columns: 320px 1fr 340px</code>.
+            The center column is fluid and will adapt to screen size. Sidebars
+            remain fixed width to maintain consistent information density.
+            Minimum recommended viewport: 1280px.
+          </p>
+        </div>
+      </section>
+
+      <!-- Component Comparison -->
+      <section class="spec-section">
+        <h2>Component Improvements</h2>
+
+        <div class="comparison">
+          <div class="comparison-item">
+            <h4>Heat Map <span class="badge before">Before</span></h4>
+            <ul class="comparison-list">
+              <li>Only 6 boxes with minimal data</li>
+              <li>No clear sector organization</li>
+              <li>Limited color variation</li>
+              <li>No interactivity</li>
+              <li>Wastes valuable screen real estate</li>
+            </ul>
+          </div>
+          <div class="comparison-item">
+            <h4>Heat Map <span class="badge after">After</span></h4>
+            <ul class="comparison-list">
+              <li>Full grid showing 20+ stocks</li>
+              <li>Organized by sector or watchlist</li>
+              <li>7-level color gradient for precision</li>
+              <li>Hover states with detailed info</li>
+              <li>Click to navigate to stock detail</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="comparison">
+          <div class="comparison-item">
+            <h4>News Section <span class="badge before">Before</span></h4>
+            <ul class="comparison-list">
+              <li>Plain text headlines</li>
+              <li>No visual hierarchy</li>
+              <li>Missing related tickers</li>
+              <li>Inconsistent spacing</li>
+              <li>No source indicators</li>
+            </ul>
+          </div>
+          <div class="comparison-item">
+            <h4>News Section <span class="badge after">After</span></h4>
+            <ul class="comparison-list">
+              <li>Card-based layout with hover states</li>
+              <li>Source badges with color coding</li>
+              <li>Related ticker tags on each story</li>
+              <li>Consistent 16px gap rhythm</li>
+              <li>Time indicators with relative formatting</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="comparison">
+          <div class="comparison-item">
+            <h4>Stock Ticker <span class="badge before">Before</span></h4>
+            <ul class="comparison-list">
+              <li>Cramped spacing</li>
+              <li>Hard to distinguish stocks</li>
+              <li>No visual separation</li>
+              <li>Plain text styling</li>
+            </ul>
+          </div>
+          <div class="comparison-item">
+            <h4>Stock Ticker <span class="badge after">After</span></h4>
+            <ul class="comparison-list">
+              <li>32px gap between items</li>
+              <li>Monospace font for alignment</li>
+              <li>Color-coded change badges</li>
+              <li>Subtle background containers</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Mockup -->
+      <section class="spec-section">
+        <h2>Interactive Mockup</h2>
+        <p>
+          Below is a fully styled mockup showing the redesigned dashboard. All
+          components are built with the actual CSS and can be used as reference
+          for implementation.
+        </p>
+
+        <div class="mockup-container">
+          <div class="mockup-label">
+            Live Preview — Fundthesis Dashboard Redesign
+          </div>
+
+          <div class="dashboard">
+            <!-- Top Navigation -->
+            <nav class="top-nav">
+              <div class="nav-left">
+                <div class="logo">Fund<span>thesis</span></div>
+                <div class="nav-links">
+                  <a href="#" class="nav-link active">Dashboard</a>
+                  <a href="#" class="nav-link">Discover</a>
+                  <a href="#" class="nav-link">Insights</a>
+                  <a href="#" class="nav-link">Missions</a>
+                  <a href="#" class="nav-link">Debrief</a>
+                  <a href="#" class="nav-link">Mentor</a>
+                </div>
+              </div>
+              <div class="nav-right">
+                <div class="search-bar">
+                  <span class="search-icon">⌘</span>
+                  <input type="text" placeholder="Search stocks, news..." />
+                </div>
+                <div class="avatar">AB</div>
+              </div>
+            </nav>
+
+            <!-- Ticker Strip -->
+            <div class="ticker-strip">
+              <div class="ticker-item">
+                <span class="ticker-symbol">AAPL</span>
+                <span class="ticker-price">$243.56</span>
+                <span class="ticker-change up">+1.24%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">MSFT</span>
+                <span class="ticker-price">$418.92</span>
+                <span class="ticker-change up">+0.87%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">GOOGL</span>
+                <span class="ticker-price">$322.43</span>
+                <span class="ticker-change up">+2.50%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">NVDA</span>
+                <span class="ticker-price">$142.18</span>
+                <span class="ticker-change down">-1.32%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">AMZN</span>
+                <span class="ticker-price">$224.87</span>
+                <span class="ticker-change up">+0.45%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">META</span>
+                <span class="ticker-price">$612.34</span>
+                <span class="ticker-change down">-0.78%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">TSLA</span>
+                <span class="ticker-price">$248.92</span>
+                <span class="ticker-change up">+3.21%</span>
+              </div>
+              <div class="ticker-item">
+                <span class="ticker-symbol">JPM</span>
+                <span class="ticker-price">$326.99</span>
+                <span class="ticker-change down">-1.25%</span>
+              </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+              <!-- Left Sidebar - News -->
+              <aside class="sidebar-left">
+                <div class="section-header">
+                  <span class="section-title">Market News</span>
+                  <a href="#" class="section-action">View All →</a>
+                </div>
+
+                <div class="news-list">
+                  <article class="news-item">
+                    <div class="news-source">
+                      <span class="news-source-dot"></span>
+                      <span class="news-source-name">Reuters</span>
+                      <span class="news-time">12m ago</span>
+                    </div>
+                    <h3 class="news-headline">
+                      Fed signals potential rate cuts in Q2 as inflation cools
+                    </h3>
+                    <div class="news-tickers">
+                      <span class="news-ticker-tag">$SPY</span>
+                      <span class="news-ticker-tag">$TLT</span>
+                    </div>
+                  </article>
+
+                  <article class="news-item">
+                    <div class="news-source">
+                      <span
+                        class="news-source-dot"
+                        style="background: #3b82f6"
+                      ></span>
+                      <span class="news-source-name">Bloomberg</span>
+                      <span class="news-time">28m ago</span>
+                    </div>
+                    <h3 class="news-headline">
+                      NVIDIA unveils next-gen AI chips at CES 2026
+                    </h3>
+                    <div class="news-tickers">
+                      <span class="news-ticker-tag">$NVDA</span>
+                      <span class="news-ticker-tag">$AMD</span>
+                    </div>
+                  </article>
+
+                  <article class="news-item">
+                    <div class="news-source">
+                      <span
+                        class="news-source-dot"
+                        style="background: #22c55e"
+                      ></span>
+                      <span class="news-source-name">WSJ</span>
+                      <span class="news-time">1h ago</span>
+                    </div>
+                    <h3 class="news-headline">
+                      Apple reportedly in talks to acquire AI startup for $2B
+                    </h3>
+                    <div class="news-tickers">
+                      <span class="news-ticker-tag">$AAPL</span>
+                    </div>
+                  </article>
+
+                  <article class="news-item">
+                    <div class="news-source">
+                      <span
+                        class="news-source-dot"
+                        style="background: #ef4444"
+                      ></span>
+                      <span class="news-source-name">CNBC</span>
+                      <span class="news-time">2h ago</span>
+                    </div>
+                    <h3 class="news-headline">
+                      Tesla deliveries beat expectations in Q4 2025
+                    </h3>
+                    <div class="news-tickers">
+                      <span class="news-ticker-tag">$TSLA</span>
+                    </div>
+                  </article>
+
+                  <article class="news-item">
+                    <div class="news-source">
+                      <span class="news-source-dot"></span>
+                      <span class="news-source-name">FT</span>
+                      <span class="news-time">3h ago</span>
+                    </div>
+                    <h3 class="news-headline">
+                      European markets rally on positive economic data
+                    </h3>
+                    <div class="news-tickers">
+                      <span class="news-ticker-tag">$VGK</span>
+                      <span class="news-ticker-tag">$EFA</span>
+                    </div>
+                  </article>
+                </div>
+              </aside>
+
+              <!-- Main Center Content -->
+              <main class="main-center">
+                <!-- Portfolio Summary -->
+                <div class="portfolio-summary">
+                  <div class="summary-card">
+                    <div class="summary-label">Portfolio Value</div>
+                    <div class="summary-value">$124,832</div>
+                    <div class="summary-change up">↑ $2,341 (1.91%)</div>
+                  </div>
+                  <div class="summary-card">
+                    <div class="summary-label">Day's P&L</div>
+                    <div class="summary-value">+$1,847</div>
+                    <div class="summary-change up">↑ 1.50%</div>
+                  </div>
+                  <div class="summary-card">
+                    <div class="summary-label">Open Positions</div>
+                    <div class="summary-value">12</div>
+                    <div class="summary-change">8 ↑ · 4 ↓</div>
+                  </div>
+                  <div class="summary-card">
+                    <div class="summary-label">Cash Available</div>
+                    <div class="summary-value">$18,420</div>
+                    <div class="summary-change">14.7% of portfolio</div>
+                  </div>
+                </div>
+
+                <!-- Heat Map -->
+                <div class="heatmap-section">
+                  <div class="section-header">
+                    <span class="section-title">Market Heat Map</span>
+                    <a href="#" class="section-action">Customize →</a>
+                  </div>
+
+                  <div class="heatmap-grid">
+                    <div class="heatmap-cell gain-high">
+                      <span class="heatmap-symbol">INTC</span>
+                      <span class="heatmap-change">+6.10%</span>
+                    </div>
+                    <div class="heatmap-cell gain-med">
+                      <span class="heatmap-symbol">ABBV</span>
+                      <span class="heatmap-change">+3.63%</span>
+                    </div>
+                    <div class="heatmap-cell gain-med">
+                      <span class="heatmap-symbol">TSLA</span>
+                      <span class="heatmap-change">+3.21%</span>
+                    </div>
+                    <div class="heatmap-cell gain-med">
+                      <span class="heatmap-symbol">LLY</span>
+                      <span class="heatmap-change">+2.89%</span>
+                    </div>
+                    <div class="heatmap-cell gain-low">
+                      <span class="heatmap-symbol">BMY</span>
+                      <span class="heatmap-change">+2.68%</span>
+                    </div>
+                    <div class="heatmap-cell gain-low">
+                      <span class="heatmap-symbol">GOOG</span>
+                      <span class="heatmap-change">+2.50%</span>
+                    </div>
+                    <div class="heatmap-cell gain-low">
+                      <span class="heatmap-symbol">AAPL</span>
+                      <span class="heatmap-change">+1.24%</span>
+                    </div>
+                    <div class="heatmap-cell gain-low">
+                      <span class="heatmap-symbol">MSFT</span>
+                      <span class="heatmap-change">+0.87%</span>
+                    </div>
+                    <div class="heatmap-cell gain-low">
+                      <span class="heatmap-symbol">AMZN</span>
+                      <span class="heatmap-change">+0.45%</span>
+                    </div>
+                    <div class="heatmap-cell neutral">
+                      <span class="heatmap-symbol">WMT</span>
+                      <span class="heatmap-change">+0.12%</span>
+                    </div>
+                    <div class="heatmap-cell neutral">
+                      <span class="heatmap-symbol">KO</span>
+                      <span class="heatmap-change">-0.08%</span>
+                    </div>
+                    <div class="heatmap-cell loss-low">
+                      <span class="heatmap-symbol">PG</span>
+                      <span class="heatmap-change">-0.36%</span>
+                    </div>
+                    <div class="heatmap-cell loss-low">
+                      <span class="heatmap-symbol">META</span>
+                      <span class="heatmap-change">-0.78%</span>
+                    </div>
+                    <div class="heatmap-cell loss-med">
+                      <span class="heatmap-symbol">XOM</span>
+                      <span class="heatmap-change">-1.09%</span>
+                    </div>
+                    <div class="heatmap-cell loss-med">
+                      <span class="heatmap-symbol">JPM</span>
+                      <span class="heatmap-change">-1.25%</span>
+                    </div>
+                    <div class="heatmap-cell loss-med">
+                      <span class="heatmap-symbol">NVDA</span>
+                      <span class="heatmap-change">-1.32%</span>
+                    </div>
+                    <div class="heatmap-cell loss-high">
+                      <span class="heatmap-symbol">UNH</span>
+                      <span class="heatmap-change">-2.09%</span>
+                    </div>
+                    <div class="heatmap-cell loss-high">
+                      <span class="heatmap-symbol">CVX</span>
+                      <span class="heatmap-change">-2.24%</span>
+                    </div>
+                    <div class="heatmap-cell loss-high">
+                      <span class="heatmap-symbol">BA</span>
+                      <span class="heatmap-change">-2.87%</span>
+                    </div>
+                    <div class="heatmap-cell loss-high">
+                      <span class="heatmap-symbol">DIS</span>
+                      <span class="heatmap-change">-3.12%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Top Movers -->
+                <div class="movers-section">
+                  <div class="movers-card">
+                    <div class="section-header">
+                      <span class="section-title">Top Gainers</span>
+                    </div>
+                    <div class="movers-list">
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">1</span>
+                          <div class="mover-details">
+                            <h5>INTC</h5>
+                            <span>Intel Corporation</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$42.63</div>
+                          <div class="mover-change up">+6.10%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">2</span>
+                          <div class="mover-details">
+                            <h5>ABBV</h5>
+                            <span>AbbVie Inc.</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$233.42</div>
+                          <div class="mover-change up">+3.63%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">3</span>
+                          <div class="mover-details">
+                            <h5>TSLA</h5>
+                            <span>Tesla Inc.</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$248.92</div>
+                          <div class="mover-change up">+3.21%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">4</span>
+                          <div class="mover-details">
+                            <h5>LLY</h5>
+                            <span>Eli Lilly</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$1,108.09</div>
+                          <div class="mover-change up">+2.89%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="movers-card">
+                    <div class="section-header">
+                      <span class="section-title">Top Losers</span>
+                    </div>
+                    <div class="movers-list">
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">1</span>
+                          <div class="mover-details">
+                            <h5>DIS</h5>
+                            <span>Walt Disney Co.</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$98.45</div>
+                          <div class="mover-change down">-3.12%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">2</span>
+                          <div class="mover-details">
+                            <h5>BA</h5>
+                            <span>Boeing Co.</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$176.23</div>
+                          <div class="mover-change down">-2.87%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">3</span>
+                          <div class="mover-details">
+                            <h5>CVX</h5>
+                            <span>Chevron Corp.</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$155.20</div>
+                          <div class="mover-change down">-2.24%</div>
+                        </div>
+                      </div>
+                      <div class="mover-item">
+                        <div class="mover-info">
+                          <span class="mover-rank">4</span>
+                          <div class="mover-details">
+                            <h5>UNH</h5>
+                            <span>UnitedHealth</span>
+                          </div>
+                        </div>
+                        <div class="mover-stats">
+                          <div class="mover-price">$341.70</div>
+                          <div class="mover-change down">-2.09%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+
+              <!-- Right Sidebar -->
+              <aside class="sidebar-right">
+                <div class="section-header">
+                  <span class="section-title">Watchlist</span>
+                  <a href="#" class="section-action">Edit →</a>
+                </div>
+
+                <div class="watchlist-item">
+                  <div class="watchlist-info">
+                    <h5>AAPL</h5>
+                    <span>Apple Inc.</span>
+                  </div>
+                  <div class="watchlist-stats">
+                    <div class="watchlist-price">$243.56</div>
+                    <div class="watchlist-change up">+1.24%</div>
+                  </div>
+                </div>
+
+                <div class="watchlist-item">
+                  <div class="watchlist-info">
+                    <h5>NVDA</h5>
+                    <span>NVIDIA Corp.</span>
+                  </div>
+                  <div class="watchlist-stats">
+                    <div class="watchlist-price">$142.18</div>
+                    <div class="watchlist-change down">-1.32%</div>
+                  </div>
+                </div>
+
+                <div class="watchlist-item">
+                  <div class="watchlist-info">
+                    <h5>MSFT</h5>
+                    <span>Microsoft Corp.</span>
+                  </div>
+                  <div class="watchlist-stats">
+                    <div class="watchlist-price">$418.92</div>
+                    <div class="watchlist-change up">+0.87%</div>
+                  </div>
+                </div>
+
+                <div class="watchlist-item">
+                  <div class="watchlist-info">
+                    <h5>GOOGL</h5>
+                    <span>Alphabet Inc.</span>
+                  </div>
+                  <div class="watchlist-stats">
+                    <div class="watchlist-price">$322.43</div>
+                    <div class="watchlist-change up">+2.50%</div>
+                  </div>
+                </div>
+
+                <div class="watchlist-item">
+                  <div class="watchlist-info">
+                    <h5>AMZN</h5>
+                    <span>Amazon.com</span>
+                  </div>
+                  <div class="watchlist-stats">
+                    <div class="watchlist-price">$224.87</div>
+                    <div class="watchlist-change up">+0.45%</div>
+                  </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="activity-section">
+                  <div class="section-header">
+                    <span class="section-title">Recent Activity</span>
+                  </div>
+
+                  <div class="activity-item">
+                    <div class="activity-icon">📈</div>
+                    <div class="activity-content">
+                      <div class="activity-text">
+                        <strong>INTC</strong> hit 52-week high at $42.63
+                      </div>
+                      <div class="activity-time">5 minutes ago</div>
+                    </div>
+                  </div>
+
+                  <div class="activity-item">
+                    <div class="activity-icon">🎯</div>
+                    <div class="activity-content">
+                      <div class="activity-text">
+                        Price alert triggered: <strong>TSLA</strong> above $245
+                      </div>
+                      <div class="activity-time">23 minutes ago</div>
+                    </div>
+                  </div>
+
+                  <div class="activity-item">
+                    <div class="activity-icon">📊</div>
+                    <div class="activity-content">
+                      <div class="activity-text">
+                        <strong>AAPL</strong> earnings call scheduled for Jan 30
+                      </div>
+                      <div class="activity-time">1 hour ago</div>
+                    </div>
+                  </div>
+
+                  <div class="activity-item">
+                    <div class="activity-icon">⚡</div>
+                    <div class="activity-content">
+                      <div class="activity-text">
+                        Mission completed: "Tech Giants Analysis"
+                      </div>
+                      <div class="activity-time">2 hours ago</div>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Implementation Notes -->
+      <section class="spec-section">
+        <h2>Implementation Guidelines</h2>
+
+        <div class="spec-grid">
+          <div class="spec-card">
+            <h4>Spacing System</h4>
+            <p>
+              Use a 4px base unit. Common values: 8px (small gaps), 16px
+              (component padding), 24px (section spacing), 32px (major
+              sections). This creates visual rhythm and consistency.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Border Radius</h4>
+            <p>
+              Cards and containers: 12px. Buttons and inputs: 8px. Tags and
+              badges: 4px. Mini elements: 4px. Keep consistent across all
+              components.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Transitions</h4>
+            <p>
+              Use 200ms duration for hover states. Apply ease-out easing for
+              natural feel. Properties: background-color, border-color,
+              transform, opacity.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Responsive Breakpoints</h4>
+            <p>
+              1280px+ : Full 3-column layout. 1024px: Collapse right sidebar.
+              768px: Single column, stacked sections. 480px: Mobile-optimized
+              cards.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Data Formatting</h4>
+            <p>
+              Prices: Always 2 decimal places. Percentages: 2 decimals with sign
+              (+/-). Large numbers: Use K/M/B suffixes. Dates: Relative ("2h
+              ago") for recent.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Accessibility</h4>
+            <p>
+              Maintain 4.5:1 contrast ratio for text. Add focus states to all
+              interactive elements. Use semantic HTML. Support keyboard
+              navigation throughout.
+            </p>
+          </div>
+        </div>
+
+        <div class="annotation">
+          <h4>CSS Variables for Theming</h4>
+          <p>
+            All colors should use CSS custom properties to enable easy theming.
+            If you want to support a light mode toggle, you can swap the
+            variable values on <code>:root</code> or a
+            <code>[data-theme="light"]</code> selector.
+          </p>
+        </div>
+      </section>
+
+      <!-- New Components -->
+      <section class="spec-section">
+        <h2>Recommended New Components</h2>
+
+        <div class="spec-grid">
+          <div class="spec-card">
+            <h4>Sparkline Charts</h4>
+            <p>
+              Add mini inline charts (60x24px) next to watchlist items showing
+              24-hour price movement. Use SVG paths with the accent colors.
+              Provides quick visual trend without cluttering the UI.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Quick Actions Bar</h4>
+            <p>
+              Floating action button cluster in bottom-right corner. Actions:
+              Quick trade, Set alert, Add to watchlist, Share analysis. Use a
+              FAB pattern with expandable menu.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Portfolio Donut Chart</h4>
+            <p>
+              Add a sector allocation visualization in the portfolio summary
+              area. Interactive segments showing holdings by category. Hover
+              reveals exact percentage and value.
+            </p>
+          </div>
+          <div class="spec-card">
+            <h4>Command Palette</h4>
+            <p>
+              Keyboard-triggered search (⌘K) for power users. Search stocks,
+              navigate pages, execute actions. Shows recent searches and
+              suggestions.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

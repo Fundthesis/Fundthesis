@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useStocks } from "@/lib/hooks/useStocks";
 
@@ -46,74 +46,70 @@ export function PerformersSection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Best Performers
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-16 bg-gray-200 rounded"></div>
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>{error instanceof Error ? error.message : "Failed to load top performers"}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 text-[#9DB38A] hover:underline"
+    <NewspaperSection title="Best Performers">
+      {isLoading ? (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-14 bg-stone-200"></div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif text-sm text-stone-600">
+            {error instanceof Error ? error.message : "Failed to load top performers"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-xs uppercase tracking-widest text-black hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : stocks.length === 0 ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif italic text-sm text-stone-600">No top performers available</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {stocks.slice(0, 5).map((stock) => (
+            <Link
+              key={stock.symbol}
+              href={`/discover?symbol=${stock.symbol}`}
+              className="block p-3 border border-stone-200 hover:border-black hover:bg-stone-50 transition-all group rounded-sm"
             >
-              Try again
-            </button>
-          </div>
-        ) : stocks.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No top performers available
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {stocks.map((stock) => (
-              <Link
-                key={stock.symbol}
-                href={`/discover?symbol=${stock.symbol}`}
-                className="block p-3 rounded-lg border border-gray-200 hover:border-[#9DB38A] hover:bg-gray-50 transition-all group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-gray-900">{stock.symbol}</span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                        #{stock.rank}
-                      </span>
-                    </div>
-                    {stock.company && (
-                      <p className="text-sm text-gray-600 truncate">{stock.company}</p>
-                    )}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-serif font-bold text-sm text-black">{stock.symbol}</span>
+                    <span className="text-xs text-stone-500 bg-stone-100 px-2 py-1 uppercase tracking-wide">
+                      #{stock.rank}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-4 ml-4">
-                    <div className="text-right">
-                      <div className="font-semibold text-gray-900">
-                        {formatPrice(stock.price)}
-                      </div>
-                      <div className="text-sm text-green-600 font-medium flex items-center gap-1">
-                        <ArrowUpRight className="w-3 h-3" />
-                        {formatChange(stock.change, stock.changePercent)}
-                      </div>
+                  {stock.company && (
+                    <p className="text-xs text-stone-600 truncate font-serif italic">
+                      {stock.company}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 ml-3">
+                  <div className="text-right">
+                    <div className="font-serif font-bold text-sm text-black">
+                      {formatPrice(stock.price)}
+                    </div>
+                    <div className="text-xs text-green-700 font-bold flex items-center gap-1">
+                      <ArrowUpRight className="w-3 h-3" />
+                      {formatChange(stock.change, stock.changePercent)}
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </NewspaperSection>
   );
 }
 

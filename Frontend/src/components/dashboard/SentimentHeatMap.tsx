@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { TrendingUp } from "lucide-react";
+import { NewspaperSection } from "@/components/ui/NewspaperSection";
 import {
   useSentimentHeatmap,
   type HeatMapItem,
@@ -20,135 +19,137 @@ export function SentimentHeatMap() {
   const heatmapData = data?.data || [];
 
   const getSentimentColor = (sentiment: number): string => {
-    // Map sentiment from -1 to 1 to color gradient
-    // Red (negative) -> Gray (neutral) -> Green (positive)
-    if (sentiment >= 0.1) {
-      // Positive - green gradient
-      const intensity = Math.min(sentiment, 1.0);
-      const green = Math.floor(100 + intensity * 155);
-      return `rgb(34, ${green}, 76)`;
-    } else if (sentiment <= -0.1) {
-      // Negative - red gradient
-      const intensity = Math.min(Math.abs(sentiment), 1.0);
-      const red = Math.floor(100 + intensity * 155);
-      return `rgb(${red}, 34, 34)`;
+    // 7-level color gradient system based on sentiment score
+    if (sentiment >= 0.5) {
+      return "#22c55e"; // Green - Strong positive
+    } else if (sentiment >= 0.2) {
+      return "rgba(34, 197, 94, 0.6)"; // Medium positive
+    } else if (sentiment >= 0.05) {
+      return "rgba(34, 197, 94, 0.3)"; // Low positive
+    } else if (sentiment >= -0.05) {
+      return "#71717a"; // Gray - Neutral
+    } else if (sentiment >= -0.2) {
+      return "rgba(239, 68, 68, 0.3)"; // Low negative
+    } else if (sentiment >= -0.5) {
+      return "rgba(239, 68, 68, 0.6)"; // Medium negative
     } else {
-      // Neutral - gray
-      return `rgb(128, 128, 128)`;
+      return "#ef4444"; // Red - Strong negative
     }
   };
 
-  const getBlockSize = (articleCount: number): string => {
-    // Scale block size based on article count (min 40px, max 80px)
-    const minSize = 40;
-    const maxSize = 80;
+  const getSentimentPercentage = (sentiment: number): string => {
+    const percentage = (sentiment * 100).toFixed(1);
+    return sentiment >= 0 ? `+${percentage}%` : `${percentage}%`;
+  };
+
+  const getBlockOpacity = (articleCount: number): number => {
     const maxArticles = Math.max(
       ...heatmapData.map((item: HeatMapItem) => item.articleCount),
       1
     );
-    const ratio = articleCount / maxArticles;
-    const size = minSize + (maxSize - minSize) * ratio;
-    return `${size}px`;
+    return 0.7 + (articleCount / maxArticles) * 0.3;
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Market Sentiment Heat Map
-          </CardTitle>
-          <div className="flex gap-2">
-            {(["1d", "1w", "1m"] as const).map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setTimeframe(tf)}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                  timeframe === tf
-                    ? "bg-[#9DB38A] text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {tf === "1d" ? "Today" : tf === "1w" ? "Week" : "Month"}
-              </button>
-            ))}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="grid grid-cols-8 gap-2">
-            {[...Array(24)].map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse bg-gray-200 rounded aspect-square"
-              ></div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>
-              {error instanceof Error
-                ? error.message
-                : "Failed to load sentiment heatmap"}
-            </p>
+    <NewspaperSection title="Market Sentiment Heat Map">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-2">
+          {(["1d", "1w", "1m"] as const).map((tf) => (
             <button
-              onClick={() => window.location.reload()}
-              className="mt-2 text-[#9DB38A] hover:underline"
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              className={`px-3 py-1.5 text-xs uppercase tracking-widest transition-colors border ${
+                timeframe === tf
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-stone-700 border-stone-300 hover:border-black"
+              }`}
             >
-              Try again
+              {tf === "1d" ? "Today" : tf === "1w" ? "Week" : "Month"}
             </button>
-          </div>
-        ) : heatmapData.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          ))}
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-8 gap-1">
+          {[...Array(24)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-stone-200 rounded-sm"
+              style={{ aspectRatio: "1.5" }}
+            />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif text-sm text-stone-600">
+            {error instanceof Error
+              ? error.message
+              : "Failed to load sentiment heatmap"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-xs uppercase tracking-widest text-black hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : heatmapData.length === 0 ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif italic text-sm text-stone-600">
             No sentiment data available
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-8 gap-2 mb-4">
-              {heatmapData.slice(0, 32).map((item: HeatMapItem) => (
-                <div
-                  key={item.ticker}
-                  className="rounded-lg cursor-pointer hover:scale-105 transition-transform relative group"
-                  style={{
-                    backgroundColor: getSentimentColor(item.sentiment),
-                    minHeight: getBlockSize(item.articleCount),
-                    aspectRatio: "1",
-                  }}
-                  title={`${item.ticker}: ${item.sentimentLabel} (${item.articleCount} articles)`}
-                >
-                  <div className="absolute inset-0 flex items-center justify-center text-white font-semibold text-xs opacity-90">
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-8 gap-1 mb-4">
+            {heatmapData.slice(0, 24).map((item: HeatMapItem) => (
+              <div
+                key={item.ticker}
+                className="cursor-pointer transition-all relative group border border-stone-300 hover:border-black hover:z-10 hover:shadow-md rounded-sm"
+                style={{
+                  backgroundColor: getSentimentColor(item.sentiment),
+                  opacity: getBlockOpacity(item.articleCount),
+                  aspectRatio: "1.5",
+                }}
+                title={`${item.ticker}: ${item.sentimentLabel} (${
+                  item.articleCount
+                } articles, ${getSentimentPercentage(item.sentiment)})`}
+              >
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="font-mono font-bold text-white text-xs leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     {item.ticker}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-[10px] px-1 py-0.5 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    {item.sentimentLabel}
+                  <div className="font-mono text-white text-[10px] mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {getSentimentPercentage(item.sentiment)}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between text-xs text-gray-600 pt-4 border-t">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-red-600"></div>
-                  <span>Negative</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-gray-500"></div>
-                  <span>Neutral</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-green-600"></div>
-                  <span>Positive</span>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-[9px] px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-wide text-center truncate">
+                  {item.sentimentLabel}
                 </div>
               </div>
-              <span className="text-gray-500">
-                {heatmapData.length} companies
-              </span>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-xs text-stone-600 pt-3 border-t border-stone-200 uppercase tracking-wide">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-red-600" />
+                <span>Loss</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-stone-500" />
+                <span>Neutral</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-600" />
+                <span>Gain</span>
+              </div>
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            <span className="text-stone-500 font-semibold">
+              {heatmapData.length} companies
+            </span>
+          </div>
+        </>
+      )}
+    </NewspaperSection>
   );
 }
