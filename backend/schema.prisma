@@ -1,11 +1,11 @@
 generator client {
     provider                    = "prisma-client-py"
     enable_experimental_decimal = true
-    previewFeatures             = ["multiSchema"]
 }
 
 datasource db {
     provider = "postgresql"
+    url      = env("DATABASE_URL")
     schemas  = ["public", "auth", "vault"]
 }
 
