@@ -61,29 +61,29 @@ async def insert_article(
     # Convert tickers list to comma-separated string
     tickers_str = ','.join(tickers) if tickers else None
 
-    # Build payload
+    # Build payload - use camelCase field names for Prisma Python client
     data = {
         "category": article_db.get('category'),
-        "published_at": published_iso,
+        "publishedAt": published_iso,
         "headline": article_db.get('headline'),
         "related": article_db.get('related'),
         "source": article_db.get('source'),
         "summary": article_db.get('summary'),
-        "full_text": text,
+        "fullText": text,
         "url": meta.get("best_url") or article_db.get('url'),
         "label": sentiment_label,  # Will be None initially, updated by sentiment job
-        "inserted_at": datetime.now(timezone.utc),
-        "fetch_status": f"{status}:{http_status}|{meta.get('used_extractor')}|html={meta.get('html_len')}",
-        "fetch_error": error,
-        "source_domain": domain,
+        "insertedAt": datetime.now(timezone.utc),
+        "fetchStatus": f"{status}:{http_status}|{meta.get('used_extractor')}|html={meta.get('html_len')}",
+        "fetchError": error,
+        "sourceDomain": domain,
         "tickers": tickers_str
     }
 
-    # Add sqlite_id/article_id if numeric
+    # Add sqliteId/articleId if numeric
     art_id = article_db.get('id')
     if isinstance(art_id, (int, float)) or (isinstance(art_id, str) and art_id.isdigit()):
-        data["sqlite_id"] = str(art_id)
-        data["article_id"] = str(art_id)
+        data["sqliteId"] = str(art_id)
+        data["articleId"] = str(art_id)
 
     # Upsert
     if not db.is_connected():

@@ -55,8 +55,8 @@ async def get_recent_news():
         twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
         
         articles = await db.article.find_many(
-            where={'published_at': {'gte': twenty_four_hours_ago}},
-            order={'published_at': 'desc'},
+            where={'publishedAt': {'gte': twenty_four_hours_ago}},
+            order={'publishedAt': 'desc'},
             take=100
         )
         
@@ -64,22 +64,22 @@ async def get_recent_news():
         if not articles:
             forty_eight_hours_ago = datetime.now(timezone.utc) - timedelta(hours=48)
             articles = await db.article.find_many(
-                where={'published_at': {'gte': forty_eight_hours_ago}},
-                order={'published_at': 'desc'},
+                where={'publishedAt': {'gte': forty_eight_hours_ago}},
+                order={'publishedAt': 'desc'},
                 take=100
             )
         
         if not articles:
             seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
             articles = await db.article.find_many(
-                where={'published_at': {'gte': seven_days_ago}},
-                order={'published_at': 'desc'},
+                where={'publishedAt': {'gte': seven_days_ago}},
+                order={'publishedAt': 'desc'},
                 take=100
             )
         
         if not articles:
             articles = await db.article.find_many(
-                order={'published_at': 'desc'},
+                order={'publishedAt': 'desc'},
                 take=20
             )
         
@@ -99,7 +99,7 @@ async def get_recent_news():
             if not tickers:
                 headline = article.get('headline', '') or ''
                 summary = article.get('summary', '') or ''
-                full_text = article.get('full_text', '') or ''
+                full_text = article.get('fullText', '') or ''
                 full_text_snippet = full_text[:500] if full_text else ''
                 combined_text = f"{headline} {summary} {full_text_snippet}"
                 tickers = extract_tickers_from_text(combined_text)
@@ -147,7 +147,7 @@ async def get_article_detail(article_id: str):
         if not tickers:
             headline = article.get('headline', '')
             summary = article.get('summary', '')
-            full_text = article.get('full_text', '')
+            full_text = article.get('fullText', '')
             combined_text = f"{headline} {summary} {full_text[:500]}"
             tickers = extract_tickers_from_text(combined_text)
         
@@ -188,18 +188,18 @@ async def get_articles_by_ticker(
         articles = await db.article.find_many(
             where={
                 'AND': [
-                    {'published_at': {'gte': time_threshold}},
+                    {'publishedAt': {'gte': time_threshold}},
                     {
                         'OR': [
                             {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
                             {'headline': {'contains': ticker, 'mode': 'insensitive'}},
                             {'summary': {'contains': ticker, 'mode': 'insensitive'}},
-                            {'full_text': {'contains': ticker, 'mode': 'insensitive'}}
+                            {'fullText': {'contains': ticker, 'mode': 'insensitive'}}
                         ]
                     }
                 ]
             },
-            order={'published_at': 'desc'},
+            order={'publishedAt': 'desc'},
             take=limit
         )
         
@@ -210,10 +210,10 @@ async def get_articles_by_ticker(
                         {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
                         {'headline': {'contains': ticker, 'mode': 'insensitive'}},
                         {'summary': {'contains': ticker, 'mode': 'insensitive'}},
-                        {'full_text': {'contains': ticker, 'mode': 'insensitive'}}
+                        {'fullText': {'contains': ticker, 'mode': 'insensitive'}}
                     ]
                 },
-                order={'published_at': 'desc'},
+                order={'publishedAt': 'desc'},
                 take=limit
             )
         
@@ -236,7 +236,7 @@ async def get_articles_by_ticker(
             if not tickers:
                 headline = article.get('headline', '') or ''
                 summary = article.get('summary', '') or ''
-                full_text = article.get('full_text', '') or ''
+                full_text = article.get('fullText', '') or ''
                 full_text_snippet = full_text[:500] if full_text else ''
                 combined_text = f"{headline} {summary} {full_text_snippet}"
                 tickers = extract_tickers_from_text(combined_text)

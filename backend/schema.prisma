@@ -1,369 +1,368 @@
 generator client {
-  provider = "prisma-client-py"
+    provider                    = "prisma-client-py"
+    enable_experimental_decimal = true
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  schemas  = ["public", "auth", "vault"]
+    provider = "postgresql"
+    schemas  = ["public", "auth", "vault"]
 }
 
 model User {
-  id                 String              @id @default(cuid())
-  name               String?
-  email              String              @unique
-  emailVerified      Boolean?            @map("email_verified")
-  image              String?
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
-  sessions           Session[]
-  accounts           Account[]
-  userAccounts       UserAccount[]
-  simulationAccounts SimulationAccount[]
+    id                 String              @id @default(cuid())
+    name               String?
+    email              String              @unique
+    emailVerified      Boolean?            @map("email_verified")
+    image              String?
+    createdAt          DateTime            @default(now()) @map("created_at")
+    updatedAt          DateTime            @updatedAt @map("updated_at")
+    sessions           Session[]
+    accounts           Account[]
+    userAccounts       UserAccount[]
+    simulationAccounts SimulationAccount[]
 
-  @@map("user")
-  @@schema("public")
+    @@map("user")
+    @@schema("public")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        String   @id @default(cuid())
+    userId    String   @map("user_id")
+    token     String   @unique
+    expiresAt DateTime @map("expires_at")
+    ipAddress String?  @map("ip_address")
+    userAgent String?  @map("user_agent")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("session")
-  @@schema("public")
+    @@map("session")
+    @@schema("public")
 }
 
 model Account {
-  id           String    @id @default(cuid())
-  userId       String    @map("user_id")
-  accountId    String    @map("account_id")
-  providerId   String    @map("provider_id")
-  accessToken  String?   @map("access_token")
-  refreshToken String?   @map("refresh_token")
-  expiresAt    DateTime? @map("expires_at")
-  password     String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id           String    @id @default(cuid())
+    userId       String    @map("user_id")
+    accountId    String    @map("account_id")
+    providerId   String    @map("provider_id")
+    accessToken  String?   @map("access_token")
+    refreshToken String?   @map("refresh_token")
+    expiresAt    DateTime? @map("expires_at")
+    password     String?
+    createdAt    DateTime  @default(now()) @map("created_at")
+    updatedAt    DateTime  @updatedAt @map("updated_at")
+    user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("account")
-  @@schema("public")
+    @@map("account")
+    @@schema("public")
 }
 
 model Verification {
-  id         String   @id @default(cuid())
-  identifier String
-  value      String
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+    id         String   @id @default(cuid())
+    identifier String
+    value      String
+    expiresAt  DateTime @map("expires_at")
+    createdAt  DateTime @default(now()) @map("created_at")
+    updatedAt  DateTime @updatedAt @map("updated_at")
 
-  @@map("verification")
-  @@schema("public")
+    @@map("verification")
+    @@schema("public")
 }
 
 model Article {
-  id            String                   @id @default(uuid())
-  url           String                   @unique
-  headline      String?
-  summary       String?
-  fullText      String?                  @map("full_text")
-  publishedAt   DateTime?                @map("published_at")
-  source        String?
-  label         String?
-  related       String?
-  category      String?
-  tickers       String?
-  insertedAt    DateTime                 @default(now()) @map("inserted_at")
-  fetchStatus   String?                  @map("fetch_status")
-  fetchError    String?                  @map("fetch_error")
-  sourceDomain  String?                  @map("source_domain")
-  sqliteId      String?                  @map("sqlite_id")
-  articleId     String?                  @map("article_id")
-  tsv           Unsupported("tsvector")? @default(dbgenerated())
+    id           String                   @id @default(uuid())
+    url          String                   @unique
+    headline     String?
+    summary      String?
+    fullText     String?                  @map("full_text")
+    publishedAt  DateTime?                @map("published_at")
+    source       String?
+    label        String?
+    related      String?
+    category     String?
+    tickers      String?
+    insertedAt   DateTime                 @default(now()) @map("inserted_at")
+    fetchStatus  String?                  @map("fetch_status")
+    fetchError   String?                  @map("fetch_error")
+    sourceDomain String?                  @map("source_domain")
+    sqliteId     String?                  @map("sqlite_id")
+    articleId    String?                  @map("article_id")
+    tsv          Unsupported("tsvector")? @default(dbgenerated())
 
-  @@map("articles")
-  @@schema("public")
+    @@map("articles")
+    @@schema("public")
 }
 
 model StockForecast {
-  id              String   @id @default(uuid())
-  symbol          String
-  priceSeries     Json?    @map("price_series")
-  forecastResults Json?    @map("forecast_results")
-  runDate         DateTime @map("run_date")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+    id              String   @id @default(uuid())
+    symbol          String
+    priceSeries     Json?    @map("price_series")
+    forecastResults Json?    @map("forecast_results")
+    runDate         DateTime @map("run_date")
+    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@index([symbol, runDate(sort: Desc)])
-  @@map("stock_forecasts")
-  @@schema("public")
+    @@index([symbol, runDate(sort: Desc)])
+    @@map("stock_forecasts")
+    @@schema("public")
 }
 
 model StockPriceSeries {
-  symbol          String   @id
-  priceSeries     Json?    @map("price_series")
-  forecastResults Json?    @map("forecast_results")
-  r2Value         Float?   @map("r2_value")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+    symbol          String   @id
+    priceSeries     Json?    @map("price_series")
+    forecastResults Json?    @map("forecast_results")
+    r2Value         Float?   @map("r2_value")
+    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@map("stock_price_series")
-  @@schema("public")
+    @@map("stock_price_series")
+    @@schema("public")
 }
 
 model StockQuoteCache {
-  symbol        String   @id
-  quoteData     Json     @map("quote_data")
-  lastFetched   DateTime @default(now()) @map("last_fetched")
-  fetchAttempts Int      @default(0) @map("fetch_attempts")
-  lastError     String?  @map("last_error")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+    symbol        String   @id
+    quoteData     Json     @map("quote_data")
+    lastFetched   DateTime @default(now()) @map("last_fetched")
+    fetchAttempts Int      @default(0) @map("fetch_attempts")
+    lastError     String?  @map("last_error")
+    updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@index([lastFetched])
-  @@map("stock_quote_cache")
-  @@schema("public")
+    @@index([lastFetched])
+    @@map("stock_quote_cache")
+    @@schema("public")
 }
 
 model UserAccount {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  stockTicker String?  @map("stock_ticker")
-  shares      Int      @default(1)
-  createdAt   DateTime @default(now()) @map("created_at")
+    id          String   @id @default(cuid())
+    userId      String   @map("user_id")
+    stockTicker String?  @map("stock_ticker")
+    shares      Int      @default(1)
+    createdAt   DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("user_account")
-  @@schema("public")
+    @@map("user_account")
+    @@schema("public")
 }
 
 // ============= SIMULATION/PAPER TRADING MODELS =============
 
 model SimulationAccount {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  name      String
-  balance   Decimal  @default(0)
-  settings  Json?
-  createdAt DateTime @default(now()) @map("created_at")
+    id        String   @id @default(uuid())
+    userId    String   @map("user_id")
+    name      String
+    balance   Decimal  @default(0)
+    settings  Json?
+    createdAt DateTime @default(now()) @map("created_at")
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  positions Position[]
-  trades    Trade[]
+    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    positions Position[]
+    trades    Trade[]
 
-  @@map("simulation_accounts")
-  @@schema("public")
+    @@map("simulation_accounts")
+    @@schema("public")
 }
 
 model Position {
-  id        String    @id @default(uuid())
-  accountId String    @map("account_id")
-  ticker    String
-  quantity  Decimal
-  avgPrice  Decimal   @map("avg_price")
-  createdAt DateTime? @default(now()) @map("created_at")
+    id        String    @id @default(uuid())
+    accountId String    @map("account_id")
+    ticker    String
+    quantity  Decimal
+    avgPrice  Decimal   @map("avg_price")
+    createdAt DateTime? @default(now()) @map("created_at")
 
-  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+    account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@map("positions")
-  @@schema("public")
+    @@map("positions")
+    @@schema("public")
 }
 
 model Trade {
-  id         String    @id @default(uuid())
-  accountId  String    @map("account_id")
-  ticker     String
-  side       String // 'buy' or 'sell'
-  price      Decimal
-  quantity   Decimal
-  executedAt DateTime? @default(now()) @map("executed_at")
+    id         String    @id @default(uuid())
+    accountId  String    @map("account_id")
+    ticker     String
+    side       String // 'buy' or 'sell'
+    price      Decimal
+    quantity   Decimal
+    executedAt DateTime? @default(now()) @map("executed_at")
 
-  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+    account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@map("trades")
-  @@schema("public")
+    @@map("trades")
+    @@schema("public")
 }
 
 // ============= STOCK PRICE CACHE =============
 
 model StockPriceCache {
-  id           String    @id @default(uuid())
-  symbol       String    @unique
-  priceHistory Json      @map("price_history")
-  updatedAt    DateTime? @default(now()) @map("updated_at")
-  createdAt    DateTime? @default(now()) @map("created_at")
+    id           String    @id @default(uuid())
+    symbol       String    @unique
+    priceHistory Json      @map("price_history")
+    updatedAt    DateTime? @default(now()) @map("updated_at")
+    createdAt    DateTime? @default(now()) @map("created_at")
 
-  @@map("stock_price_cache")
-  @@schema("public")
+    @@map("stock_price_cache")
+    @@schema("public")
 }
 
 // ============= SUPABASE AUTH MODELS =============
 
 model SupabaseUser {
-  id                          String    @id @db.Uuid
-  instanceId                  String?   @map("instance_id") @db.Uuid
-  aud                         String?
-  role                        String?
-  email                       String?
-  encryptedPassword           String?   @map("encrypted_password")
-  emailConfirmedAt            DateTime? @map("email_confirmed_at") @db.Timestamptz
-  invitedAt                   DateTime? @map("invited_at") @db.Timestamptz
-  confirmationToken           String?   @map("confirmation_token")
-  confirmationSentAt          DateTime? @map("confirmation_sent_at") @db.Timestamptz
-  recoveryToken               String?   @map("recovery_token")
-  recoverySentAt              DateTime? @map("recovery_sent_at") @db.Timestamptz
-  emailChangeTokenNew         String?   @map("email_change_token_new")
-  emailChange                 String?   @map("email_change")
-  emailChangeSentAt           DateTime? @map("email_change_sent_at") @db.Timestamptz
-  lastSignInAt                DateTime? @map("last_sign_in_at") @db.Timestamptz
-  rawAppMetaData              Json?     @map("raw_app_meta_data")
-  rawUserMetaData             Json?     @map("raw_user_meta_data")
-  isSuperAdmin                Boolean?  @map("is_super_admin")
-  createdAt                   DateTime? @map("created_at") @db.Timestamptz
-  updatedAt                   DateTime? @map("updated_at") @db.Timestamptz
-  phone                       String?   @unique
-  phoneConfirmedAt            DateTime? @map("phone_confirmed_at") @db.Timestamptz
-  phoneChange                 String?   @default("") @map("phone_change")
-  phoneChangeToken            String?   @default("") @map("phone_change_token")
-  phoneChangeSentAt           DateTime? @map("phone_change_sent_at") @db.Timestamptz
-  confirmedAt                 DateTime? @map("confirmed_at") @db.Timestamptz
-  emailChangeTokenCurrent     String?   @default("") @map("email_change_token_current")
-  emailChangeConfirmStatus    Int?      @default(0) @map("email_change_confirm_status") @db.SmallInt
-  bannedUntil                 DateTime? @map("banned_until") @db.Timestamptz
-  reauthenticationToken       String?   @default("") @map("reauthentication_token")
-  reauthenticationSentAt      DateTime? @map("reauthentication_sent_at") @db.Timestamptz
-  isSsoUser                   Boolean   @default(false) @map("is_sso_user")
-  deletedAt                   DateTime? @map("deleted_at") @db.Timestamptz
-  isAnonymous                 Boolean   @default(false) @map("is_anonymous")
+    id                       String    @id @db.Uuid
+    instanceId               String?   @map("instance_id") @db.Uuid
+    aud                      String?
+    role                     String?
+    email                    String?
+    encryptedPassword        String?   @map("encrypted_password")
+    emailConfirmedAt         DateTime? @map("email_confirmed_at") @db.Timestamptz
+    invitedAt                DateTime? @map("invited_at") @db.Timestamptz
+    confirmationToken        String?   @map("confirmation_token")
+    confirmationSentAt       DateTime? @map("confirmation_sent_at") @db.Timestamptz
+    recoveryToken            String?   @map("recovery_token")
+    recoverySentAt           DateTime? @map("recovery_sent_at") @db.Timestamptz
+    emailChangeTokenNew      String?   @map("email_change_token_new")
+    emailChange              String?   @map("email_change")
+    emailChangeSentAt        DateTime? @map("email_change_sent_at") @db.Timestamptz
+    lastSignInAt             DateTime? @map("last_sign_in_at") @db.Timestamptz
+    rawAppMetaData           Json?     @map("raw_app_meta_data")
+    rawUserMetaData          Json?     @map("raw_user_meta_data")
+    isSuperAdmin             Boolean?  @map("is_super_admin")
+    createdAt                DateTime? @map("created_at") @db.Timestamptz
+    updatedAt                DateTime? @map("updated_at") @db.Timestamptz
+    phone                    String?   @unique
+    phoneConfirmedAt         DateTime? @map("phone_confirmed_at") @db.Timestamptz
+    phoneChange              String?   @default("") @map("phone_change")
+    phoneChangeToken         String?   @default("") @map("phone_change_token")
+    phoneChangeSentAt        DateTime? @map("phone_change_sent_at") @db.Timestamptz
+    confirmedAt              DateTime? @map("confirmed_at") @db.Timestamptz
+    emailChangeTokenCurrent  String?   @default("") @map("email_change_token_current")
+    emailChangeConfirmStatus Int?      @default(0) @map("email_change_confirm_status") @db.SmallInt
+    bannedUntil              DateTime? @map("banned_until") @db.Timestamptz
+    reauthenticationToken    String?   @default("") @map("reauthentication_token")
+    reauthenticationSentAt   DateTime? @map("reauthentication_sent_at") @db.Timestamptz
+    isSsoUser                Boolean   @default(false) @map("is_sso_user")
+    deletedAt                DateTime? @map("deleted_at") @db.Timestamptz
+    isAnonymous              Boolean   @default(false) @map("is_anonymous")
 
-  identities  SupabaseIdentity[]
-  mfaFactors  SupabaseMfaFactor[]
-  sessions    SupabaseSession[]
+    identities SupabaseIdentity[]
+    mfaFactors SupabaseMfaFactor[]
+    sessions   SupabaseSession[]
 
-  @@map("users")
-  @@schema("auth")
+    @@map("users")
+    @@schema("auth")
 }
 
 model SupabaseSession {
-  id            String    @id @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  createdAt     DateTime? @map("created_at") @db.Timestamptz
-  updatedAt     DateTime? @map("updated_at") @db.Timestamptz
-  factorId      String?   @map("factor_id") @db.Uuid
-  aal           String?
-  notAfter      DateTime? @map("not_after") @db.Timestamptz
-  refreshedAt   DateTime? @map("refreshed_at") @db.Timestamp
-  userAgent     String?   @map("user_agent")
-  ip            String?
-  tag           String?
-  oauthClientId String?   @map("oauth_client_id") @db.Uuid
+    id            String    @id @db.Uuid
+    userId        String    @map("user_id") @db.Uuid
+    createdAt     DateTime? @map("created_at") @db.Timestamptz
+    updatedAt     DateTime? @map("updated_at") @db.Timestamptz
+    factorId      String?   @map("factor_id") @db.Uuid
+    aal           String?
+    notAfter      DateTime? @map("not_after") @db.Timestamptz
+    refreshedAt   DateTime? @map("refreshed_at") @db.Timestamp
+    userAgent     String?   @map("user_agent")
+    ip            String?
+    tag           String?
+    oauthClientId String?   @map("oauth_client_id") @db.Uuid
 
-  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("sessions")
-  @@schema("auth")
+    @@map("sessions")
+    @@schema("auth")
 }
 
 model AuditLogEntry {
-  instanceId String?   @map("instance_id") @db.Uuid
-  id         String    @id @db.Uuid
-  payload    Json?
-  createdAt  DateTime? @map("created_at") @db.Timestamptz
-  ipAddress  String    @default("") @map("ip_address")
+    instanceId String?   @map("instance_id") @db.Uuid
+    id         String    @id @db.Uuid
+    payload    Json?
+    createdAt  DateTime? @map("created_at") @db.Timestamptz
+    ipAddress  String    @default("") @map("ip_address")
 
-  @@map("audit_log_entries")
-  @@schema("auth")
+    @@map("audit_log_entries")
+    @@schema("auth")
 }
 
 model SupabaseIdentity {
-  providerId    String    @map("provider_id")
-  userId        String    @map("user_id") @db.Uuid
-  identityData  Json      @map("identity_data")
-  provider      String
-  lastSignInAt  DateTime? @map("last_sign_in_at") @db.Timestamptz
-  createdAt     DateTime? @map("created_at") @db.Timestamptz
-  updatedAt     DateTime? @map("updated_at") @db.Timestamptz
-  email         String?
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    providerId   String    @map("provider_id")
+    userId       String    @map("user_id") @db.Uuid
+    identityData Json      @map("identity_data")
+    provider     String
+    lastSignInAt DateTime? @map("last_sign_in_at") @db.Timestamptz
+    createdAt    DateTime? @map("created_at") @db.Timestamptz
+    updatedAt    DateTime? @map("updated_at") @db.Timestamptz
+    email        String?
+    id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("identities")
-  @@schema("auth")
+    @@map("identities")
+    @@schema("auth")
 }
 
 model FlowState {
-  id                     String    @id @db.Uuid
-  userId                 String?   @map("user_id") @db.Uuid
-  authCode               String    @map("auth_code")
-  codeChallengeMethod    String    @map("code_challenge_method")
-  codeChallenge          String    @map("code_challenge")
-  providerType           String    @map("provider_type")
-  providerAccessToken    String?   @map("provider_access_token")
-  providerRefreshToken   String?   @map("provider_refresh_token")
-  createdAt              DateTime? @map("created_at") @db.Timestamptz
-  updatedAt              DateTime? @map("updated_at") @db.Timestamptz
-  authenticationMethod   String    @map("authentication_method")
-  authCodeIssuedAt       DateTime? @map("auth_code_issued_at") @db.Timestamptz
+    id                   String    @id @db.Uuid
+    userId               String?   @map("user_id") @db.Uuid
+    authCode             String    @map("auth_code")
+    codeChallengeMethod  String    @map("code_challenge_method")
+    codeChallenge        String    @map("code_challenge")
+    providerType         String    @map("provider_type")
+    providerAccessToken  String?   @map("provider_access_token")
+    providerRefreshToken String?   @map("provider_refresh_token")
+    createdAt            DateTime? @map("created_at") @db.Timestamptz
+    updatedAt            DateTime? @map("updated_at") @db.Timestamptz
+    authenticationMethod String    @map("authentication_method")
+    authCodeIssuedAt     DateTime? @map("auth_code_issued_at") @db.Timestamptz
 
-  @@map("flow_state")
-  @@schema("auth")
+    @@map("flow_state")
+    @@schema("auth")
 }
 
 model MfaFactor {
-  id                          String    @id @db.Uuid
-  userId                      String    @map("user_id") @db.Uuid
-  friendlyName                String?   @map("friendly_name")
-  factorType                  String    @map("factor_type")
-  status                      String
-  createdAt                   DateTime  @map("created_at") @db.Timestamptz
-  updatedAt                   DateTime  @map("updated_at") @db.Timestamptz
-  secret                      String?
-  phone                       String?
-  lastChallengedAt            DateTime? @unique @map("last_challenged_at") @db.Timestamptz
-  webAuthnCredential          Json?     @map("web_authn_credential")
-  webAuthnAaguid              String?   @map("web_authn_aaguid") @db.Uuid
-  lastWebauthnChallengeData   Json?     @map("last_webauthn_challenge_data")
+    id                        String    @id @db.Uuid
+    userId                    String    @map("user_id") @db.Uuid
+    friendlyName              String?   @map("friendly_name")
+    factorType                String    @map("factor_type")
+    status                    String
+    createdAt                 DateTime  @map("created_at") @db.Timestamptz
+    updatedAt                 DateTime  @map("updated_at") @db.Timestamptz
+    secret                    String?
+    phone                     String?
+    lastChallengedAt          DateTime? @unique @map("last_challenged_at") @db.Timestamptz
+    webAuthnCredential        Json?     @map("web_authn_credential")
+    webAuthnAaguid            String?   @map("web_authn_aaguid") @db.Uuid
+    lastWebauthnChallengeData Json?     @map("last_webauthn_challenge_data")
 
-  @@map("mfa_factors")
-  @@schema("auth")
+    @@map("mfa_factors")
+    @@schema("auth")
 }
 
 model SupabaseMfaFactor {
-  id               String    @id @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  friendlyName     String?   @map("friendly_name")
-  factorType       String    @map("factor_type")
-  status           String
-  createdAt        DateTime  @map("created_at") @db.Timestamptz
-  updatedAt        DateTime  @map("updated_at") @db.Timestamptz
-  secret           String?
-  phone            String?
-  lastChallengedAt DateTime? @unique @map("last_challenged_at") @db.Timestamptz
+    id               String    @id @db.Uuid
+    userId           String    @map("user_id") @db.Uuid
+    friendlyName     String?   @map("friendly_name")
+    factorType       String    @map("factor_type")
+    status           String
+    createdAt        DateTime  @map("created_at") @db.Timestamptz
+    updatedAt        DateTime  @map("updated_at") @db.Timestamptz
+    secret           String?
+    phone            String?
+    lastChallengedAt DateTime? @unique @map("last_challenged_at") @db.Timestamptz
 
-  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("mfa_factors_deprecated")
-  @@schema("auth")
+    @@map("mfa_factors_deprecated")
+    @@schema("auth")
 }
 
 model VaultSecret {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String?
-  description String   @default("")
-  secret      String
-  keyId       String?  @map("key_id") @db.Uuid
-  nonce       Bytes?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz
+    id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name        String?
+    description String   @default("")
+    secret      String
+    keyId       String?  @map("key_id") @db.Uuid
+    nonce       Bytes?
+    createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
-  @@map("secrets")
-  @@schema("vault")
+    @@map("secrets")
+    @@schema("vault")
 }
-

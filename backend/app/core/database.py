@@ -14,20 +14,20 @@ async def get_cached_forecast(symbol: str):
         await db.connect()
 
     try:
-        # Find first matching symbol, ordered by run_date desc
+        # Find first matching symbol, ordered by runDate desc (camelCase for Prisma Python)
         forecast = await db.stockforecast.find_first(
             where={
                 'symbol': symbol
             },
             order={
-                'run_date': 'desc'
+                'runDate': 'desc'
             }
         )
 
         if not forecast:
             return None
 
-        run_date = forecast.run_date
+        run_date = forecast.runDate
         # Check if within 24 hours
         now = datetime.now(run_date.tzinfo) if run_date.tzinfo else datetime.utcnow()
         
@@ -47,13 +47,14 @@ async def insert_cached_forecast(symbol: str, price_series, forecast_results):
     try:
         # price_series and forecast_results are likely dicts or lists.
         # Prisma Json type handles them.
+        # Use camelCase field names for Prisma Python client
         
         payload = {
             'id': str(uuid.uuid4()),
             'symbol': symbol,
-            'price_series': json.dumps(price_series) if not isinstance(price_series, (dict, list)) else price_series,
-            'forecast_results': json.dumps(forecast_results) if not isinstance(forecast_results, (dict, list)) else forecast_results,
-            'run_date': datetime.utcnow(),
+            'priceSeries': json.dumps(price_series) if not isinstance(price_series, (dict, list)) else price_series,
+            'forecastResults': json.dumps(forecast_results) if not isinstance(forecast_results, (dict, list)) else forecast_results,
+            'runDate': datetime.utcnow(),
         }
 
         resp = await db.stockforecast.create(data=payload)

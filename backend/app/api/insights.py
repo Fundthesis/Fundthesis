@@ -27,8 +27,8 @@ async def get_recent_articles(limit: int = 50, hours: int = 24) -> list:
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         articles = await db.article.find_many(
-            where={'published_at': {'gte': time_threshold}},
-            order={'published_at': 'desc'},
+            where={'publishedAt': {'gte': time_threshold}},
+            order={'publishedAt': 'desc'},
             take=limit
         )
         

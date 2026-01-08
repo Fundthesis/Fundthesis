@@ -29,7 +29,7 @@ async def analyze_articles_without_sentiment(limit: int = 100):
             },
             take=limit,
             order={
-                'published_at': 'desc'
+                'publishedAt': 'desc'
             }
         )
         
@@ -45,7 +45,7 @@ async def analyze_articles_without_sentiment(limit: int = 100):
             text_for_analysis = (
                 article.summary or 
                 article.headline or 
-                (article.full_text[:500] if article.full_text else "")
+                (article.fullText[:500] if article.fullText else "")
             )
             
             if not text_for_analysis:

@@ -31,3 +31,44 @@ EXTENDED_TICKERS = list(MAJOR_TICKERS) + [
 # Ticker pattern regex for extraction
 TICKER_PATTERN = r'\b([A-Z]{1,5})\b'
 
+import re
+
+
+def extract_tickers_from_text(text: str) -> list[str]:
+    """
+    Extract stock ticker symbols from text.
+    
+    Uses regex pattern to find potential tickers and filters them against
+    known ticker lists to return valid ticker symbols.
+    
+    Args:
+        text: Text to search for ticker symbols
+        
+    Returns:
+        List of unique ticker symbols found in the text (uppercase)
+    """
+    if not text:
+        return []
+    
+    # Convert to uppercase for matching
+    text_upper = text.upper()
+    
+    # Find all potential tickers using regex
+    matches = re.findall(TICKER_PATTERN, text_upper)
+    
+    # Convert EXTENDED_TICKERS to a set for faster lookup
+    valid_tickers = set(EXTENDED_TICKERS)
+    
+    # Filter matches to only include valid tickers
+    found_tickers = []
+    seen = set()
+    
+    for match in matches:
+        ticker = match.upper()
+        # Check if it's a valid ticker and not already seen
+        if ticker in valid_tickers and ticker not in seen:
+            found_tickers.append(ticker)
+            seen.add(ticker)
+    
+    return found_tickers
+

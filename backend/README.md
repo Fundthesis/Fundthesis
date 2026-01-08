@@ -45,56 +45,79 @@ backend/
 ### Prerequisites
 
 - Python 3.9+
-- PostgreSQL database
+- Azure PostgreSQL database (shared with frontend)
 - Prisma CLI
 
 ### Installation
 
 1. **Clone the repository and navigate to backend:**
+
    ```bash
    cd backend
    ```
 
 2. **Create a virtual environment:**
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Set up Prisma:**
+
    ```bash
-   prisma generate
+   prisma generate --schema=schema.prisma
    ```
+
+   This generates the Python Prisma client compatible with the Azure PostgreSQL database.
 
 5. **Set up environment variables:**
    Create a `.env` file in the backend directory:
+
    ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/fundthesis"
+   DATABASE_URL="postgresql://username:password@your-azure-server.postgres.database.azure.com:5432/database?schema=public&sslmode=require"
    FINNHUB_KEY="your_finnhub_api_key"
    FRONTEND_URL="http://localhost:3000"
    ENV="development"
    DEBUG="true"
    ```
 
-6. **Run database migrations:**
-   ```bash
-   prisma migrate dev
-   ```
+   **Important:** The `DATABASE_URL` must point to the same Azure PostgreSQL database used by the frontend. Both applications share the same database instance.
+
+   **Obtaining DATABASE_URL from Azure:**
+
+   - Navigate to your Azure Portal → Azure Database for PostgreSQL
+   - Go to "Connection strings" or "Settings" → "Connection strings"
+   - Copy the PostgreSQL connection string
+   - Format: `postgresql://{username}@{server}:{password}@{server}.postgres.database.azure.com:5432/{database}?sslmode=require`
+   - Replace `{password}` with your actual password
+
+6. **Database Schema:**
+   The database schema is managed by Prisma and shared between frontend and backend. The backend uses `prisma-client-py` while the frontend uses `prisma-client-js`, but both connect to the same database.
+
+   **Note:** Schema changes should be coordinated between frontend and backend. The `schema.prisma` file in the backend mirrors the frontend schema structure.
 
 ## 🔧 Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `FINNHUB_KEY` | Finnhub API key for news scraping | Yes |
-| `FRONTEND_URL` | Frontend application URL for CORS | No (default: http://localhost:3000) |
-| `ENV` | Environment (development/production) | No (default: development) |
-| `DEBUG` | Enable debug mode | No (default: false) |
+| Variable       | Description                                               | Required                            |
+| -------------- | --------------------------------------------------------- | ----------------------------------- |
+| `DATABASE_URL` | Azure PostgreSQL connection string (shared with frontend) | Yes                                 |
+| `FINNHUB_KEY`  | Finnhub API key for news scraping                         | Yes                                 |
+| `FRONTEND_URL` | Frontend application URL for CORS                         | No (default: http://localhost:3000) |
+| `ENV`          | Environment (development/production)                      | No (default: development)           |
+| `DEBUG`        | Enable debug mode                                         | No (default: false)                 |
+
+**DATABASE_URL Format for Azure PostgreSQL:**
+
+```
+postgresql://{username}:{password}@{server}.postgres.database.azure.com:5432/{database}?schema=public&sslmode=require
+```
 
 ## 🏃 Running the API
 
@@ -109,6 +132,7 @@ The API will be available at `http://localhost:8000`
 ### API Documentation
 
 Once running, visit:
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -151,6 +175,7 @@ The backend includes three scheduled jobs that should be run via GitHub Actions 
 Generates 30-day price forecasts for all tracked stocks using XGBoost.
 
 **Run manually:**
+
 ```bash
 python -m jobs.forecasting.runner
 ```
@@ -162,6 +187,7 @@ python -m jobs.forecasting.runner
 Scrapes financial news from Finnhub and RSS feeds (BusinessWire, PR Newswire).
 
 **Run manually:**
+
 ```bash
 python -m jobs.scraper.runner
 ```
@@ -173,6 +199,7 @@ python -m jobs.scraper.runner
 Analyzes articles missing sentiment labels using FinBERT.
 
 **Run manually:**
+
 ```bash
 python -m jobs.sentiment.runner
 ```
@@ -182,6 +209,7 @@ python -m jobs.sentiment.runner
 ## 🧪 Testing
 
 Run tests (when available):
+
 ```bash
 pytest
 ```
@@ -189,6 +217,7 @@ pytest
 ## 📦 Dependencies
 
 Key dependencies include:
+
 - `fastapi` - Web framework
 - `prisma` - Database ORM
 - `yfinance` - Stock data fetching
@@ -201,12 +230,28 @@ See `requirements.txt` for complete list.
 
 ## 🗄️ Database
 
-The application uses PostgreSQL with Prisma ORM. The schema is defined in `schema.prisma`.
+The application uses **Azure PostgreSQL** with Prisma ORM. The backend connects to the same database instance as the frontend, sharing all data and schema.
 
-Key models:
+**Database Architecture:**
+
+- **Frontend:** Uses `prisma-client-js` (TypeScript/JavaScript)
+- **Backend:** Uses `prisma-client-py` (Python)
+- **Shared Database:** Azure PostgreSQL in the cloud
+- **Schema:** Defined in `schema.prisma` (backend) and `Frontend/prisma/schema.prisma` (frontend)
+
+**Important Notes:**
+
+- Both applications must use the same `DATABASE_URL`
+- Schema changes should be synchronized between frontend and backend schema files
+- The backend schema uses camelCase field names (Python Prisma convention) with `@map` directives for snake_case database columns
+- Database connection is managed via Prisma lifecycle events in `main.py`
+
+**Key models:**
+
 - `Article` - News articles with sentiment and ticker associations
 - `StockForecast` - Cached forecast predictions
 - `User` - User accounts and authentication
+- `SimulationAccount`, `Position`, `Trade` - Paper trading simulation data
 
 ## 🔐 Security Notes
 
@@ -225,16 +270,22 @@ Key models:
 ## 🐛 Troubleshooting
 
 **Database connection issues:**
-- Verify `DATABASE_URL` is correct
-- Ensure PostgreSQL is running
-- Run `prisma generate` after schema changes
+
+- Verify `DATABASE_URL` is correct and points to Azure PostgreSQL
+- Ensure the connection string includes `?sslmode=require` for Azure
+- Check that the database server allows connections from your IP (Azure firewall rules)
+- Verify credentials are correct (username format: `username@servername`)
+- Run `prisma generate --schema=schema.prisma` after schema changes
+- Ensure both frontend and backend use the same database URL
 
 **Import errors:**
+
 - Ensure virtual environment is activated
 - Run `pip install -r requirements.txt`
 - Check Python path includes backend directory
 
 **Forecast job failures:**
+
 - Verify stock symbols are valid
 - Check yfinance API availability
 - Ensure sufficient historical data exists
@@ -246,4 +297,3 @@ Key models:
 ## 👥 Contributing
 
 [Contributing guidelines here]
-
