@@ -2,7 +2,6 @@
 import json
 from datetime import datetime, timedelta
 from prisma import Prisma
-from prisma import types
 import uuid
 
 # Initialize Prisma client
@@ -72,10 +71,10 @@ async def insert_cached_forecast(symbol: str, price_series, forecast_results):
             }
         )
         
-        # Wrap JSON data with types.Json for Prisma Python
+        # Prisma Python accepts plain Python dicts/lists for JSON fields
         update_data = {
-            'priceSeries': types.Json(price_series) if price_series is not None else None,
-            'forecastResults': types.Json(forecast_results) if forecast_results is not None else None,
+            'priceSeries': price_series,
+            'forecastResults': forecast_results,
             'runDate': now,
         }
         

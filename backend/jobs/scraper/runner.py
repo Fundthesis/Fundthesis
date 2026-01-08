@@ -24,13 +24,21 @@ async def run_scraper():
         print("Starting scraper job...")
         print("=" * 80)
         
-        # Scrape from Finnhub
+        # Scrape from Finnhub - fail if error occurs
         print("\n[1/2] Scraping Finnhub news...")
-        finnhub_count = await scrape_finnhub_news()
+        try:
+            finnhub_count = await scrape_finnhub_news()
+        except Exception as e:
+            print(f"❌ Fatal error in Finnhub scraping: {e}")
+            raise
         
-        # Scrape from RSS feeds
+        # Scrape from RSS feeds - fail if error occurs
         print("\n[2/2] Scraping RSS feeds...")
-        rss_count = await ingest_all_feeds()
+        try:
+            rss_count = await ingest_all_feeds()
+        except Exception as e:
+            print(f"❌ Fatal error in RSS feed scraping: {e}")
+            raise
         
         total = finnhub_count + rss_count
         print("\n" + "=" * 80)

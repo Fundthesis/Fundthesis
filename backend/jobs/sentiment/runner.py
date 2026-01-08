@@ -57,7 +57,7 @@ async def analyze_articles_without_sentiment(limit: int = 100):
             # Capitalize first letter for consistency
             sentiment_label = sentiment.capitalize()
             
-            # Update article
+            # Update article - fail on database errors
             try:
                 await db.article.update(
                     where={'id': article.id},
@@ -66,7 +66,8 @@ async def analyze_articles_without_sentiment(limit: int = 100):
                 updated += 1
                 print(f"Updated article {article.id[:8]}... with sentiment: {sentiment_label}")
             except Exception as e:
-                print(f"Error updating article {article.id}: {e}")
+                print(f"❌ Fatal error updating article {article.id}: {e}")
+                raise
         
         print(f"Successfully updated {updated} articles with sentiment labels")
         return updated

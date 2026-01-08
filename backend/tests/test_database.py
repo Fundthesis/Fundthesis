@@ -103,7 +103,6 @@ async def test_get_cached_forecast_within_24h(db_session):
 async def test_get_cached_forecast_stale(db_session):
     """Test that stale forecasts (>24h) return None."""
     from app.core.database import db
-    from prisma import types
     
     # Create an old forecast manually
     old_date = datetime.utcnow() - timedelta(hours=25)
@@ -111,8 +110,8 @@ async def test_get_cached_forecast_stale(db_session):
         data={
             'id': 'test-stale-forecast',
             'symbol': 'TEST_STALE',
-            'priceSeries': types.Json([{'date': '2024-01-01', 'close': 100.0}]),
-            'forecastResults': types.Json({'forecast': []}),
+            'priceSeries': [{'date': '2024-01-01', 'close': 100.0}],
+            'forecastResults': {'forecast': []},
             'runDate': old_date
         }
     )
