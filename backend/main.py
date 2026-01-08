@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 import sys
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 # Add backend to path
 backend_path = Path(__file__).parent
@@ -12,16 +13,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import db
 from app.api import routes, news, stocks, insights
 
-app = FastAPI(title="FundThesis API")
 
-# Database lifecycle
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Database lifecycle management."""
     await db.connect()
-
-@app.on_event("shutdown")
-async def shutdown():
+    yield
     await db.disconnect()
+
+
+app = FastAPI(title="FundThesis API", lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
