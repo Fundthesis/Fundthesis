@@ -3,10 +3,11 @@ import pytest
 import asyncio
 import sys
 from pathlib import Path
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from unittest.mock import Mock, patch
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
+from prisma import Prisma
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent
@@ -14,41 +15,40 @@ if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
 from main import app
-from app.core.database import db
-
-
-@pytest.fixture(scope="session")
-def event_loop_policy():
-    """Set event loop policy for async tests."""
-    policy = asyncio.get_event_loop_policy()
-    yield policy
-
-
-@pytest.fixture(scope="function")
-async def async_client():
-    """Create a test client for FastAPI."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
+from app.core import database
 
 
 @pytest.fixture(scope="function")
 async def db_session():
     """Database session fixture with cleanup."""
-    if not db.is_connected():
-        await db.connect()
-    
-    yield db
-    
+    # Create a fresh Prisma client for each test
+    test_db = Prisma()
+    await test_db.connect()
+
+    # Replace the global db with our test db
+    original_db = database.db
+    database.db = test_db
+
+    yield test_db
+
     # Cleanup: Delete test data
     try:
-        # Clean up test forecasts
-        await db.stockforecast.delete_many(where={'symbol': {'startsWith': 'TEST'}})
-        # Clean up test articles
-        await db.article.delete_many(where={'url': {'contains': 'test'}})
+        await test_db.stockforecast.delete_many(where={'symbol': {'startsWith': 'TEST'}})
+        await test_db.article.delete_many(where={'url': {'contains': 'test'}})
     except Exception as e:
         print(f"Cleanup error: {e}")
-    
-    await db.disconnect()
+
+    # Restore original and disconnect
+    database.db = original_db
+    await test_db.disconnect()
+
+
+@pytest.fixture(scope="function")
+async def async_client(db_session):
+    """Create a test client for FastAPI. Uses same db as db_session."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
 
 
 @pytest.fixture

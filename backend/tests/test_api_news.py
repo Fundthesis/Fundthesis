@@ -1,14 +1,13 @@
 """Tests for news API endpoints."""
 import pytest
 from datetime import datetime, timedelta, timezone
-from app.core.database import db
 
 
 @pytest.mark.asyncio
 async def test_get_recent_news(async_client, db_session):
     """Test GET /api/news/recent endpoint."""
     # Create a test article
-    test_article = await db.article.create(
+    test_article = await db_session.article.create(
         data={
             'id': 'test-news-1',
             'url': 'https://test.com/news1',
@@ -27,7 +26,7 @@ async def test_get_recent_news(async_client, db_session):
     assert isinstance(data["articles"], list)
     
     # Cleanup
-    await db.article.delete(where={'id': test_article.id})
+    await db_session.article.delete(where={'id': test_article.id})
 
 
 @pytest.mark.asyncio
@@ -36,7 +35,7 @@ async def test_get_recent_news_limit(async_client, db_session):
     # Create multiple test articles
     articles = []
     for i in range(5):
-        article = await db.article.create(
+        article = await db_session.article.create(
             data={
                 'id': f'test-news-limit-{i}',
                 'url': f'https://test.com/news{i}',
@@ -56,14 +55,14 @@ async def test_get_recent_news_limit(async_client, db_session):
     
     # Cleanup
     for article in articles:
-        await db.article.delete(where={'id': article.id})
+        await db_session.article.delete(where={'id': article.id})
 
 
 @pytest.mark.asyncio
 async def test_get_article_detail(async_client, db_session):
     """Test GET /api/news/{article_id} endpoint."""
     # Create a test article
-    test_article = await db.article.create(
+    test_article = await db_session.article.create(
         data={
             'id': 'test-article-detail',
             'url': 'https://test.com/detail',
@@ -84,7 +83,7 @@ async def test_get_article_detail(async_client, db_session):
     assert "summary" in data
     
     # Cleanup
-    await db.article.delete(where={'id': test_article.id})
+    await db_session.article.delete(where={'id': test_article.id})
 
 
 @pytest.mark.asyncio
@@ -97,40 +96,45 @@ async def test_get_article_detail_not_found(async_client):
 @pytest.mark.asyncio
 async def test_get_articles_by_ticker(async_client, db_session):
     """Test GET /api/news/ticker/{ticker} endpoint."""
-    # Create test articles with tickers
-    test_article1 = await db.article.create(
-        data={
-            'id': 'test-ticker-1',
-            'url': 'https://test.com/ticker1',
-            'headline': 'AAPL Stock News',
-            'summary': 'Apple Inc. announces new product',
-            'tickers': 'AAPL',
-            'publishedAt': datetime.now(timezone.utc),
-            'source': 'Test Source',
-            'insertedAt': datetime.now(timezone.utc)
-        }
-    )
-    
-    test_article2 = await db.article.create(
-        data={
-            'id': 'test-ticker-2',
-            'url': 'https://test.com/ticker2',
-            'headline': 'More AAPL News',
-            'summary': 'Apple stock rises',
-            'tickers': 'AAPL,MSFT',
-            'publishedAt': datetime.now(timezone.utc),
-            'source': 'Test Source',
-            'insertedAt': datetime.now(timezone.utc)
-        }
-    )
-    
-    response = await async_client.get("/api/news/ticker/AAPL?hours=24&limit=10")
-    assert response.status_code == 200
-    data = response.json()
-    assert "articles" in data
-    assert isinstance(data["articles"], list)
-    
-    # Cleanup
-    await db.article.delete(where={'id': test_article1.id})
-    await db.article.delete(where={'id': test_article2.id})
+    test_article1 = None
+    test_article2 = None
+    try:
+        # Create test articles with tickers
+        test_article1 = await db_session.article.create(
+            data={
+                'id': 'test-ticker-1',
+                'url': 'https://test.com/ticker1',
+                'headline': 'AAPL Stock News',
+                'summary': 'Apple Inc. announces new product',
+                'tickers': 'AAPL',
+                'publishedAt': datetime.now(timezone.utc),
+                'source': 'Test Source',
+                'insertedAt': datetime.now(timezone.utc)
+            }
+        )
+
+        test_article2 = await db_session.article.create(
+            data={
+                'id': 'test-ticker-2',
+                'url': 'https://test.com/ticker2',
+                'headline': 'More AAPL News',
+                'summary': 'Apple stock rises',
+                'tickers': 'AAPL,MSFT',
+                'publishedAt': datetime.now(timezone.utc),
+                'source': 'Test Source',
+                'insertedAt': datetime.now(timezone.utc)
+            }
+        )
+
+        response = await async_client.get("/api/news/ticker/AAPL?hours=24&limit=10")
+        assert response.status_code == 200
+        data = response.json()
+        assert "articles" in data
+        assert isinstance(data["articles"], list)
+    finally:
+        # Cleanup
+        if test_article1:
+            await db_session.article.delete(where={'id': test_article1.id})
+        if test_article2:
+            await db_session.article.delete(where={'id': test_article2.id})
 

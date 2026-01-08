@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timezone, timedelta
 from typing import List
 
-from app.core.database import db
+from app.core import database
 from lib.tickers import extract_tickers_from_text
 
 router = APIRouter()
@@ -46,41 +46,41 @@ def generate_recommendation(article: dict) -> str:
 
 
 @router.get("/news/recent")
-async def get_recent_news():
+async def get_recent_news(limit: int = Query(default=20, ge=1, le=100)):
     """Get recent financial news articles from the past 24 hours."""
-    if not db.is_connected():
-        await db.connect()
-    
+    if not database.db.is_connected():
+        await database.db.connect()
+
     try:
         twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
-        
-        articles = await db.article.find_many(
+
+        articles = await database.db.article.find_many(
             where={'publishedAt': {'gte': twenty_four_hours_ago}},
             order={'publishedAt': 'desc'},
-            take=100
+            take=limit
         )
         
         # Fallback to longer timeframes if no recent articles
         if not articles:
             forty_eight_hours_ago = datetime.now(timezone.utc) - timedelta(hours=48)
-            articles = await db.article.find_many(
+            articles = await database.db.article.find_many(
                 where={'publishedAt': {'gte': forty_eight_hours_ago}},
                 order={'publishedAt': 'desc'},
-                take=100
+                take=limit
             )
-        
+
         if not articles:
             seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-            articles = await db.article.find_many(
+            articles = await database.db.article.find_many(
                 where={'publishedAt': {'gte': seven_days_ago}},
                 order={'publishedAt': 'desc'},
-                take=100
+                take=limit
             )
-        
+
         if not articles:
-            articles = await db.article.find_many(
+            articles = await database.db.article.find_many(
                 order={'publishedAt': 'desc'},
-                take=20
+                take=limit
             )
         
         if not articles:
@@ -114,9 +114,9 @@ async def get_recent_news():
             article['sentiment_percentage'] = sentiment_percentage
             
             articles_with_tickers.append(article)
-        
-        articles_with_tickers = articles_with_tickers[:20]
-        
+
+        articles_with_tickers = articles_with_tickers[:limit]
+
         return {
             "articles": articles_with_tickers,
             "count": len(articles_with_tickers)
@@ -130,11 +130,11 @@ async def get_recent_news():
 @router.get("/news/{article_id}")
 async def get_article_detail(article_id: str):
     """Get detailed information about a specific article by ID."""
-    if not db.is_connected():
-        await db.connect()
+    if not database.db.is_connected():
+        await database.db.connect()
     
     try:
-        article_obj = await db.article.find_unique(where={'id': article_id})
+        article_obj = await database.db.article.find_unique(where={'id': article_id})
         
         if not article_obj:
             raise HTTPException(status_code=404, detail="Article not found")
@@ -175,8 +175,8 @@ async def get_articles_by_ticker(
     limit: int = Query(default=50, ge=1, le=100)
 ):
     """Get all articles mentioning a specific stock ticker."""
-    if not db.is_connected():
-        await db.connect()
+    if not database.db.is_connected():
+        await database.db.connect()
     
     ticker = ticker.upper().strip()
     if not ticker or len(ticker) > 5:
@@ -185,7 +185,7 @@ async def get_articles_by_ticker(
     try:
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
         
-        articles = await db.article.find_many(
+        articles = await database.db.article.find_many(
             where={
                 'AND': [
                     {'publishedAt': {'gte': time_threshold}},
@@ -204,7 +204,7 @@ async def get_articles_by_ticker(
         )
         
         if not articles:
-            articles = await db.article.find_many(
+            articles = await database.db.article.find_many(
                 where={
                     'OR': [
                         {'tickers': {'contains': ticker, 'mode': 'insensitive'}},
