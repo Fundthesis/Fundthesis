@@ -70,10 +70,7 @@ export default function EnviroPage() {
     router.push(`/enviro/enviro-dashboard?sandboxId=${encodeURIComponent(id)}`)
   }
 
-  const removeSandbox = (id: string) => {
-    const filtered = sandboxes.filter(s => s.id !== id)
-    save(filtered)
-  }
+
 
   // typed-delete confirmation states for landing page
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
@@ -153,7 +150,7 @@ export default function EnviroPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => openSandbox(sb.id)} className="bg-blue-600 text-white px-3 py-1 rounded">Open</button>
-                    <button onClick={() => promptDeleteSandbox(sb.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded">Delete</button>
+                  <button onClick={() => promptDeleteSandbox(sb.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded">Delete</button>
                 </div>
               </div>
             ))}

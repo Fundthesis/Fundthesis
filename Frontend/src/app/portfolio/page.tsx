@@ -22,13 +22,7 @@ type HoldingRow = {
   isPositive: boolean;
 };
 
-type StockQuoteResponse = {
-  symbol: string;
-  company: string;
-  price: number;
-  change: number;
-  changePercent: number;
-};
+
 
 type StockData = {
   [symbol: string]: {
@@ -153,7 +147,7 @@ export default function PortfolioPage() {
       // Build holdings from individual stock data
       const derivedHoldings: HoldingRow[] = fetchedTickers.map((symbol) => {
         const stock = stockData[symbol];
-        
+
         if (!stock || typeof stock.price !== "number" || stock.price === 0) {
           // Fallback if no stock data available
           return {
@@ -210,9 +204,8 @@ export default function PortfolioPage() {
       return "No tickers in your portfolio yet.";
     }
 
-    return `Tracking ${tickers.length} ${
-      tickers.length === 1 ? "ticker" : "tickers"
-    }: ${tickers.join(", ")}`;
+    return `Tracking ${tickers.length} ${tickers.length === 1 ? "ticker" : "tickers"
+      }: ${tickers.join(", ")}`;
   }, [tickers]);
 
   const openAddTickerModal = () => {
@@ -259,7 +252,7 @@ export default function PortfolioPage() {
       let payload: { error?: string; message?: string } | null = null;
       try {
         payload = await response.json();
-      } catch (error) {
+      } catch {
         payload = null;
       }
 
@@ -315,7 +308,7 @@ export default function PortfolioPage() {
         let payload: { error?: string; message?: string } | null = null;
         try {
           payload = await response.json();
-        } catch (error) {
+        } catch {
           payload = null;
         }
 

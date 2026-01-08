@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { StockCard } from './StockCard'
+import { StockCard } from '@/components/StockCard'
 
 interface Stock {
   symbol: string
@@ -41,7 +41,7 @@ interface StockCardStackProps {
   setCurrentIndex: (index: number) => void
   timeframe: 'day' | 'month' | 'year' | 'all'
   setTimeframe: (timeframe: 'day' | 'month' | 'year' | 'all') => void
-  loadingMore: boolean
+
   checkAndLoadMore: (index: number) => void
   fetchStockDetail: (symbol: string) => Promise<void>
   // New prop: completely custom expanded modal component
@@ -62,7 +62,7 @@ export function StockCardStack({
   setCurrentIndex,
   timeframe,
   setTimeframe,
-  loadingMore,
+
   checkAndLoadMore,
   fetchStockDetail,
   ExpandedModal
@@ -98,7 +98,7 @@ export function StockCardStack({
 
   const getCardStyle = (stockIndex: number) => {
     let relativePosition = stockIndex - currentIndex
-    
+
     if (relativePosition > stocks.length / 2) {
       relativePosition -= stocks.length
     } else if (relativePosition < -stocks.length / 2) {
@@ -106,7 +106,7 @@ export function StockCardStack({
     }
 
     const distance = Math.abs(relativePosition)
-    
+
     if (distance === 0) {
       return { transform: 'translateX(0) scale(1)', zIndex: 30, filter: 'blur(0px)', opacity: 1 }
     } else if (distance === 1) {
@@ -122,7 +122,7 @@ export function StockCardStack({
     return <div className="flex items-center justify-center h-auto py-20"><div className="text-gray-600">No stocks available</div></div>
   }
 
-  const currentStock = stocks[currentIndex]
+
 
   return (
     <>
@@ -136,11 +136,11 @@ export function StockCardStack({
             const detail = stockDetails[stock.symbol];
             const chartData = detail
               ? [
-                  ...(detail.chartData?.map((d) => ({ ...d, type: "historical" as const })) || []),
-                  ...(detail.forecastData?.map((d) => ({ ...d, type: "forecast" as const })) || []),
-                ]
+                ...(detail.chartData?.map((d) => ({ ...d, type: "historical" as const })) || []),
+                ...(detail.forecastData?.map((d) => ({ ...d, type: "forecast" as const })) || []),
+              ]
               : [];
-            
+
             return (
               <div key={`${stock.symbol}-${index}`} className="absolute w-full max-w-[650px] min-h-[900px] transition-all duration-500 ease-out cursor-pointer" style={getCardStyle(index)}>
                 <StockCard
@@ -165,7 +165,7 @@ export function StockCardStack({
           {stocks.map((_, index) => (
             <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-[#9DB38A] w-6' : 'bg-gray-400 hover:bg-gray-600'}`} />
           ))}
-          {loadingMore && <div className="ml-2 text-sm text-gray-500">Loading more...</div>}
+
         </div>
       </div>
 

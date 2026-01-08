@@ -8,31 +8,31 @@ type Props = {
   title?: string;
 };
 
-const ArrowCircle: React.FC<{ disabled?: boolean; direction: 'left'|'right' }> = ({ disabled, direction }) => {
+const ArrowCircle: React.FC<{ disabled?: boolean; direction: 'left' | 'right' }> = ({ disabled, direction }) => {
   const cls = `w-10 h-10 rounded-full flex items-center justify-center border ${disabled ? 'bg-gray-100 border-gray-200 text-gray-300' : 'bg-white border-gray-300 text-gray-700 hover:shadow'}`;
   return (
     <div className={cls} aria-hidden>
       {direction === 'left' ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
       )}
     </div>
   );
 };
 
-import { getAnsweredCount } from '../data/userProgress';
+import { getAnsweredCount } from '@/app/lessonmodules/data/userProgress';
 
 const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
   const prev = moduleIndex - 1;
   const next = moduleIndex + 1;
   const isFirst = moduleIndex <= 1;
-  const isLast = moduleIndex === totalModules;
+
   const [counts, setCounts] = useState(() => getAnsweredCount(moduleIndex));
 
   useEffect(() => {
     function onChange() {
-      try { setCounts(getAnsweredCount(moduleIndex)); } catch (e) { /* ignore */ }
+      try { setCounts(getAnsweredCount(moduleIndex)); } catch { /* ignore */ }
     }
     // custom event dispatched by userProgress write
     window.addEventListener('ft-progress-changed', onChange);

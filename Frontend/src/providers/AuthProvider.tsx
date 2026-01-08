@@ -4,19 +4,17 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
-  useRef,
   useState,
+  useCallback,
   type ReactNode,
 } from 'react';
-import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 
-import { getSupabaseClient } from '@/lib/supabaseClient';
-
-type SupabaseClientInstance = ReturnType<typeof getSupabaseClient>;
+type User = typeof authClient.$Infer.Session.user;
+type Session = typeof authClient.$Infer.Session.session;
 
 type AuthContextValue = {
-  supabase: SupabaseClientInstance;
   session: Session | null;
   user: User | null;
   isLoading: boolean;
@@ -29,152 +27,48 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
-const SESSION_SYNC_EVENTS: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED'];
-
 export function AuthProvider({ children }: AuthProviderProps) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const lastSyncedSessionRef = useRef<{
-    accessToken: string | null;
-    refreshToken: string | null;
-    expiresAt: number | null;
-    event: AuthChangeEvent | null;
-  }>({
-    accessToken: null,
-    refreshToken: null,
-    expiresAt: null,
-    event: null,
-  });
-  const pendingSyncRef = useRef<Promise<void> | null>(null);
-
-  const shouldSyncSession = (event: AuthChangeEvent, currentSession: Session | null) => {
-    const lastSynced = lastSyncedSessionRef.current;
-
-    if (!SESSION_SYNC_EVENTS.includes(event)) {
-      return false;
-    }
-
-    if (event === 'SIGNED_OUT') {
-      return lastSynced.event !== 'SIGNED_OUT';
-    }
-
-    const accessToken = currentSession?.access_token ?? null;
-    const refreshToken = currentSession?.refresh_token ?? null;
-    const expiresAt = currentSession?.expires_at ?? null;
-
-    if (
-      lastSynced.accessToken === accessToken &&
-      lastSynced.refreshToken === refreshToken &&
-      lastSynced.expiresAt === expiresAt &&
-      lastSynced.event === event
-    ) {
-      return false;
-    }
-
-    return Boolean(accessToken || refreshToken);
-  };
-
-  const syncSession = async (event: AuthChangeEvent, currentSession: Session | null) => {
-    if (!shouldSyncSession(event, currentSession)) {
-      return;
-    }
-
-    if (pendingSyncRef.current) {
-      try {
-        await pendingSyncRef.current;
-      } catch {
-        // ignore previous sync failures
-      }
-    }
-
-    const accessToken = currentSession?.access_token ?? null;
-    const refreshToken = currentSession?.refresh_token ?? null;
-    const expiresAt = currentSession?.expires_at ?? null;
-
-    const runSync = async () => {
-      try {
-        const response = await fetch('/api/auth/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event, session: currentSession }),
-          keepalive: true,
-        });
-
-        if (!response.ok) {
-          console.error('Failed to sync auth session', response.statusText);
-          return;
-        }
-
-        lastSyncedSessionRef.current = {
-          accessToken,
-          refreshToken,
-          expiresAt,
-          event,
-        };
-      } catch (error) {
-        console.error('Failed to sync auth session', error);
-      }
-    };
-
-    const syncPromise = runSync().finally(() => {
-      if (pendingSyncRef.current === syncPromise) {
-        pendingSyncRef.current = null;
-      }
-    });
-
-    pendingSyncRef.current = syncPromise;
-
-    await syncPromise;
-  };
+  const router = useRouter();
 
   useEffect(() => {
-    let isMounted = true;
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-
-      if (session) {
-        void syncSession('SIGNED_IN', session);
+    // Fetch initial session
+    const fetchSession = async () => {
+      try {
+        const { data } = await authClient.getSession();
+        if (data) {
+          setSession(data.session);
+          setUser(data.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch session:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      await syncSession(event, session);
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
     };
-  }, [supabase]);
 
-  const value = useMemo(
-    () => ({
-      supabase,
-      session,
-      user,
-      isLoading,
-      signOut: async () => {
-        await supabase.auth.signOut();
-      },
-    }),
-    [supabase, session, user, isLoading],
-  );
+    fetchSession();
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await authClient.signOut();
+    setSession(null);
+    setUser(null);
+    router.push('/auth');
+    router.refresh();
+  }, [router]);
+
+  const value = {
+    session,
+    user,
+    isLoading,
+    signOut,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

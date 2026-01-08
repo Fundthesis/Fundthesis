@@ -1,19 +1,29 @@
+"""FastAPI application entry point."""
 import sys
 from pathlib import Path
 
-# Add project root to Python path if not already there
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+# Add backend to path
+backend_path = Path(__file__).parent
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import router
-from app.news_routes import router as news_router
+from app.core.database import db
+from app.api import routes, news, stocks, insights
 
-app = FastAPI()
+app = FastAPI(title="FundThesis API")
 
-# Add CORS middleware to allow frontend to access the API
+# Database lifecycle
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db.disconnect()
+
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -22,31 +32,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
-app.include_router(news_router)
+# Include routers
+app.include_router(routes.router)
+app.include_router(news.router, prefix="/api")
+app.include_router(stocks.router, prefix="/api")
+app.include_router(insights.router, prefix="/api")
 
-# Try to include insights routes if available
-try:
-    from app.insights_routes import router as insights_router
-    app.include_router(insights_router)
-except ImportError:
-    print("Warning: insights_routes not available. LangChain features may not work.")
-
-
-'''
-assuming current DB structure:
-
-ticker (uuid), current_price, %change from most recent open, forecast model prediction (will be in dataframe)
-
-- ASK FRONTEND TEAM HOW THEY ARE PLANNING TO VISUALISE CHARTS
--ASK IF EACH TICKER WILL HAVE THEIR OWN PAGE
-- CHECK PLANS FOR DIFFERENT PLATES
-- Plan with frontend team to basically ask what they all are doing cause 
-'''
-
-
-@app.get("/")#homepage
+@app.get("/")
 def read_root():
     return {"Welcome to fundthesis"}
-
-

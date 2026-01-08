@@ -9,9 +9,6 @@ interface StockData {
   changePercent?: number;
 }
 
-// Use Next.js API routes instead of external Flask server
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
 const formatNumber = (value?: number, decimals = 2) =>
   typeof value === "number" ? value.toFixed(decimals) : "-";
 
@@ -98,8 +95,8 @@ const StockTicker = () => {
                 (
                 {stock.changePercent
                   ? (stock.changePercent >= 0 ? "+" : "") +
-                    formatNumber(stock.changePercent) +
-                    "%"
+                  formatNumber(stock.changePercent) +
+                  "%"
                   : "-"}
                 )
               </span>

@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import StockTicker from "@/components/StockTicker";
 import NewsArticleModal from "@/components/NewsArticleModal";
 import MarkdownContent from "@/components/MarkdownContent";
-import { fetchArticlesFromSupabase, NewsArticle } from "@/lib/api";
+import { fetchArticles, NewsArticle } from "@/lib/api";
 
 // Cache configuration
 const CACHE_KEY = "fundthesis_insights_cache";
@@ -76,8 +74,8 @@ export default function InsightsPage() {
       try {
         setLoading(true);
         setError(null);
-        console.log("Fetching articles from Supabase...");
-        const response = await fetchArticlesFromSupabase({
+        console.log("Fetching articles...");
+        const response = await fetchArticles({
           limit: 50,
           offset: 0,
           orderBy: "published_at",
@@ -223,16 +221,6 @@ export default function InsightsPage() {
               AI-powered market analysis and stock recommendations
             </p>
           </div>
-          {/* <button
-            onClick={() => {
-              localStorage.removeItem(CACHE_KEY);
-              window.location.reload();
-            }}
-            className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
-            title="Clear cache and refresh"
-          >
-            Clear Cache
-          </button> */}
         </div>
 
         <div className="space-y-6">
@@ -304,7 +292,7 @@ export default function InsightsPage() {
                 <p className="text-gray-600">No recent news articles found.</p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
                   <p className="text-sm text-blue-800">
-                    Articles are loaded from your Supabase database. Make sure
+                    Articles are loaded from your database. Make sure
                     articles have been populated in the{" "}
                     <code className="bg-blue-100 px-1 rounded">articles</code>{" "}
                     table.
@@ -325,13 +313,13 @@ export default function InsightsPage() {
                   const dotColor = isPositive
                     ? "bg-green-600"
                     : isNegative
-                    ? "bg-amber-700"
-                    : "bg-gray-500";
+                      ? "bg-amber-700"
+                      : "bg-gray-500";
                   const sentimentColor = isPositive
                     ? "text-green-600"
                     : isNegative
-                    ? "text-amber-700"
-                    : "text-gray-600";
+                      ? "text-amber-700"
+                      : "text-gray-600";
 
                   return (
                     <div

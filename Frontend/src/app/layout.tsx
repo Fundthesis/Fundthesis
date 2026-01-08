@@ -1,6 +1,7 @@
 'use client'
 
 import './globals.css'
+import { Toaster } from 'sonner'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -8,21 +9,13 @@ import StockTicker from '@/components/StockTicker'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
 import { AuthProvider, useAuth } from '@/providers/AuthProvider'
+import { navItems } from '@/constants/navigation'
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700', '900'],
   subsets: ['latin'],
   display: 'swap',
 })
-
-const NAV_ITEMS = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Discover', href: '/discover' },
-  { name: 'Insights', href: '/insights' },
-  { name: 'Portfolio', href: '/portfolio' },
-  { name: 'LearnThesis', href: '/learn' },
-  { name: 'EnviroThesis', href: '/enviro' },
-]
 
 function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -47,15 +40,14 @@ function AppFrame({ children }: { children: ReactNode }) {
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                  pathname === item.href
-                    ? 'text-black border-b-2 border-black pb-1'
-                    : 'text-gray-500'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === item.href
+                  ? 'text-black border-b-2 border-black pb-1'
+                  : 'text-gray-500'
+                  }`}
               >
                 {item.name}
               </Link>
@@ -72,11 +64,10 @@ function AppFrame({ children }: { children: ReactNode }) {
                 </span>
                 <Link
                   href="/profile"
-                  className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                    pathname === '/profile'
-                      ? 'text-black border-b-2 border-black pb-1'
-                      : 'text-gray-500'
-                  }`}
+                  className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/profile'
+                    ? 'text-black border-b-2 border-black pb-1'
+                    : 'text-gray-500'
+                    }`}
                 >
                   Profile
                 </Link>
@@ -91,11 +82,10 @@ function AppFrame({ children }: { children: ReactNode }) {
             ) : (
               <Link
                 href="/auth"
-                className={`text-sm font-medium transition-colors hover:text-gray-600 ${
-                  pathname === '/auth'
-                    ? 'text-black border-b-2 border-black pb-1'
-                    : 'text-gray-500'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/auth'
+                  ? 'text-black border-b-2 border-black pb-1'
+                  : 'text-gray-500'
+                  }`}
               >
                 Sign in
               </Link>
@@ -134,7 +124,7 @@ export default function RootLayout({
     <html lang="en" className={merriweather.className}>
       <body suppressHydrationWarning={true}>
         <AuthProvider>
-          <AppFrame>{children}</AppFrame>
+          <AppFrame>{children}</AppFrame><Toaster position="top-center" richColors />
         </AuthProvider>
       </body>
     </html>

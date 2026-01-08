@@ -1,32 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { requireAuth } from "@/lib/apiAuth";
 
-type Article = {
-  id: string;
-  sqlite_id: number | null;
-  article_id: number | null;
-  category: string | null;
-  published_at: string | null;
-  headline: string | null;
-  related: string | null;
-  source: string | null;
-  summary: string | null;
-  full_text: string | null;
-  url: string;
-  label: string | null;
-  inserted_at: string;
-  fetch_status: string | null;
-  fetch_error: string | null;
-  source_domain: string | null;
-  tickers: string | null;
-};
+const MAX_LIMIT = 100;
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
+    const rawLimit = parseInt(searchParams.get("limit") || "20", 10);
+    const rawOffset = parseInt(searchParams.get("offset") || "0", 10);
+
+    // Validate and constrain pagination
+    const limit = Math.min(Math.max(1, rawLimit), MAX_LIMIT);
+    const offset = Math.max(0, rawOffset);
     const category = searchParams.get("category");
     const source = searchParams.get("source");
     const tickers = searchParams.get("tickers");
@@ -34,72 +25,53 @@ export async function GET(request: NextRequest) {
     const orderBy = searchParams.get("orderBy") || "published_at";
     const orderDirection = searchParams.get("orderDirection") || "desc";
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore as unknown as ReturnType<typeof cookies>,
-    });
+    const where: Prisma.ArticleWhereInput = {};
 
-    let query = supabase.from("articles").select("*", { count: "exact" });
-
-    // Apply filters
     if (category) {
-      query = query.eq("category", category);
+      where.category = category;
     }
 
     if (source) {
-      query = query.eq("source", source);
+      where.source = source;
     }
 
     if (tickers) {
-      // tickers is a text field, so we use ilike for case-insensitive partial matching
       const tickerArray = tickers.split(",").map((t) => t.trim().toUpperCase());
-      // Match any of the provided tickers in the text field
       if (tickerArray.length === 1) {
-        query = query.ilike("tickers", `%${tickerArray[0]}%`);
+        where.tickers = { contains: tickerArray[0], mode: 'insensitive' };
       } else {
-        // For multiple tickers, use OR filter
-        const orConditions = tickerArray
-          .map((ticker) => `tickers.ilike.%${ticker}%`)
-          .join(",");
-        query = query.or(orConditions);
+        where.OR = tickerArray.map(t => ({ tickers: { contains: t, mode: 'insensitive' } }));
       }
     }
 
-    // Full-text search using the tsv column
     if (search) {
-      query = query.textSearch("tsv", search, {
-        type: "websearch",
-        config: "english",
-      });
+      where.OR = [
+        { headline: { contains: search, mode: 'insensitive' } },
+        { summary: { contains: search, mode: 'insensitive' } },
+        { full_text: { contains: search, mode: 'insensitive' } }
+      ];
     }
 
-    // Apply ordering
     const validOrderBy = ["published_at", "inserted_at", "headline", "source"];
-    const orderByField = validOrderBy.includes(orderBy)
-      ? orderBy
-      : "published_at";
+    const orderByField = validOrderBy.includes(orderBy) ? orderBy : "published_at";
     const orderDir = orderDirection.toLowerCase() === "asc" ? "asc" : "desc";
 
-    query = query
-      .order(orderByField, { ascending: orderDir === "asc" })
-      .range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error("Error fetching articles:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch articles", details: error.message },
-        { status: 500 }
-      );
-    }
+    const [articles, count] = await Promise.all([
+      prisma.article.findMany({
+        where,
+        orderBy: { [orderByField]: orderDir },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.article.count({ where }),
+    ]);
 
     return NextResponse.json({
-      articles: data as Article[],
-      total: count ?? 0,
+      articles,
+      total: count,
       offset,
       limit,
-      hasMore: count ? offset + limit < count : false,
+      hasMore: offset + limit < count,
     });
   } catch (error) {
     console.error("Error in /api/articles:", error);

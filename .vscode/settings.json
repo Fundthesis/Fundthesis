@@ -1,0 +1,12 @@
+{
+  "prisma.pinToPrisma6": false,
+  "prisma.fileWatcher": false,
+  "prisma.enableLinting": false,
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "files.exclude": {
+    "**/*.prisma": false
+  },
+  "prisma.schemaPath": "Frontend/prisma/schema.prisma"
+}

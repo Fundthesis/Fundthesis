@@ -1,0 +1,50 @@
+name: Sentiment Analysis Job
+
+on:
+  schedule:
+    - cron: "30 */4 * * *" # Every 4 hours at :30 minutes (offset from scraper)
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  run-sentiment:
+    runs-on: ubuntu-latest
+    name: Analyze Article Sentiment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: |
+          pip install prisma
+          prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run Sentiment Analysis Job
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python jobs/sentiment/runner.py
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentiment-job-logs
+          path: backend/*.log
+          if-no-files-found: ignore

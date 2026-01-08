@@ -1,0 +1,50 @@
+name: Forecasting Job
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Daily at 6:00 AM UTC
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  run-forecasting:
+    runs-on: ubuntu-latest
+    name: Generate Stock Forecasts
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: |
+          pip install prisma
+          prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run Forecasting Job
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python jobs/forecasting/runner.py
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecasting-job-logs
+          path: backend/*.log
+          if-no-files-found: ignore

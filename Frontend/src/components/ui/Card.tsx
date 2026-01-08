@@ -9,7 +9,7 @@ interface CardProps {
 
 export function Card({ children, className, hover = false }: CardProps) {
   return (
-    <div 
+    <div
       className={cn(
         "bg-white rounded-lg shadow-sm border border-gray-200",
         hover && "hover:shadow-md transition-shadow",
@@ -70,6 +70,19 @@ export function CardDescription({ children, className }: CardDescriptionProps) {
     <p className={cn("text-gray-600", className)}>
       {children}
     </p>
+  )
+}
+
+interface CardFooterProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function CardFooter({ children, className }: CardFooterProps) {
+  return (
+    <div className={cn("p-6 border-t border-gray-200", className)}>
+      {children}
+    </div>
   )
 }
 

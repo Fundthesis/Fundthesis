@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import YahooFinance from 'yahoo-finance2';
+import { fetchQuotes } from '@/lib/multiApiService';
+import { quoteToStockSummary } from '@/lib/stockUtils';
+import { requireAuth } from '@/lib/apiAuth';
+
+const MAX_SYMBOLS = 50;
 
 type PriceSeriesPoint = {
   date: string;
   price: number;
-};
-
-type StockPriceSeriesRow = {
-  symbol: string;
-  price_series: unknown;
-  forecast_results?: unknown;
-  metadata?: Record<string, unknown> | null;
 };
 
 type StockSummary = {
@@ -24,14 +19,11 @@ type StockSummary = {
   forecastData: PriceSeriesPoint[];
 };
 
-// Create a singleton instance
-const yahooFinance = new YahooFinance();
-
 // Extended list of symbols (matching the Python server)
 const SYMBOLS = [
-  'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX', 
+  'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX',
   'JPM', 'BAC', 'GS', 'WFC', 'C', 'JNJ', 'UNH', 'PFE', 'ABBV', 'TMO',
-  'WMT', 'HD', 'DIS', 'NKE', 'SBUX', 'XOM', 'CVX', 'COP', 'BA', 'CAT', 
+  'WMT', 'HD', 'DIS', 'NKE', 'SBUX', 'XOM', 'CVX', 'COP', 'BA', 'CAT',
   'GE', 'T', 'VZ', 'CMCSA', 'INTC', 'AMD', 'QCOM', 'AVGO', 'TXN', 'MU',
   'V', 'MA', 'PYPL', 'AXP', 'SQ', 'BLK', 'SCHW', 'MS', 'SPGI', 'ICE',
   'KO', 'PEP', 'COST', 'MCD', 'MDLZ', 'PM', 'MO', 'CL', 'PG', 'UL',
@@ -51,229 +43,69 @@ const SYMBOLS = [
   'SLB', 'HAL', 'BKR', 'NOV', 'FTI', 'HP', 'RIG', 'VAL', 'MRO', 'DVN'
 ];
 
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function extractPriceFromPoint(point: unknown): number | null {
-  if (!point || typeof point !== 'object') {
-    return null;
-  }
-
-  const record = point as Record<string, unknown>;
-  // Include both lowercase and uppercase variants to handle different data formats
-  const candidateKeys = ['price', 'Price', 'close', 'Close', 'closing_price', 'value', 'adjClose', 'adj_close', 'AdjClose'];
-  for (const key of candidateKeys) {
-    const value = record[key];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string' && value.trim().length > 0) {
-      const parsed = Number(value);
-      if (!Number.isNaN(parsed)) {
-        return parsed;
-      }
-    }
-  }
-
-  return null;
-}
-
-function normalisePriceSeries(series: unknown): PriceSeriesPoint[] {
-  if (!Array.isArray(series)) {
+async function fetchYahooSummaries(symbols: string[]): Promise<StockSummary[]> {
+  if (symbols.length === 0) {
     return [];
   }
 
-  return series
-    .map((point) => {
-      const price = extractPriceFromPoint(point);
-      if (price === null) {
-        return null;
-      }
-
-      // Handle both lowercase 'date' and uppercase 'Date' keys
-      const rawDate =
-        point && typeof point === 'object'
-          ? ((point as Record<string, unknown>).date ?? (point as Record<string, unknown>).Date ?? null)
-          : null;
-      const dateValue = rawDate ? new Date(rawDate as string | number | Date) : null;
-
-      if (!dateValue || Number.isNaN(dateValue.getTime())) {
-        return null;
-      }
-
-      return {
-        date: dateValue.toISOString().split('T')[0],
-        price,
-      } satisfies PriceSeriesPoint;
-    })
-    .filter((point): point is PriceSeriesPoint => point !== null);
-}
-
-function extractCompanyName(row: StockPriceSeriesRow, symbol: string): string {
-  const metadata = row.metadata;
-  if (metadata && typeof metadata === 'object') {
-    const record = metadata as Record<string, unknown>;
-    const candidateKeys = [
-      'company',
-      'company_name',
-      'name',
-      'companyName',
-      'longName',
-      'shortName',
-      'title',
-    ];
-
-    for (const key of candidateKeys) {
-      const value = record[key];
-      if (typeof value === 'string' && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-  }
-
-  return `${symbol} Inc.`;
-}
-
-function normaliseForecastSeries(series: unknown): PriceSeriesPoint[] {
-  if (!Array.isArray(series)) {
-    return [];
-  }
-
-  return series
-    .map((point) => {
-      if (!point || typeof point !== 'object') {
-        return null;
-      }
-
-      const record = point as Record<string, unknown>;
-      const rawDate = record.date ?? record.Date ?? null;
-      const rawPrice =
-        record.price ??
-        record.Price ??
-        record.value ??
-        record.prediction ??
-        record.Predicted_Close ??
-        null;
-
-      if (!rawDate) {
-        return null;
-      }
-
-      const date = new Date(rawDate as string | number | Date);
-      if (Number.isNaN(date.getTime())) {
-        return null;
-      }
-
-      const value =
-        typeof rawPrice === 'number'
-          ? rawPrice
-          : typeof rawPrice === 'string'
-            ? Number(rawPrice)
-            : null;
-
-      if (value === null || Number.isNaN(value)) {
-        return null;
-      }
-
-      return {
-        date: date.toISOString().split('T')[0],
-        price: Number(value),
-      } satisfies PriceSeriesPoint;
-    })
-    .filter((point): point is PriceSeriesPoint => point !== null);
-}
-
-function buildSummaryFromSeries(row: StockPriceSeriesRow): StockSummary | null {
-  const series = normalisePriceSeries(row.price_series);
-  if (series.length === 0) {
-    return null;
-  }
-
-  const latest = series[series.length - 1];
-  const previous = series.length > 1 ? series[series.length - 2] : latest;
-
-  const price = latest.price;
-  const previousPrice = previous?.price ?? price;
-  const change = price - previousPrice;
-  const changePercent = previousPrice !== 0 ? (change / previousPrice) * 100 : 0;
-
-  const company = extractCompanyName(row, row.symbol);
-
-  const forecastData = normaliseForecastSeries(row.forecast_results);
-
-  return {
-    symbol: row.symbol,
-    company,
-    price: round(price),
-    change: round(change),
-    changePercent: round(changePercent),
-    forecastData,
-  };
-}
-
-async function fetchYahooSummary(symbol: string): Promise<StockSummary | null> {
   try {
-    console.log(`🌐 Fetching Yahoo quote for ${symbol}...`);
-    const quote = await yahooFinance.quote(symbol);
+    console.log(`🌐 Fetching quotes for ${symbols.length} symbols: ${symbols.join(', ')}...`);
 
-    if (!quote) {
-      console.log(`⚠️ No quote returned for ${symbol}`);
-      return null;
+    // Use the service wrapper which handles caching, rate limiting, and retries
+    const quotes = await fetchQuotes(symbols, true);
+
+    console.log(`✅ Received ${quotes.length} quotes from Yahoo Finance service`);
+
+    const summaries: StockSummary[] = [];
+
+    for (const quote of quotes) {
+      const summary = quoteToStockSummary(quote);
+      if (summary) {
+        summaries.push({
+          ...summary,
+          forecastData: [], // Forecast data handled separately
+        });
+      }
     }
-    
-    if (quote.regularMarketPrice === undefined) {
-      console.log(`⚠️ No regularMarketPrice for ${symbol}, quote:`, JSON.stringify(quote).slice(0, 200));
-      return null;
-    }
 
-    const currentPrice = quote.regularMarketPrice;
-    const openPrice = quote.regularMarketOpen || currentPrice;
-    const change = currentPrice - openPrice;
-    const changePercent = openPrice !== 0 ? (change / openPrice) * 100 : 0;
-
-    const companyName =
-      (quote.longName && typeof quote.longName === 'string' && quote.longName.length > 0
-        ? quote.longName
-        : quote.shortName) || `${symbol} Inc.`;
-
-    console.log(`✅ Yahoo quote for ${symbol}: $${currentPrice} (${companyName})`);
-
-    return {
-      symbol,
-      company: companyName,
-      price: round(currentPrice),
-      change: round(change),
-      changePercent: round(changePercent),
-      forecastData: [],
-    };
-  } catch (error) {
-    console.error(`❌ Error fetching ${symbol} from Yahoo Finance:`, error);
-    return null;
+    return summaries;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Error fetching bulk quotes from Yahoo Finance:`, errorMessage);
+    return [];
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication
+    const { error } = await requireAuth();
+    if (error) return error;
+
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const symbolsParam = searchParams.get('symbols');
 
-    console.log(`📥 Received symbols param: "${symbolsParam}"`);
+    console.log(`Received symbols param: "${symbolsParam}"`);
 
-    const customSymbols = symbolsParam
+    let customSymbols = symbolsParam && symbolsParam !== 'null'
       ? Array.from(
-          new Set(
-            symbolsParam
-              .split(',')
-              .map((symbol) => symbol.trim().toUpperCase())
-              .filter((symbol) => symbol.length > 0),
-          ),
-        )
+        new Set(
+          symbolsParam
+            .split(',')
+            .map((symbol) => symbol.trim().toUpperCase())
+            .filter((symbol) => symbol.length > 0),
+        ),
+      )
       : null;
-    
-    console.log(`📥 Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
+
+    // Limit custom symbols to prevent abuse
+    if (customSymbols && customSymbols.length > MAX_SYMBOLS) {
+      customSymbols = customSymbols.slice(0, MAX_SYMBOLS);
+    }
+
+    console.log(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
 
     const paginatedSymbols =
       customSymbols && customSymbols.length > 0
@@ -295,74 +127,11 @@ export async function GET(request: NextRequest) {
     const responseTotal = customSymbols ? customSymbols.length : SYMBOLS.length;
     const responseHasMore = customSymbols ? false : offset + limit < SYMBOLS.length;
 
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore as unknown as ReturnType<typeof cookies>,
-    });
+    const symbolsToFetch = paginatedSymbols.map(s => s.toUpperCase());
 
-    const {
-      data: cachedRows,
-      error: cachedError,
-    } = await supabase
-      .from('stock_price_series')
-      .select('symbol, price_series, forecast_results')
-      .in('symbol', paginatedSymbols);
+    console.log(`🌐 Fetching live data for ${symbolsToFetch.length} symbols`);
 
-    if (cachedError) {
-      console.error('Error fetching cached stock price series:', cachedError.message);
-    }
-
-    const cachedMap = new Map<string, StockPriceSeriesRow>();
-    (cachedRows ?? []).forEach((row) => {
-      if (row && typeof row.symbol === 'string') {
-        cachedMap.set(row.symbol.toUpperCase(), row as StockPriceSeriesRow);
-      }
-    });
-
-    console.log(`📊 Cached rows found: ${cachedMap.size} for symbols: ${paginatedSymbols.join(', ')}`);
-
-    // First, try to build summaries from cached data
-    const stocks: StockSummary[] = [];
-    const symbolsNeedingYahoo: string[] = [];
-
-    paginatedSymbols.forEach((symbol) => {
-      const upperSymbol = symbol.toUpperCase();
-      const cachedRow = cachedMap.get(upperSymbol);
-
-      if (cachedRow) {
-        const summary = buildSummaryFromSeries({
-          ...cachedRow,
-          symbol: upperSymbol,
-        });
-        if (summary) {
-          console.log(`✅ Built summary from cache for ${upperSymbol}`);
-          stocks.push(summary);
-          return;
-        } else {
-          console.log(`⚠️ Failed to build summary from cache for ${upperSymbol}, will try Yahoo`);
-        }
-      }
-      
-      // Need to fetch from Yahoo
-      symbolsNeedingYahoo.push(upperSymbol);
-    });
-
-    console.log(`🌐 Fetching ${symbolsNeedingYahoo.length} symbols from Yahoo: ${symbolsNeedingYahoo.join(', ')}`);
-
-    // Fetch missing symbols from Yahoo Finance
-    const yahooSummaries = await Promise.all(
-      symbolsNeedingYahoo.map((symbol) => fetchYahooSummary(symbol)),
-    );
-
-    yahooSummaries.forEach((summary) => {
-      if (summary) {
-        console.log(`✅ Got Yahoo data for ${summary.symbol}`);
-        stocks.push({
-          ...summary,
-          forecastData: [],
-        });
-      }
-    });
+    const stocks = await fetchYahooSummaries(symbolsToFetch);
 
     console.log(`📈 Total stocks to return: ${stocks.length}`);
 
@@ -378,4 +147,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch stocks' }, { status: 500 });
   }
 }
-

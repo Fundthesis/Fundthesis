@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import QuestionCard from './QuestionCard';
-import Confetti from './Confetti';
-import { markQuestionAnswered } from '../data/userProgress';
+import QuestionCard from '@/app/lessonmodules/components/QuestionCard';
+import Confetti from '@/app/lessonmodules/components/Confetti';
+import { markQuestionAnswered } from '@/app/lessonmodules/data/userProgress';
 import { saveResult } from '@/lib/dummyProgressDB';
-import { Question } from './types';
-import { getStartingQuestionIndex, canNavigateToQuestion, isQuestionAnswered } from '../data/quizNavigation';
+import { Question } from '@/app/lessonmodules/components/types';
+import { getStartingQuestionIndex, canNavigateToQuestion, isQuestionAnswered } from '@/app/lessonmodules/data/quizNavigation';
 
 type Props = {
   moduleIndex: number;
@@ -28,7 +28,7 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     const explanation = q.explanations?.[choiceIndex];
     setShowResult({ correct, explanation, selectedIndex: choiceIndex });
     // store correctness in a local dummy DB until backend/auth is available
-    try { saveResult(moduleIndex, q.id, correct); } catch (e) { /* ignore */ }
+    try { saveResult(moduleIndex, q.id, correct); } catch { /* ignore */ }
     // mark this question answered ONLY if the user was correct
     if (correct) {
       markQuestionAnswered(moduleIndex, q.id, questions.length);
@@ -73,12 +73,12 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     <div className="w-full">
       {confettiOn && <Confetti />}
       <div className="grid grid-cols-1 gap-4">
-  <QuestionCard question={questions[current]} onAnswer={onAnswer} showResult={showResult} locked={!!(showResult && showResult.correct)} />
+        <QuestionCard question={questions[current]} onAnswer={onAnswer} showResult={showResult} locked={!!(showResult && showResult.correct)} />
         <div className="grid grid-cols-3 items-center">
           <div className="justify-self-start flex items-center gap-3">
             {canGoBack && (
-              <button 
-                onClick={previous} 
+              <button
+                onClick={previous}
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
               >
                 Previous

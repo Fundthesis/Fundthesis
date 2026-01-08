@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Question } from './types';
+import { Question } from '@/app/lessonmodules/components/types';
 
 type Props = {
   question: Question;

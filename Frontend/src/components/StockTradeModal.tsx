@@ -2,7 +2,6 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { PortfolioHistoryPoint } from '@/components/enviro-compoents-real/Portfolio'
 
 interface StockDetail {
   symbol: string
@@ -71,7 +70,13 @@ export default function StockTradeModal({ stock, onClose, timeframe, setTimefram
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-0" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-0"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="trade-modal-title"
+    >
       <button onClick={onClose} aria-label="Close" className="fixed right-4 top-4 z-60 p-2 rounded hover:bg-gray-100 bg-white/80 backdrop-blur-sm">
         <X className="w-5 h-5 text-gray-600" />
       </button>
@@ -81,7 +86,7 @@ export default function StockTradeModal({ stock, onClose, timeframe, setTimefram
           <div className="space-y-6">
             <div className="flex items-start justify-between pb-6 border-b">
               <div>
-                <h2 className="text-5xl font-bold text-gray-900">{stock.symbol}</h2>
+                <h2 id="trade-modal-title" className="text-5xl font-bold text-gray-900">{stock.symbol}</h2>
                 <p className="text-xl text-gray-600 mt-2">{stock.company}</p>
               </div>
               <div className="text-right">
@@ -173,17 +178,17 @@ export default function StockTradeModal({ stock, onClose, timeframe, setTimefram
                   </div>
 
                   <div className="mt-4 flex flex-col items-center w-full">
-                    <input 
-                      type="number" 
-                      step="0.01" 
+                    <input
+                      type="number"
+                      step="0.01"
                       min="0"
-                      value={quantity === 0 ? '' : quantity} 
+                      value={quantity === 0 ? '' : quantity}
                       onChange={(e) => {
                         const val = e.target.value === '' ? 0 : Number(e.target.value)
                         setQuantity(val >= 0 ? val : 0)
-                      }} 
-                      placeholder="Quantity" 
-                      className="w-40 border rounded px-3 py-2 text-center" 
+                      }}
+                      placeholder="Quantity"
+                      className="w-40 border rounded px-3 py-2 text-center"
                     />
 
                     <div className="text-sm text-gray-600 mt-2 text-center">Price: <span className="font-medium">${stock.price.toFixed(2)}</span></div>

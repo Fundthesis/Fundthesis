@@ -1,71 +1,12 @@
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { StockModel, TradeResult } from '../lib/stockModel';
-import ModNav from '../components/ModNav';
-import questionsByModule, { getQuestions } from '../data/moduleQuestions';
-import Confetti from '../components/Confetti';
+import { StockModel } from '@/app/lessonmodules/lib/stockModel';
+import ModNav from '@/app/lessonmodules/components/ModNav';
+import Confetti from '@/app/lessonmodules/components/Confetti';
 // DecisionQuiz is defined in this file for the Module X assessment
-type Decision = 'BUY' | 'SELL' | 'HOLD' | null;
 
-const DecisionQuiz: React.FC = () => {
-  const scenarios = [
-    { id: 's1', title: 'AI chip demand surges', text: 'Analysts report stronger-than-expected demand for GPUs in data centers, which may boost NVDA revenue this quarter.', correct: 'BUY' as Decision, explanation: 'Increased demand for GPUs is a positive signal for NVDA revenue and growth.' },
-    { id: 's2', title: 'Fed signals on interest rates', text: 'Recent commentary suggests rates could remain elevated, potentially weighing on growth stocks by increasing discount rates.', correct: 'HOLD' as Decision, explanation: 'Higher rates can pressure growth valuations; a cautious approach (hold) may be appropriate.' },
-    { id: 's3', title: 'Supply chain tariffication risk', text: 'New tariffs proposed on semiconductor components could raise costs for manufacturers and squeeze margins.', correct: 'SELL' as Decision, explanation: 'Tariffs that increase costs can hurt margins and are a near-term negative for suppliers.' },
-    { id: 's4', title: 'Partnership announcement', text: 'NVDA announces a strategic partnership with a major cloud provider to integrate its AI stack, expanding reach.', correct: 'BUY' as Decision, explanation: 'Strategic partnerships can expand revenue opportunities and distribution.' }
-  ];
 
-  const [answers, setAnswers] = React.useState<Record<string, Decision>>({});
-  const [submitted, setSubmitted] = React.useState(false);
 
-  function select(id: string, choice: Decision) {
-    setAnswers(a => ({ ...a, [id]: choice }));
-  }
-
-  function score() {
-    let correct = 0;
-    scenarios.forEach(s => { if (answers[s.id] === s.correct) correct++; });
-    return { correct, total: scenarios.length };
-  }
-
-  const result = submitted ? score() : null;
-
-  return (
-    <div className="space-y-4">
-      {scenarios.map(s => (
-        <div key={s.id} className="p-3 border rounded">
-          <div className="font-semibold">{s.title}</div>
-          <div className="text-sm text-gray-700 mb-2">{s.text}</div>
-          <div className="flex gap-3">
-            {(['BUY','SELL','HOLD'] as Decision[]).map(opt => (
-              <button
-                key={opt || 'null'}
-                onClick={() => select(s.id, opt)}
-                className={`px-3 py-1 rounded ${answers[s.id] === opt ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                {opt}
-              </button>
-            ))}
-          </div>
-          {submitted && (
-            <div className="mt-2 text-sm">
-              <div><strong>Correct:</strong> {s.correct}</div>
-              <div className="text-gray-600">{s.explanation}</div>
-              <div className="mt-1">Your answer: <span className="font-semibold">{answers[s.id] ?? '—'}</span></div>
-            </div>
-          )}
-        </div>
-      ))}
-
-      <div className="flex items-center gap-3">
-        <button onClick={() => setSubmitted(true)} className="px-4 py-2 bg-blue-600 text-white rounded">Check Answers</button>
-        <button onClick={() => { setAnswers({}); setSubmitted(false); }} className="px-4 py-2 bg-gray-200 rounded">Reset</button>
-        {submitted && result && (
-          <div className="ml-auto font-semibold">Score: {result.correct} / {result.total}</div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const Module10: React.FC = () => {
   const stock = useMemo(() => new StockModel(875.4), []);
@@ -80,9 +21,9 @@ const Module10: React.FC = () => {
   const [balance, setBalance] = useState<number>(10000);
   const [shares, setShares] = useState<number>(0);
   const [amount, setAmount] = useState<number>(1);
-  const [orderType, setOrderType] = useState<'market'|'limit'|'stop'>('market');
+  const [orderType, setOrderType] = useState<'market' | 'limit' | 'stop'>('market');
   const [limitPrice, setLimitPrice] = useState<string>('');
-  const [history, setHistory] = useState<TradeResult[]>([]);
+
 
   // Assessment mode intercepts buy/sell clicks and uses them as answers to scenarios
   const [assessmentActive] = useState<boolean>(true);
@@ -104,7 +45,7 @@ const Module10: React.FC = () => {
     if (balance < res.total) { alert('Insufficient funds'); return; }
     setBalance(b => b - res.total);
     setShares(s => s + res.shares);
-    setHistory(h => [...h, res]);
+
   };
 
   const doSell = () => {
@@ -118,7 +59,7 @@ const Module10: React.FC = () => {
     const res = stock.executeTrade('SELL', amount, orderType, Number.isFinite(limit) ? limit : undefined);
     setBalance(b => b + res.total);
     setShares(s => s - res.shares);
-    setHistory(h => [...h, res]);
+
   };
 
   // --- Decision assessment state and handlers ---
@@ -134,7 +75,7 @@ const Module10: React.FC = () => {
   const [decisionState, setDecisionState] = useState(() => ({
     scenarios: initialScenarios,
     currentIndex: 0,
-    answers: {} as Record<string, { choice: Decision; correct: boolean; feedback: string; recommendedOrder?: string }> ,
+    answers: {} as Record<string, { choice: Decision; correct: boolean; feedback: string; recommendedOrder?: string }>,
     answeredIds: new Set<string>()
   }));
 
@@ -179,11 +120,11 @@ const Module10: React.FC = () => {
           <div className="md:col-span-2 bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                  <div className="text-3xl font-bold text-black">NVDA</div>
+                <div className="text-3xl font-bold text-black">NVDA</div>
                 <div className="text-sm text-black">NVIDIA Corporation</div>
               </div>
               <div className="text-right">
-                  <div className="text-3xl font-bold text-black">${displayedPrice.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-black">${displayedPrice.toFixed(2)}</div>
               </div>
             </div>
 
@@ -213,7 +154,7 @@ const Module10: React.FC = () => {
           </div>
 
           <aside className="bg-white rounded-lg shadow p-6">
-              <h4 className="text-lg font-semibold mb-3 text-black">Market News</h4>
+            <h4 className="text-lg font-semibold mb-3 text-black">Market News</h4>
             <div className="space-y-4 text-sm text-black">
               {/* show only the current scenario here */}
               {decisionState.scenarios[decisionState.currentIndex] ? (
@@ -239,35 +180,35 @@ const Module10: React.FC = () => {
                   <div>
                     <div className="text-sm text-gray-700 mb-2">Read the news on the right, then use the trading panel to choose Buy or Sell for this scenario.</div>
                     <div className="mt-2">
-                              {decisionState.answeredIds.has(decisionState.scenarios[decisionState.currentIndex].id) ? (
-                                (() => {
-                                  const sid = decisionState.scenarios[decisionState.currentIndex].id;
-                                  const ans = decisionState.answers[sid];
-                                  const capitalizedOrderType = ans.recommendedOrder ? ans.recommendedOrder.charAt(0).toUpperCase() + ans.recommendedOrder.slice(1) : '';
-                                  return (
-                                    <div className={`p-3 border rounded ${ans.correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                      <div className={`font-semibold ${ans.correct ? 'text-green-700' : 'text-red-700'}`}>{ans.correct ? 'Correct' : 'Not quite'}</div>
-                                      <div className="text-sm text-gray-700 mt-1">{ans.feedback}</div>
-                                      <div className="text-sm text-gray-600 mt-2">Recommended Order Type: <span className="font-semibold">{capitalizedOrderType}</span></div>
-                                      <div className="mt-3 flex justify-end">
-                                        <button onClick={nextScenario} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">Next</button>
-                                      </div>
-                                    </div>
-                                  );
-                                })()
-                              ) : (
+                      {decisionState.answeredIds.has(decisionState.scenarios[decisionState.currentIndex].id) ? (
+                        (() => {
+                          const sid = decisionState.scenarios[decisionState.currentIndex].id;
+                          const ans = decisionState.answers[sid];
+                          const capitalizedOrderType = ans.recommendedOrder ? ans.recommendedOrder.charAt(0).toUpperCase() + ans.recommendedOrder.slice(1) : '';
+                          return (
+                            <div className={`p-3 border rounded ${ans.correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                              <div className={`font-semibold ${ans.correct ? 'text-green-700' : 'text-red-700'}`}>{ans.correct ? 'Correct' : 'Not quite'}</div>
+                              <div className="text-sm text-gray-700 mt-1">{ans.feedback}</div>
+                              <div className="text-sm text-gray-600 mt-2">Recommended Order Type: <span className="font-semibold">{capitalizedOrderType}</span></div>
+                              <div className="mt-3 flex justify-end">
+                                <button onClick={nextScenario} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">Next</button>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
                         <div className="p-3 border rounded bg-gray-50">
                           <div className="text-sm text-gray-700">Awaiting your Buy or Sell decision.</div>
                         </div>
                       )}
                     </div>
                   </div>
-                  ) : (
+                ) : (
                   <div className="text-center">
                     <div className="font-semibold mb-2">All scenarios completed</div>
                     <div className="text-sm text-gray-700 mb-4">You can retry the set to practice again.</div>
                     <button onClick={resetAssessment} aria-label="Retry" className="w-10 h-10 rounded-full bg-gray-700 text-white inline-flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block"><path d="M21 12a9 9 0 1 1-3-6.7" /><polyline points="21 3 21 9 15 9" /></svg>
                     </button>
                   </div>
                 )}

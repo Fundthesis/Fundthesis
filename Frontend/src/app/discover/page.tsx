@@ -48,7 +48,7 @@ interface StockDetail {
 }
 
 // Use Next.js API routes instead of external Flask server
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 
 const getDaysForTimeframe = (tf: "day" | "month" | "year") => {
   switch (tf) {
@@ -383,8 +383,8 @@ function DiscoverPage() {
         const data = await res.json();
         const mapped: Stock[] = Array.isArray(data.stocks)
           ? data.stocks
-              .map((stock: unknown) => mapApiStockSummary(stock))
-              .filter((stock: Stock | null): stock is Stock => stock !== null)
+            .map((stock: unknown) => mapApiStockSummary(stock))
+            .filter((stock: Stock | null): stock is Stock => stock !== null)
           : [];
 
         defaultOffsetRef.current = offset + mapped.length;
@@ -514,16 +514,16 @@ function DiscoverPage() {
         console.log("📦 Portfolio payload:", payload);
         const userTickers = Array.isArray(payload.tickers)
           ? Array.from(
-              new Set(
-                payload.tickers
-                  .map((ticker: unknown) =>
-                    typeof ticker === "string"
-                      ? ticker.trim().toUpperCase()
-                      : ""
-                  )
-                  .filter((ticker: string) => ticker.length > 0)
-              )
+            new Set(
+              payload.tickers
+                .map((ticker: unknown) =>
+                  typeof ticker === "string"
+                    ? ticker.trim().toUpperCase()
+                    : ""
+                )
+                .filter((ticker: string) => ticker.length > 0)
             )
+          )
           : [];
 
         console.log("🎯 User tickers extracted:", userTickers);
@@ -545,10 +545,10 @@ function DiscoverPage() {
             console.log("📊 Stocks API response:", data);
             const mapped: Stock[] = Array.isArray(data.stocks)
               ? data.stocks
-                  .map((stock: unknown) => mapApiStockSummary(stock))
-                  .filter(
-                    (stock: Stock | null): stock is Stock => stock !== null
-                  )
+                .map((stock: unknown) => mapApiStockSummary(stock))
+                .filter(
+                  (stock: Stock | null): stock is Stock => stock !== null
+                )
               : [];
 
             console.log("✅ Mapped stocks for cards:", mapped);
@@ -717,7 +717,7 @@ function DiscoverPage() {
             setCurrentIndex={setCurrentIndex}
             timeframe={timeframe}
             setTimeframe={setTimeframe}
-            loadingMore={loadingMore}
+
             checkAndLoadMore={checkAndLoadMore}
           />
         </div>
@@ -735,8 +735,9 @@ function DiscoverPage() {
             Clear Search
           </button>
         </div>
-      )}
-    </main>
+      )
+      }
+    </main >
   );
 }
 

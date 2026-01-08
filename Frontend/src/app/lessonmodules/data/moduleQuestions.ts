@@ -1,4 +1,4 @@
-import { Question } from '../components/types';
+import { Question } from '@/app/lessonmodules/components/types';
 
 // Demo questions (previously in module0Questions.ts)
 const Module0Questions: Question[] = [

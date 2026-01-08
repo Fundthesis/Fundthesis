@@ -1,216 +1,149 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/AuthProvider";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-
-// Prevent static generation since this page requires client-side auth
-export const dynamic = "force-dynamic";
 
 export default function AuthPage() {
-  const { supabase, user, isLoading: isAuthLoading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSignup, setIsSignup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const router = useRouter();
-  const isProcessing = loading || isAuthLoading;
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [name, setName] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
-  useEffect(() => {
-    if (!isAuthLoading && user) {
-      router.replace("/dashboard");
-    }
-  }, [isAuthLoading, user, router]);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+        try {
+            if (isLogin) {
+                await authClient.signIn.email({
+                    email,
+                    password,
+                    callbackURL: "/dashboard",
+                }, {
+                    onSuccess: () => {
+                        toast.success("Logged in successfully!");
+                        router.push("/dashboard");
+                    },
+                    onError: (ctx) => {
+                        toast.error(ctx.error.message || "Failed to login");
+                    }
+                });
+            } else {
+                await authClient.signUp.email({
+                    email,
+                    password,
+                    name,
+                    callbackURL: "/dashboard",
+                }, {
+                    onSuccess: () => {
+                        toast.success("Account created successfully!");
+                        router.push("/dashboard");
+                    },
+                    onError: (ctx) => {
+                        toast.error(ctx.error.message || "Failed to create account");
+                    }
+                });
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred");
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    if (isSignup) {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccessMessage(
-          "Signup successful! Please check your email for confirmation."
-        );
-        setEmail("");
-        setPassword("");
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError(error.message);
-      } else {
-        router.push("/dashboard");
-      }
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="w-full max-w-2xl">
-        {/* Logo/Brand Section */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-            FundThesis
-          </h1>
-          <p className="text-lg text-gray-600">
-            {isSignup ? "Create your account" : "Sign in to your account"}
-          </p>
+    return (
+        <div className="w-full max-w-md mx-auto p-4">
+            <Card className="border-2 border-[#9DB38A]/20 shadow-xl">
+                <CardHeader className="space-y-1 text-center">
+                    <CardTitle className="text-3xl font-bold text-gray-900">
+                        {isLogin ? "Welcome Back" : "Create Account"}
+                    </CardTitle>
+                    <CardDescription className="text-gray-500">
+                        {isLogin
+                            ? "Enter your credentials to access your account"
+                            : "Join Fundthesis and start your investment journey"}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {!isLogin && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700" htmlFor="name">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all"
+                                />
+                            </div>
+                        )}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700" htmlFor="email">
+                                Email Address
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="name@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700" htmlFor="password">
+                                Password
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all"
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="w-full bg-[#9DB38A] hover:bg-[#8ca279] text-white py-6 text-lg font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-70"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Processing...
+                                </div>
+                            ) : (
+                                isLogin ? "Sign In" : "Create Account"
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+                <CardFooter className="flex flex-col space-y-4">
+                    <div className="text-sm text-center text-gray-500">
+                        {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+                        <button
+                            onClick={() => setIsLogin(!isLogin)}
+                            className="text-[#9DB38A] font-semibold hover:underline"
+                        >
+                            {isLogin ? "Sign Up" : "Sign In"}
+                        </button>
+                    </div>
+                </CardFooter>
+            </Card>
         </div>
-
-        {/* Auth Card */}
-        <div className="bg-white rounded-lg p-10 md:p-12 border border-gray-200 shadow-sm">
-          {/* Toggle between Login/Signup */}
-          <div className="flex gap-3 mb-8">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignup(false);
-                setError(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-3 px-6 rounded text-base font-medium transition-all ${
-                !isSignup
-                  ? "bg-[#9DB38A] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignup(true);
-                setError(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-3 px-6 rounded text-base font-medium transition-all ${
-                isSignup
-                  ? "bg-[#9DB38A] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Input */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-base font-medium text-gray-700 mb-2"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-5 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9DB38A] focus:border-[#9DB38A] outline-none disabled:bg-gray-50"
-                disabled={isProcessing}
-                required
-              />
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-base font-medium text-gray-700 mb-2"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-5 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9DB38A] focus:border-[#9DB38A] outline-none disabled:bg-gray-50"
-                disabled={isProcessing}
-                required
-                minLength={6}
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-base text-red-600">{error}</p>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {successMessage && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-base text-green-600">{successMessage}</p>
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isProcessing}
-              className="w-full h-12 text-base bg-[#9DB38A] hover:bg-[#8BA378] text-white font-medium"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {isSignup ? "Creating Account..." : "Signing In..."}
-                </>
-              ) : isSignup ? (
-                "Create Account"
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-
-          {/* Footer Text */}
-          <p className="mt-8 text-center text-base text-gray-500">
-            {isSignup ? (
-              <>
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => setIsSignup(false)}
-                  className="text-[#9DB38A] hover:text-[#8BA378] font-medium"
-                >
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                Don&apos;t have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => setIsSignup(true)}
-                  className="text-[#9DB38A] hover:text-[#8BA378] font-medium"
-                >
-                  Sign up
-                </button>
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

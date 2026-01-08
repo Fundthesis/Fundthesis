@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useCallback, useEffect } from 'react';
-import QuestionCard from './QuestionCard';
-import Confetti from './Confetti';
-import { markQuestionAnswered } from '../data/userProgress';
+import QuestionCard from '@/app/lessonmodules/components/QuestionCard';
+import Confetti from '@/app/lessonmodules/components/Confetti';
+import { markQuestionAnswered } from '@/app/lessonmodules/data/userProgress';
 import { saveResult } from '@/lib/dummyProgressDB';
-import { Question } from './types';
-import { isQuestionAnswered } from '../data/quizNavigation';
+import { Question } from '@/app/lessonmodules/components/types';
+import { isQuestionAnswered } from '@/app/lessonmodules/data/quizNavigation';
 
 type Props = {
   moduleIndex: number;
@@ -14,7 +14,7 @@ type Props = {
 
 const GridQuiz: React.FC<Props> = ({ moduleIndex, questions }) => {
   // Initialize results based on previously answered questions
-  const [results, setResults] = useState<Array<{ correct: boolean; explanation?: string; selectedIndex?: number } | null>>(() => 
+  const [results, setResults] = useState<Array<{ correct: boolean; explanation?: string; selectedIndex?: number } | null>>(() =>
     questions.map((q) => {
       const answered = isQuestionAnswered(moduleIndex, q.id);
       return answered ? { correct: true, explanation: undefined, selectedIndex: undefined } : null;
@@ -37,10 +37,10 @@ const GridQuiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     if (already && already.correct) return;
 
     const correct = choiceIndex === q.correctIndex;
-  const explanation = q.explanations?.[choiceIndex];
+    const explanation = q.explanations?.[choiceIndex];
 
     // persist correctness to dummy DB
-    try { saveResult(moduleIndex, q.id, correct); } catch (e) { /* ignore */ }
+    try { saveResult(moduleIndex, q.id, correct); } catch { /* ignore */ }
 
     setResults(prev => {
       const next = prev.slice();
