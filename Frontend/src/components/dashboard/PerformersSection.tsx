@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useStocks } from "@/lib/hooks/useStocks";
@@ -51,25 +51,25 @@ export function PerformersSection() {
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-14 bg-stone-200"></div>
+              <div className="h-14 bg-stone-200 dark:bg-stone-700"></div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-6 text-stone-500">
-          <p className="font-serif text-sm text-stone-600">
+        <div className="text-center py-6 text-stone-500 dark:text-stone-400">
+          <p className="font-serif text-sm text-stone-600 dark:text-stone-300">
             {error instanceof Error ? error.message : "Failed to load top performers"}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-3 text-xs uppercase tracking-widest text-black hover:underline"
+            className="mt-3 text-xs uppercase tracking-widest text-black dark:text-stone-100 hover:underline"
           >
             Try again
           </button>
         </div>
       ) : stocks.length === 0 ? (
-        <div className="text-center py-6 text-stone-500">
-          <p className="font-serif italic text-sm text-stone-600">No top performers available</p>
+        <div className="text-center py-6 text-stone-500 dark:text-stone-400">
+          <p className="font-serif italic text-sm text-stone-600 dark:text-stone-300">No top performers available</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -77,28 +77,28 @@ export function PerformersSection() {
             <Link
               key={stock.symbol}
               href={`/discover?symbol=${stock.symbol}`}
-              className="block p-3 border border-stone-200 hover:border-black hover:bg-stone-50 transition-all group rounded-sm"
+              className="block p-3 border border-stone-200 dark:border-stone-700 hover:border-black dark:hover:border-stone-100 hover:bg-stone-50 dark:hover:bg-stone-800 transition-all group rounded-sm"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-serif font-bold text-sm text-black">{stock.symbol}</span>
-                    <span className="text-xs text-stone-500 bg-stone-100 px-2 py-1 uppercase tracking-wide">
+                    <span className="font-serif font-bold text-sm text-black dark:text-stone-100">{stock.symbol}</span>
+                    <span className="text-xs text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-1 uppercase tracking-wide">
                       #{stock.rank}
                     </span>
                   </div>
                   {stock.company && (
-                    <p className="text-xs text-stone-600 truncate font-serif italic">
+                    <p className="text-xs text-stone-600 dark:text-stone-400 truncate font-serif italic">
                       {stock.company}
                     </p>
                   )}
                 </div>
                 <div className="flex items-center gap-3 ml-3">
                   <div className="text-right">
-                    <div className="font-serif font-bold text-sm text-black">
+                    <div className="font-serif font-bold text-sm text-black dark:text-stone-100">
                       {formatPrice(stock.price)}
                     </div>
-                    <div className="text-xs text-green-700 font-bold flex items-center gap-1">
+                    <div className="text-xs text-green-700 dark:text-green-400 font-bold flex items-center gap-1">
                       <ArrowUpRight className="w-3 h-3" />
                       {formatChange(stock.change, stock.changePercent)}
                     </div>

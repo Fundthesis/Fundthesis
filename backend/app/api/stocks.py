@@ -218,7 +218,7 @@ async def get_stock_metadata():
 
 @router.get("/stocks")
 async def get_stocks(
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     symbols: Optional[str] = Query(default=None, description="Comma-separated list of custom symbols"),
     search: Optional[str] = Query(default=None, description="Search by symbol or company name"),

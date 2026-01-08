@@ -59,20 +59,20 @@ export function AccountSettings() {
       <CardContent className="space-y-6">
         {/* Change Email */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Change Email</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-stone-100 mb-3">Change Email</h3>
           <form onSubmit={handleChangeEmail} className="space-y-3">
             <input
               type="email"
               placeholder="New email address"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A]"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] dark:focus:ring-green-500"
               required
             />
             <Button
               type="submit"
               disabled={isChangingEmail}
-              className="bg-[#9DB38A] hover:bg-[#8ca279] text-white"
+              className="bg-[#9DB38A] hover:bg-[#8ca279] dark:bg-green-600 dark:hover:bg-green-700 text-white"
             >
               {isChangingEmail ? "Changing..." : "Change Email"}
             </Button>
@@ -80,15 +80,15 @@ export function AccountSettings() {
         </div>
 
         {/* Change Password */}
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Change Password</h3>
+        <div className="pt-4 border-t border-gray-200 dark:border-stone-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-stone-100 mb-3">Change Password</h3>
           <form onSubmit={handleChangePassword} className="space-y-3">
             <input
               type="password"
               placeholder="Current password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A]"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] dark:focus:ring-green-500"
               required
             />
             <input
@@ -96,7 +96,7 @@ export function AccountSettings() {
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A]"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] dark:focus:ring-green-500"
               required
               minLength={8}
             />
@@ -105,13 +105,13 @@ export function AccountSettings() {
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A]"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] dark:focus:ring-green-500"
               required
             />
             <Button
               type="submit"
               disabled={isChangingPassword}
-              className="bg-[#9DB38A] hover:bg-[#8ca279] text-white"
+              className="bg-[#9DB38A] hover:bg-[#8ca279] dark:bg-green-600 dark:hover:bg-green-700 text-white"
             >
               {isChangingPassword ? "Changing..." : "Change Password"}
             </Button>
@@ -119,30 +119,30 @@ export function AccountSettings() {
         </div>
 
         {/* Two-Factor Authentication */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-gray-200 dark:border-stone-700">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Two-Factor Authentication</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-stone-100">Two-Factor Authentication</h3>
+              <p className="text-sm text-gray-500 dark:text-stone-400 mt-1">
                 Add an extra layer of security to your account
               </p>
             </div>
-            <Button className="bg-gray-200 text-gray-700 hover:bg-gray-300">
+            <Button className="bg-gray-200 dark:bg-stone-700 text-gray-700 dark:text-stone-200 hover:bg-gray-300 dark:hover:bg-stone-600">
               Enable
             </Button>
           </div>
         </div>
 
         {/* Delete Account */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-gray-200 dark:border-stone-700">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-red-600">Delete Account</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Delete Account</h3>
+              <p className="text-sm text-gray-500 dark:text-stone-400 mt-1">
                 Permanently delete your account and all associated data
               </p>
             </div>
-            <Button className="bg-red-600 text-white hover:bg-red-700">
+            <Button className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800">
               Delete Account
             </Button>
           </div>

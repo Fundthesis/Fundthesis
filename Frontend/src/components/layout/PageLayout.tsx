@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import StockTicker from '@/components/StockTicker'
+import StockTicker from '@/components/stocks/StockTicker'
 import { navItems } from '@/constants/navigation'
 
 interface PageLayoutProps {

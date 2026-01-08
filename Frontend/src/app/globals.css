@@ -1,10 +1,20 @@
 /* Newspaper Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap");
 @import "tailwindcss";
+
+/* Configure Tailwind v4 dark mode to use class selector */
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-serif: "Playfair Display", serif;
   --font-body: "Merriweather", serif;
+
+  /* Brand Colors */
+  --color-accent: #9DB38A;           /* Primary accent green */
+  --color-accent-light: #eff3eb;     /* Light accent background */
+  --color-accent-dark: #7a9168;      /* Darker accent for hover states */
+  --color-negative: #c17b7b;         /* Negative/destructive red */
+  --color-negative-light: #f5e6e6;   /* Light negative background */
 }
 
 body {
@@ -12,6 +22,13 @@ body {
   background-color: #fcfbf9;
   /* Off-white paper color */
   color: #1a1a1a;
+}
+
+/* Dark mode styles */
+.dark body {
+  background-color: #0c0a09;
+  /* Dark stone background */
+  color: #fafaf9;
 }
 
 h1,
@@ -26,6 +43,10 @@ h6 {
 /* Custom color for ticker */
 .ticker-bg {
   background-color: hsl(0, 0%, 100%);
+}
+
+.dark .ticker-bg {
+  background-color: hsl(0, 0%, 10%);
 }
 
 /* Custom animations for stock ticker */

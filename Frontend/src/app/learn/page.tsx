@@ -70,20 +70,20 @@ export default function LearnPage() {
   const totalModules = moduleTitles.length;
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Masthead */}
-        <header className="text-center border-b-4 border-double border-black pb-4 mb-6">
-          <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
             {dateString}
           </p>
-          <h1 className="font-serif text-5xl font-black tracking-tight text-black">
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
             The Learning Ledger
           </h1>
-          <p className="text-sm font-serif italic text-stone-600 mt-2">
+          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
             &ldquo;Ten Chapters to Financial Literacy&rdquo;
           </p>
-          <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500">
+          <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
             <span>Vol. I</span>
             <span>|</span>
             <span>{completedCount} of {totalModules} Complete</span>
@@ -93,7 +93,7 @@ export default function LearnPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Module List */}
           <div className="lg:col-span-3">
-            <div className="border border-stone-200 bg-white divide-y divide-stone-100">
+            <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 divide-y divide-stone-100 dark:divide-stone-700">
               {moduleTitles.map((title, i) => {
                 const moduleNumber = i + 1;
                 const isComplete = progress[i] >= 100;
@@ -103,11 +103,11 @@ export default function LearnPage() {
                   <Link
                     key={i}
                     href={`/lessonmodules/${moduleNumber}`}
-                    className="flex items-center justify-between p-6 hover:bg-stone-50 transition-colors"
+                    className="flex items-center justify-between p-6 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
                   >
                     <div className="flex items-start gap-4">
                       <div className="text-center min-w-[40px]">
-                        <span className="font-serif text-2xl font-bold text-stone-300">
+                        <span className="font-serif text-2xl font-bold text-stone-300 dark:text-stone-600">
                           {moduleNumber === 10 ? 'X' : moduleNumber}
                         </span>
                       </div>
@@ -115,11 +115,11 @@ export default function LearnPage() {
                         <p className="text-xs uppercase tracking-widest text-stone-400 mb-1">
                           Chapter {moduleNumber === 10 ? 'X' : moduleNumber}
                         </p>
-                        <h3 className="font-serif text-lg font-bold text-black">
+                        <h3 className="font-serif text-lg font-bold text-black dark:text-white">
                           {title}
                         </h3>
                         {isComplete && (
-                          <p className="text-xs text-stone-500 mt-1 uppercase tracking-wide">
+                          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 uppercase tracking-wide">
                             Completed
                           </p>
                         )}
@@ -127,9 +127,9 @@ export default function LearnPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="w-24 hidden sm:block">
-                        <div className="w-full bg-stone-200 h-1">
+                        <div className="w-full bg-stone-200 dark:bg-stone-700 h-1">
                           <div
-                            className="bg-black h-1 transition-all"
+                            className="bg-black dark:bg-green-500 h-1 transition-all"
                             style={{ width: `${progressPercent}%` }}
                           />
                         </div>
@@ -149,16 +149,16 @@ export default function LearnPage() {
 
           {/* Sidebar */}
           <aside className="lg:col-span-1">
-            <div className="border border-stone-200 bg-white p-6 sticky top-8">
-              <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+            <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 sticky top-8">
+              <h3 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                 Reading Progress
               </h3>
 
               <div className="mb-6">
-                <p className="font-serif text-4xl font-black text-black">
+                <p className="font-serif text-4xl font-black text-black dark:text-white">
                   {completedCount}
                 </p>
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-stone-500 dark:text-stone-400">
                   of {totalModules} chapters complete
                 </p>
               </div>
@@ -171,9 +171,9 @@ export default function LearnPage() {
                       <span className="text-xs text-stone-400 w-4">
                         {i + 1 === 10 ? 'X' : i + 1}
                       </span>
-                      <div className="flex-1 bg-stone-200 h-1">
+                      <div className="flex-1 bg-stone-200 dark:bg-stone-700 h-1">
                         <div
-                          className="bg-black h-1"
+                          className="bg-black dark:bg-green-500 h-1"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -184,7 +184,7 @@ export default function LearnPage() {
 
               <button
                 onClick={handleReset}
-                className="w-full text-xs uppercase tracking-widest text-stone-500 border border-stone-300 py-2 hover:bg-stone-50 transition-colors"
+                className="w-full text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-600 py-2 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
               >
                 Reset All Progress
               </button>

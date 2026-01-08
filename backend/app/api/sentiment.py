@@ -80,16 +80,20 @@ async def get_sentiment_heatmap(
         return cached_result
     
     try:
-        # Calculate date range based on timeframe
+        # Calculate date range based on timeframe with fallback
         now = datetime.now()
         if timeframe == "1d":
             start_date = now - timedelta(days=1)
+            fallback_start = now - timedelta(days=2)
         elif timeframe == "1w":
             start_date = now - timedelta(weeks=1)
+            fallback_start = now - timedelta(days=10)
         elif timeframe == "1m":
             start_date = now - timedelta(days=30)
+            fallback_start = now - timedelta(days=35)
         else:
             start_date = now - timedelta(days=1)
+            fallback_start = now - timedelta(days=2)
         
         print(f"📊 Fetching sentiment heatmap data for timeframe: {timeframe}")
         
@@ -110,7 +114,21 @@ async def get_sentiment_heatmap(
             take=1000  # Limit to recent articles for performance
         )
         
-        print(f"✅ Found {len(articles)} articles")
+        # If insufficient articles (< 50), use fallback range
+        if len(articles) < 50:
+            print(f"⚠️ Only {len(articles)} articles found, using fallback range")
+            fallback_where_clause = {
+                'publishedAt': {
+                    'gte': fallback_start
+                }
+            }
+            articles = await db.article.find_many(
+                where=fallback_where_clause,
+                take=1000
+            )
+            print(f"✅ Found {len(articles)} articles with fallback range")
+        else:
+            print(f"✅ Found {len(articles)} articles")
         
         # Aggregate sentiment by ticker
         ticker_sentiments: Dict[str, List[float]] = {}

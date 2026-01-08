@@ -3,7 +3,7 @@ import Link from 'next/link';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Dialog from '@radix-ui/react-dialog';
 import { User, LogOut, Settings, UserCircle, X } from 'lucide-react';
-import StockTicker from './StockTicker';
+import StockTicker from '@/components/stocks/StockTicker';
 
 interface HeaderProps {
   className?: string;

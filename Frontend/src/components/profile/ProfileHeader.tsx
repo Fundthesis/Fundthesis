@@ -41,10 +41,10 @@ export function ProfileHeader({
             onUpload={onAvatarUpload}
             isLoading={isLoading}
           />
-          <h2 className="text-2xl font-bold text-gray-900 mt-4">{name || "User"}</h2>
-          <p className="text-gray-600 mt-1">{email}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-stone-100 mt-4">{name || "User"}</h2>
+          <p className="text-gray-600 dark:text-stone-400 mt-1">{email}</p>
           {memberSince && (
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 dark:text-stone-500 mt-2">
               Member since {formatDate(memberSince)}
             </p>
           )}

@@ -25,18 +25,18 @@ export function NewspaperLayout({
   });
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
       <main className={`${maxWidth} mx-auto px-4 py-8`}>
         {/* Newspaper Masthead */}
-        <header className="text-center border-b-4 border-double border-black pb-3 mb-4">
-          <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-100 pb-3 mb-4">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
             {today}
           </p>
-          <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black">
+          <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black dark:text-stone-100">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm font-serif italic text-stone-600 mt-2">
+            <p className="text-sm font-serif italic text-stone-600 dark:text-stone-300 mt-2">
               &ldquo;{subtitle}&rdquo;
             </p>
           )}

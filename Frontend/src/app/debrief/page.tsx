@@ -109,17 +109,17 @@ export default function DebriefPage() {
     const selectedAnalysis = selectedTrade ? analyses[selectedTrade.id] : null;
 
     return (
-        <div className="min-h-screen bg-stone-50">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
             <main className="max-w-6xl mx-auto px-4 py-8">
                 {/* Masthead */}
-                <header className="text-center border-b-4 border-double border-black pb-4 mb-6">
-                    <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+                <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
                         {dateString}
                     </p>
-                    <h1 className="font-serif text-5xl font-black tracking-tight text-black">
+                    <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
                         The Trading Post-Mortem
                     </h1>
-                    <p className="text-sm font-serif italic text-stone-600 mt-2">
+                    <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
                         &ldquo;Study Your Moves, Master Your Mind&rdquo;
                     </p>
                 </header>
@@ -127,17 +127,17 @@ export default function DebriefPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Trade Ledger - Left Column */}
                     <div className="lg:col-span-1">
-                        <div className="border border-stone-200 bg-white">
-                            <div className="border-b border-stone-200 p-4">
-                                <h2 className="text-xs uppercase tracking-widest text-stone-500">
+                        <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800">
+                            <div className="border-b border-stone-200 dark:border-stone-700 p-4">
+                                <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
                                     Recent Transactions
                                 </h2>
                             </div>
 
-                            <div className="divide-y divide-stone-100 max-h-[600px] overflow-y-auto">
+                            <div className="divide-y divide-stone-100 dark:divide-stone-700 max-h-[600px] overflow-y-auto">
                                 {trades.length === 0 ? (
                                     <div className="p-8 text-center">
-                                        <p className="font-serif text-stone-500 italic">
+                                        <p className="font-serif text-stone-500 dark:text-stone-400 italic">
                                             No transactions recorded.
                                         </p>
                                         <p className="text-sm text-stone-400 mt-2">
@@ -149,23 +149,23 @@ export default function DebriefPage() {
                                         <button
                                             key={trade.id}
                                             onClick={() => analyzeTrade(trade)}
-                                            className={`w-full p-4 text-left hover:bg-stone-50 transition-colors ${selectedTrade?.id === trade.id ? 'bg-stone-100' : ''
+                                            className={`w-full p-4 text-left hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors ${selectedTrade?.id === trade.id ? 'bg-stone-100 dark:bg-stone-700' : ''
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="font-serif font-bold text-black">
+                                                <span className="font-serif font-bold text-black dark:text-white">
                                                     {trade.symbol}
                                                 </span>
                                                 <span
                                                     className={`text-xs uppercase tracking-wide ${trade.action === 'buy'
-                                                            ? 'text-stone-600'
-                                                            : 'text-stone-500'
+                                                            ? 'text-stone-600 dark:text-stone-300'
+                                                            : 'text-stone-500 dark:text-stone-400'
                                                         }`}
                                                 >
                                                     {trade.action}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm text-stone-500">
+                                            <div className="flex items-center justify-between text-sm text-stone-500 dark:text-stone-400">
                                                 <span>${trade.price.toFixed(2)}</span>
                                                 <span>{trade.quantity} shares</span>
                                             </div>
@@ -173,7 +173,7 @@ export default function DebriefPage() {
                                                 {new Date(trade.timestamp).toLocaleDateString()}
                                             </div>
                                             {analyses[trade.id]?.psychologyTag && (
-                                                <div className="mt-2 text-xs uppercase tracking-wide text-stone-500 border-l-2 border-stone-300 pl-2">
+                                                <div className="mt-2 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400 border-l-2 border-stone-300 dark:border-stone-600 pl-2">
                                                     {analyses[trade.id].psychologyTag}
                                                 </div>
                                             )}
@@ -187,24 +187,24 @@ export default function DebriefPage() {
                     {/* Analysis - Right Column */}
                     <div className="lg:col-span-2">
                         {selectedTrade ? (
-                            <article className="border border-stone-200 bg-white p-8">
+                            <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-8">
                                 {isAnalyzing ? (
                                     <div className="text-center py-12">
-                                        <p className="font-serif text-stone-500 italic">
+                                        <p className="font-serif text-stone-500 dark:text-stone-400 italic">
                                             Reviewing transaction records...
                                         </p>
                                     </div>
                                 ) : selectedAnalysis ? (
                                     <div className="space-y-8">
                                         {/* Article Header */}
-                                        <header className="border-b border-stone-200 pb-6">
+                                        <header className="border-b border-stone-200 dark:border-stone-700 pb-6">
                                             <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
                                                 Transaction Analysis
                                             </p>
-                                            <h2 className="font-serif text-3xl font-bold text-black mb-2">
+                                            <h2 className="font-serif text-3xl font-bold text-black dark:text-white mb-2">
                                                 {selectedTrade.symbol}: {selectedTrade.action.toUpperCase()} Order Review
                                             </h2>
-                                            <p className="text-sm text-stone-500">
+                                            <p className="text-sm text-stone-500 dark:text-stone-400">
                                                 {selectedTrade.quantity} shares at ${selectedTrade.price.toFixed(2)} —{' '}
                                                 {new Date(selectedTrade.timestamp).toLocaleDateString('en-US', {
                                                     weekday: 'long',
@@ -217,22 +217,22 @@ export default function DebriefPage() {
 
                                         {/* Main Analysis */}
                                         <section>
-                                            <p className="font-serif text-lg leading-relaxed text-stone-700">
+                                            <p className="font-serif text-lg leading-relaxed text-stone-700 dark:text-stone-300">
                                                 {selectedAnalysis.analysis}
                                             </p>
                                         </section>
 
                                         {/* Psychology Tag */}
                                         {selectedAnalysis.psychologyTag && (
-                                            <section className="border-l-4 border-stone-300 pl-6 py-4 bg-stone-50">
-                                                <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-2">
+                                            <section className="border-l-4 border-stone-300 dark:border-stone-600 pl-6 py-4 bg-stone-50 dark:bg-stone-900">
+                                                <h3 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
                                                     Behavioral Pattern Detected
                                                 </h3>
-                                                <p className="font-serif text-xl font-bold text-black mb-1">
+                                                <p className="font-serif text-xl font-bold text-black dark:text-white mb-1">
                                                     {PSYCHOLOGY_TAGS[selectedAnalysis.psychologyTag]?.label ||
                                                         selectedAnalysis.psychologyTag}
                                                 </p>
-                                                <p className="text-sm text-stone-600">
+                                                <p className="text-sm text-stone-600 dark:text-stone-400">
                                                     {PSYCHOLOGY_TAGS[selectedAnalysis.psychologyTag]?.description}
                                                 </p>
                                             </section>
@@ -240,40 +240,40 @@ export default function DebriefPage() {
 
                                         {/* The Path Not Taken */}
                                         {selectedAnalysis.alternateOutcome && (
-                                            <section className="border border-stone-200 p-6">
-                                                <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-3">
+                                            <section className="border border-stone-200 dark:border-stone-700 p-6">
+                                                <h3 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-3">
                                                     The Road Not Taken
                                                 </h3>
-                                                <p className="font-serif text-stone-700 italic">
+                                                <p className="font-serif text-stone-700 dark:text-stone-300 italic">
                                                     {selectedAnalysis.alternateOutcome}
                                                 </p>
                                             </section>
                                         )}
 
                                         {/* Editorial Recommendation */}
-                                        <section className="bg-stone-100 p-6">
-                                            <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-3">
+                                        <section className="bg-stone-100 dark:bg-stone-900 p-6">
+                                            <h3 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-3">
                                                 Editor&apos;s Recommendation
                                             </h3>
-                                            <p className="font-serif text-stone-800 leading-relaxed">
+                                            <p className="font-serif text-stone-800 dark:text-stone-200 leading-relaxed">
                                                 {selectedAnalysis.improvement}
                                             </p>
                                         </section>
                                     </div>
                                 ) : (
                                     <div className="text-center py-12">
-                                        <p className="font-serif text-stone-500">
+                                        <p className="font-serif text-stone-500 dark:text-stone-400">
                                             Select &ldquo;Analyze&rdquo; to review this transaction.
                                         </p>
                                     </div>
                                 )}
                             </article>
                         ) : (
-                            <div className="border border-stone-200 bg-white p-12 text-center">
-                                <h3 className="font-serif text-2xl font-bold text-black mb-3">
+                            <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-12 text-center">
+                                <h3 className="font-serif text-2xl font-bold text-black dark:text-white mb-3">
                                     Select a Transaction
                                 </h3>
-                                <p className="font-serif text-stone-500 italic max-w-md mx-auto">
+                                <p className="font-serif text-stone-500 dark:text-stone-400 italic max-w-md mx-auto">
                                     Choose any transaction from your ledger to receive a detailed
                                     psychological and strategic analysis of your trading decision.
                                 </p>
