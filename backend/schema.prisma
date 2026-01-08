@@ -90,6 +90,7 @@ model Article {
     sqliteId     String?                  @map("sqlite_id")
     articleId    String?                  @map("article_id")
     tsv          Unsupported("tsvector")? @default(dbgenerated())
+    embedding    Unsupported("vector(1536)")? // pgvector for RAG
 
     @@map("articles")
     @@schema("public")

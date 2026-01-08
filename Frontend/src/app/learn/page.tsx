@@ -1,32 +1,34 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import ProgressRing from "@/app/lessonmodules/components/ProgressRing";
-import { getProgress, resetAllProgress } from "@/app/lessonmodules/data/userProgress";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { getProgress, resetAllProgress } from '@/app/lessonmodules/data/userProgress';
 
 const moduleTitles = [
-  "Introduction to FundThesis",
-  "What is a Stock and ETF",
-  "Buying vs Selling",
-  "Portfolio Basics",
-  "Market Movement & Risk",
-  "Company Research Basics",
-  "Long-Term vs Short-Term Thinking",
-  "Reading a graph",
-  "Sustainability Factors",
-  "Demo",
+  'Introduction to FundThesis',
+  'What is a Stock and ETF',
+  'Buying vs Selling',
+  'Portfolio Basics',
+  'Market Movement & Risk',
+  'Company Research Basics',
+  'Long-Term vs Short-Term Thinking',
+  'Reading a Graph',
+  'Sustainability Factors',
+  'Demo',
 ];
 
-
-
-const LearnPage: React.FC = () => {
-  const [progress, setProgress] = useState<number[]>(() => Array(moduleTitles.length).fill(0));
+export default function LearnPage() {
+  const [progress, setProgress] = useState<number[]>(() =>
+    Array(moduleTitles.length).fill(0)
+  );
 
   const reloadProgress = () => {
     try {
       const p = moduleTitles.map((_, i) => getProgress(i + 1, 4));
       setProgress(p);
-    } catch {/* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   useEffect(() => {
@@ -42,101 +44,154 @@ const LearnPage: React.FC = () => {
 
   const handleReset = () => {
     if (typeof window !== 'undefined') {
-      const confirmReset = window.confirm('Reset all modules? This will lose all current progress.');
+      const confirmReset = window.confirm(
+        'Reset all modules? This will clear all current progress.'
+      );
       if (!confirmReset) return;
       try {
-        resetAllProgress(); // triggers ft-progress-changed
+        resetAllProgress();
         reloadProgress();
-      } catch {/* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   };
 
+  // Get today's date
+  const today = new Date();
+  const dateString = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const completedCount = progress.filter((p) => p >= 100).length;
+  const totalModules = moduleTitles.length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* StockTicker is rendered globally in RootLayout */}
+    <div className="min-h-screen bg-stone-50">
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Masthead */}
+        <header className="text-center border-b-4 border-double border-black pb-4 mb-6">
+          <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+            {dateString}
+          </p>
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black">
+            The Learning Ledger
+          </h1>
+          <p className="text-sm font-serif italic text-stone-600 mt-2">
+            &ldquo;Ten Chapters to Financial Literacy&rdquo;
+          </p>
+          <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500">
+            <span>Vol. I</span>
+            <span>|</span>
+            <span>{completedCount} of {totalModules} Complete</span>
+          </div>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-1">LearnThesis</h1>
-          <p className="text-lg text-gray-600">Learn and master the fundamentals of investing step-by-step through interactive modules</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-9">
-            <div className="bg-white rounded-lg shadow divide-y">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Module List */}
+          <div className="lg:col-span-3">
+            <div className="border border-stone-200 bg-white divide-y divide-stone-100">
               {moduleTitles.map((title, i) => {
-                const moduleNumber = i + 1; // 1-based
-                const label =
-                  moduleNumber === moduleTitles.length
-                    ? "X"
-                    : String(moduleNumber);
+                const moduleNumber = i + 1;
+                const isComplete = progress[i] >= 100;
+                const progressPercent = progress[i] || 0;
+
                 return (
                   <Link
                     key={i}
                     href={`/lessonmodules/${moduleNumber}`}
-                    className="flex p-6 hover:bg-gray-50 items-center justify-between"
+                    className="flex items-center justify-between p-6 hover:bg-stone-50 transition-colors"
                   >
-                    <div>
-                      <div className="text-sm text-gray-500">
-                        Module {label}
+                    <div className="flex items-start gap-4">
+                      <div className="text-center min-w-[40px]">
+                        <span className="font-serif text-2xl font-bold text-stone-300">
+                          {moduleNumber === 10 ? 'X' : moduleNumber}
+                        </span>
                       </div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        {title}
+                      <div>
+                        <p className="text-xs uppercase tracking-widest text-stone-400 mb-1">
+                          Chapter {moduleNumber === 10 ? 'X' : moduleNumber}
+                        </p>
+                        <h3 className="font-serif text-lg font-bold text-black">
+                          {title}
+                        </h3>
+                        {isComplete && (
+                          <p className="text-xs text-stone-500 mt-1 uppercase tracking-wide">
+                            Completed
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500">Open →</div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 hidden sm:block">
+                        <div className="w-full bg-stone-200 h-1">
+                          <div
+                            className="bg-black h-1 transition-all"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-stone-400 mt-1 text-right">
+                          {progressPercent}%
+                        </p>
+                      </div>
+                      <span className="text-xs text-stone-400">
+                        Read →
+                      </span>
+                    </div>
                   </Link>
                 );
               })}
             </div>
           </div>
 
-          <aside className="lg:col-span-3 flex flex-col items-center">
-            <div className="w-full bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-700">Progress</h3>
-                <button
-                  onClick={handleReset}
-                  aria-label="Reset all progress"
-                  className="p-1 text-gray-700 hover:text-gray-900 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="1 4 1 10 7 10" />
-                    <path d="M3.51 15a9 9 0 1 0 .49-9.36" />
-                  </svg>
-                </button>
+          {/* Sidebar */}
+          <aside className="lg:col-span-1">
+            <div className="border border-stone-200 bg-white p-6 sticky top-8">
+              <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+                Reading Progress
+              </h3>
+
+              <div className="mb-6">
+                <p className="font-serif text-4xl font-black text-black">
+                  {completedCount}
+                </p>
+                <p className="text-sm text-stone-500">
+                  of {totalModules} chapters complete
+                </p>
               </div>
-              <div className="flex flex-col items-center gap-4">
+
+              <div className="space-y-2 mb-6">
                 {moduleTitles.map((_, i) => {
-                  const moduleNumber = i + 1;
-                  const label =
-                    moduleNumber === moduleTitles.length
-                      ? "X"
-                      : String(moduleNumber);
+                  const pct = progress[i] || 0;
                   return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 w-full justify-between"
-                    >
-                      <div className="text-sm text-gray-600">
-                        Module {label}
-                      </div>
-                      <div className="w-12 h-12">
-                        <ProgressRing
-                          percent={progress[i] || 0}
-                          size={44}
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs text-stone-400 w-4">
+                        {i + 1 === 10 ? 'X' : i + 1}
+                      </span>
+                      <div className="flex-1 bg-stone-200 h-1">
+                        <div
+                          className="bg-black h-1"
+                          style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
                   );
                 })}
               </div>
+
+              <button
+                onClick={handleReset}
+                className="w-full text-xs uppercase tracking-widest text-stone-500 border border-stone-300 py-2 hover:bg-stone-50 transition-colors"
+              >
+                Reset All Progress
+              </button>
             </div>
           </aside>
         </div>
       </main>
     </div>
   );
-};
-
-export default LearnPage;
+}

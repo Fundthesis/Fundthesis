@@ -17,7 +17,6 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
   const [showResult, setShowResult] = useState<{ correct: boolean; explanation?: string; selectedIndex?: number } | null>(null);
   const [confettiOn, setConfettiOn] = useState(false);
 
-  // Update current question when moduleIndex or questions change
   useEffect(() => {
     setCurrent(getStartingQuestionIndex(moduleIndex, questions));
   }, [moduleIndex, questions]);
@@ -27,9 +26,11 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
     const correct = choiceIndex === q.correctIndex;
     const explanation = q.explanations?.[choiceIndex];
     setShowResult({ correct, explanation, selectedIndex: choiceIndex });
-    // store correctness in a local dummy DB until backend/auth is available
-    try { saveResult(moduleIndex, q.id, correct); } catch { /* ignore */ }
-    // mark this question answered ONLY if the user was correct
+    try {
+      saveResult(moduleIndex, q.id, correct);
+    } catch {
+      /* ignore */
+    }
     if (correct) {
       markQuestionAnswered(moduleIndex, q.id, questions.length);
     }
@@ -41,7 +42,6 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
 
   const next = () => {
     setShowResult(null);
-    // determine the furthest index user can move forward to (first unanswered)
     let firstUnanswered = questions.length - 1;
     for (let i = 0; i < questions.length; i++) {
       if (!isQuestionAnswered(moduleIndex, questions[i].id)) {
@@ -50,21 +50,23 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
       }
     }
     const allowedMax = Math.min(firstUnanswered, questions.length - 1);
-    setCurrent(c => (c < allowedMax ? c + 1 : c));
+    setCurrent((c) => (c < allowedMax ? c + 1 : c));
   };
 
   const previous = () => {
     setShowResult(null);
     if (current > 0 && canNavigateToQuestion(moduleIndex, questions, current - 1)) {
-      setCurrent(c => c - 1);
+      setCurrent((c) => c - 1);
     }
   };
 
   const canGoBack = current > 0 && canNavigateToQuestion(moduleIndex, questions, current - 1);
-  // compute forward availability up to the first unanswered question
   let firstUnanswered = questions.length - 1;
   for (let i = 0; i < questions.length; i++) {
-    if (!isQuestionAnswered(moduleIndex, questions[i].id)) { firstUnanswered = i; break; }
+    if (!isQuestionAnswered(moduleIndex, questions[i].id)) {
+      firstUnanswered = i;
+      break;
+    }
   }
   const allowedMax = Math.min(firstUnanswered, questions.length - 1);
   const canGoNext = current < allowedMax;
@@ -72,29 +74,37 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
   return (
     <div className="w-full">
       {confettiOn && <Confetti />}
-      <div className="grid grid-cols-1 gap-4">
-        <QuestionCard question={questions[current]} onAnswer={onAnswer} showResult={showResult} locked={!!(showResult && showResult.correct)} />
-        <div className="grid grid-cols-3 items-center">
-          <div className="justify-self-start flex items-center gap-3">
+      <div className="space-y-4">
+        <QuestionCard
+          question={questions[current]}
+          onAnswer={onAnswer}
+          showResult={showResult}
+          locked={!!(showResult && showResult.correct)}
+        />
+        <div className="flex items-center justify-between border-t border-stone-200 pt-4">
+          <div>
             {canGoBack && (
               <button
                 onClick={previous}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+                className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
               >
-                Previous
+                Previous Question
               </button>
             )}
           </div>
-          <div className="justify-self-center text-sm text-gray-600">
-            {current + 1} / {questions.length}
+          <div className="text-xs text-stone-500">
+            Question {current + 1} of {questions.length}
           </div>
-          <div className="justify-self-end">
+          <div>
             <button
               onClick={next}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!canGoNext}
+              className={`text-xs uppercase tracking-widest transition-colors ${canGoNext
+                  ? 'text-stone-500 hover:text-black'
+                  : 'text-stone-300 cursor-not-allowed'
+                }`}
             >
-              Next
+              Next Question
             </button>
           </div>
         </div>
