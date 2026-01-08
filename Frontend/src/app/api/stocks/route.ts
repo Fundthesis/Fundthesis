@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/apiAuth';
-import { backendFetch } from '@/lib/backendApi';
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/apiAuth";
+import { backendFetch } from "@/lib/backendApi";
 
 // Debug logging helper - set DEBUG_LOGS=true in .env to enable
 const debugLog = (...args: unknown[]) => {
-  if (process.env.DEBUG_LOGS === 'true') console.log(...args);
+  if (process.env.DEBUG_LOGS === "true") console.log(...args);
 };
 
 const MAX_SYMBOLS = 50;
@@ -23,22 +23,26 @@ export async function GET(request: NextRequest) {
     if (error) return error;
 
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
-    const symbolsParam = searchParams.get('symbols');
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const offset = parseInt(searchParams.get("offset") || "0", 10);
+    const symbolsParam = searchParams.get("symbols");
 
-    debugLog(`Proxying stocks request to Python backend: limit=${limit}, offset=${offset}, symbols=${symbolsParam || 'none'}`);
+    debugLog(
+      `Proxying stocks request to Python backend: limit=${limit}, offset=${offset}, symbols=${
+        symbolsParam || "none"
+      }`
+    );
 
     // Validate and limit custom symbols to prevent abuse
     let symbols: string | undefined = undefined;
-    if (symbolsParam && symbolsParam !== 'null') {
+    if (symbolsParam && symbolsParam !== "null") {
       const customSymbols = Array.from(
         new Set(
           symbolsParam
-            .split(',')
+            .split(",")
             .map((symbol) => symbol.trim().toUpperCase())
-            .filter((symbol) => symbol.length > 0),
-        ),
+            .filter((symbol) => symbol.length > 0)
+        )
       );
 
       if (customSymbols.length > MAX_SYMBOLS) {
@@ -49,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (customSymbols.length > 0) {
-        symbols = customSymbols.join(',');
+        symbols = customSymbols.join(",");
       }
     }
 
@@ -75,35 +79,45 @@ export async function GET(request: NextRequest) {
         offset: number;
         limit: number;
         hasMore: boolean;
-      }>('/api/stocks', { params });
+      }>("/api/stocks", { params });
 
       debugLog(`✅ Received ${data.stocks.length} stocks from Python backend`);
 
       return NextResponse.json(data, {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
         },
       });
     } catch (backendError: unknown) {
-      const errorMessage = backendError instanceof Error ? backendError.message : String(backendError);
-      console.error('❌ Error proxying to Python backend:', errorMessage);
-      
+      const errorMessage =
+        backendError instanceof Error
+          ? backendError.message
+          : String(backendError);
+      console.error("❌ Error proxying to Python backend:", errorMessage);
+
       // Return appropriate error response
-      if (backendError && typeof backendError === 'object' && 'status' in backendError) {
+      if (
+        backendError &&
+        typeof backendError === "object" &&
+        "status" in backendError
+      ) {
         const status = (backendError as { status: number }).status;
         return NextResponse.json(
-          { error: errorMessage || 'Backend request failed' },
+          { error: errorMessage || "Backend request failed" },
           { status }
         );
       }
 
       return NextResponse.json(
-        { error: 'Failed to fetch stocks from backend' },
+        { error: "Failed to fetch stocks from backend" },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error in /api/stocks proxy:', error);
-    return NextResponse.json({ error: 'Failed to fetch stocks' }, { status: 500 });
+    console.error("Error in /api/stocks proxy:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch stocks" },
+      { status: 500 }
+    );
   }
 }
