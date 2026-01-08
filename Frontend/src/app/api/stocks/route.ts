@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchQuotes } from '@/lib/multiApiService';
-import { quoteToStockSummary } from '@/lib/stockUtils';
 import { requireAuth } from '@/lib/apiAuth';
+import { backendFetch } from '@/lib/backendApi';
 
 // Debug logging helper - set DEBUG_LOGS=true in .env to enable
 const debugLog = (...args: unknown[]) => {
@@ -10,77 +9,13 @@ const debugLog = (...args: unknown[]) => {
 
 const MAX_SYMBOLS = 50;
 
-type PriceSeriesPoint = {
-  date: string;
-  price: number;
-};
+// Cache for 60 seconds (1 minute) - stocks data changes frequently
+export const revalidate = 60;
 
-type StockSummary = {
-  symbol: string;
-  company: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  forecastData: PriceSeriesPoint[];
-};
-
-// Extended list of symbols (matching the Python server)
-const SYMBOLS = [
-  'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX',
-  'JPM', 'BAC', 'GS', 'WFC', 'C', 'JNJ', 'UNH', 'PFE', 'ABBV', 'TMO',
-  'WMT', 'HD', 'DIS', 'NKE', 'SBUX', 'XOM', 'CVX', 'COP', 'BA', 'CAT',
-  'GE', 'T', 'VZ', 'CMCSA', 'INTC', 'AMD', 'QCOM', 'AVGO', 'TXN', 'MU',
-  'V', 'MA', 'PYPL', 'AXP', 'SQ', 'BLK', 'SCHW', 'MS', 'SPGI', 'ICE',
-  'KO', 'PEP', 'COST', 'MCD', 'MDLZ', 'PM', 'MO', 'CL', 'PG', 'UL',
-  'ADBE', 'CRM', 'ORCL', 'NOW', 'INTU', 'SHOP', 'SNOW', 'DDOG', 'ZM', 'TEAM',
-  'UPS', 'FDX', 'DAL', 'LUV', 'UAL', 'AAL', 'MAR', 'HLT', 'RCL', 'CCL',
-  'HON', 'RTX', 'LMT', 'NOC', 'GD', 'BA', 'DE', 'EMR', 'ITW', 'MMM',
-  'BMY', 'LLY', 'MRK', 'GILD', 'AMGN', 'BIIB', 'REGN', 'VRTX', 'ILMN', 'ALXN',
-  'NEE', 'DUK', 'SO', 'D', 'AEP', 'EXC', 'SRE', 'PEG', 'XEL', 'ED',
-  'LOW', 'TGT', 'TJX', 'ROST', 'DG', 'DLTR', 'BBY', 'EBAY', 'ETSY', 'W',
-  'F', 'GM', 'TM', 'HMC', 'RACE', 'RIVN', 'LCID', 'NIO', 'XPEV', 'LI',
-  'BABA', 'JD', 'PDD', 'BIDU', 'TCEHY', 'SE', 'MELI', 'GRAB', 'DIDI', 'CPNG',
-  'UBER', 'LYFT', 'ABNB', 'DASH', 'SPOT', 'RBLX', 'U', 'PINS', 'SNAP', 'TWTR',
-  'DHR', 'ABT', 'SYK', 'BSX', 'MDT', 'ISRG', 'EW', 'ZBH', 'BAX', 'BDX',
-  'WBA', 'CVS', 'CI', 'HUM', 'ANTM', 'CNC', 'MOH', 'ELV', 'HCA', 'UHS',
-  'NXPI', 'MRVL', 'LRCX', 'KLAC', 'AMAT', 'ADI', 'MCHP', 'SWKS', 'QRVO', 'SLAB',
-  'CMG', 'YUM', 'QSR', 'DPZ', 'WING', 'DNUT', 'JACK', 'WEN', 'SONO', 'CAKE',
-  'SLB', 'HAL', 'BKR', 'NOV', 'FTI', 'HP', 'RIG', 'VAL', 'MRO', 'DVN'
-];
-
-async function fetchYahooSummaries(symbols: string[]): Promise<StockSummary[]> {
-  if (symbols.length === 0) {
-    return [];
-  }
-
-  try {
-    debugLog(`🌐 Fetching quotes for ${symbols.length} symbols: ${symbols.join(', ')}...`);
-
-    // Use the service wrapper which handles caching, rate limiting, and retries
-    const quotes = await fetchQuotes(symbols, true);
-
-    debugLog(`✅ Received ${quotes.length} quotes from Yahoo Finance service`);
-
-    const summaries: StockSummary[] = [];
-
-    for (const quote of quotes) {
-      const summary = quoteToStockSummary(quote);
-      if (summary) {
-        summaries.push({
-          ...summary,
-          forecastData: [], // Forecast data handled separately
-        });
-      }
-    }
-
-    return summaries;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`❌ Error fetching bulk quotes from Yahoo Finance:`, errorMessage);
-    return [];
-  }
-}
-
+/**
+ * Thin proxy route that forwards stock list requests to Python backend.
+ * Handles authentication and forwards all requests to the backend.
+ */
 export async function GET(request: NextRequest) {
   try {
     // Require authentication
@@ -92,63 +27,83 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const symbolsParam = searchParams.get('symbols');
 
-    debugLog(`Received symbols param: "${symbolsParam}"`);
+    debugLog(`Proxying stocks request to Python backend: limit=${limit}, offset=${offset}, symbols=${symbolsParam || 'none'}`);
 
-    let customSymbols = symbolsParam && symbolsParam !== 'null'
-      ? Array.from(
+    // Validate and limit custom symbols to prevent abuse
+    let symbols: string | undefined = undefined;
+    if (symbolsParam && symbolsParam !== 'null') {
+      const customSymbols = Array.from(
         new Set(
           symbolsParam
             .split(',')
             .map((symbol) => symbol.trim().toUpperCase())
             .filter((symbol) => symbol.length > 0),
         ),
-      )
-      : null;
+      );
 
-    // Limit custom symbols to prevent abuse
-    if (customSymbols && customSymbols.length > MAX_SYMBOLS) {
-      customSymbols = customSymbols.slice(0, MAX_SYMBOLS);
+      if (customSymbols.length > MAX_SYMBOLS) {
+        return NextResponse.json(
+          { error: `Maximum ${MAX_SYMBOLS} symbols allowed` },
+          { status: 400 }
+        );
+      }
+
+      if (customSymbols.length > 0) {
+        symbols = customSymbols.join(',');
+      }
     }
 
-    debugLog(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
+    // Forward request to Python backend
+    const params: Record<string, string | number> = {
+      limit,
+      offset,
+    };
 
-    const paginatedSymbols =
-      customSymbols && customSymbols.length > 0
-        ? customSymbols
-        : SYMBOLS.slice(offset, offset + limit);
+    if (symbols) {
+      params.symbols = symbols;
+    }
 
-    if (paginatedSymbols.length === 0) {
-      return NextResponse.json({
-        stocks: [],
-        total: customSymbols ? 0 : SYMBOLS.length,
-        offset: customSymbols ? 0 : offset,
-        limit: customSymbols ? 0 : limit,
-        hasMore: false,
+    try {
+      const data = await backendFetch<{
+        stocks: Array<{
+          symbol: string;
+          price: number;
+          change: number;
+          changePercent: number;
+        }>;
+        total: number;
+        offset: number;
+        limit: number;
+        hasMore: boolean;
+      }>('/api/stocks', { params });
+
+      debugLog(`✅ Received ${data.stocks.length} stocks from Python backend`);
+
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
       });
+    } catch (backendError: unknown) {
+      const errorMessage = backendError instanceof Error ? backendError.message : String(backendError);
+      console.error('❌ Error proxying to Python backend:', errorMessage);
+      
+      // Return appropriate error response
+      if (backendError && typeof backendError === 'object' && 'status' in backendError) {
+        const status = (backendError as { status: number }).status;
+        return NextResponse.json(
+          { error: errorMessage || 'Backend request failed' },
+          { status }
+        );
+      }
+
+      return NextResponse.json(
+        { error: 'Failed to fetch stocks from backend' },
+        { status: 500 }
+      );
     }
-
-    const responseOffset = customSymbols ? 0 : offset;
-    const responseLimit = customSymbols ? paginatedSymbols.length : limit;
-    const responseTotal = customSymbols ? customSymbols.length : SYMBOLS.length;
-    const responseHasMore = customSymbols ? false : offset + limit < SYMBOLS.length;
-
-    const symbolsToFetch = paginatedSymbols.map(s => s.toUpperCase());
-
-    debugLog(`🌐 Fetching live data for ${symbolsToFetch.length} symbols`);
-
-    const stocks = await fetchYahooSummaries(symbolsToFetch);
-
-    debugLog(`📈 Total stocks to return: ${stocks.length}`);
-
-    return NextResponse.json({
-      stocks,
-      total: responseTotal,
-      offset: responseOffset,
-      limit: responseLimit,
-      hasMore: responseHasMore,
-    });
   } catch (error) {
-    console.error('Error in /api/stocks:', error);
+    console.error('Error in /api/stocks proxy:', error);
     return NextResponse.json({ error: 'Failed to fetch stocks' }, { status: 500 });
   }
 }

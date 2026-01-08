@@ -39,7 +39,8 @@
     "recharts": "^3.3.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
-    "yahoo-finance2": "^3.10.2"
+    "yahoo-finance2": "^3.10.2",
+    "@tanstack/react-query": "^5.62.11"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

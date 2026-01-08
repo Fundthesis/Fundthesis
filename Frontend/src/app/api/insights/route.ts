@@ -8,6 +8,9 @@ import {
   generateAIRecommendations,
 } from "@/lib/insightsHelpers";
 
+// Cache for 300 seconds (5 minutes) - AI generation is expensive
+export const revalidate = 300;
+
 export async function GET(request: NextRequest) {
   try {
     // Require authentication
@@ -84,12 +87,19 @@ export async function GET(request: NextRequest) {
       aiRecommendations = await generateAIRecommendations(articlesText);
     }
 
-    return NextResponse.json({
-      market_summary: marketSummary || undefined,
-      ai_recommendations: aiRecommendations || undefined,
-      articles_analyzed: articlesList.length,
-      generated_at: new Date().toISOString(),
-    });
+    return NextResponse.json(
+      {
+        market_summary: marketSummary || undefined,
+        ai_recommendations: aiRecommendations || undefined,
+        articles_analyzed: articlesList.length,
+        generated_at: new Date().toISOString(),
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (error) {
     console.error("Error generating insights:", error);
 

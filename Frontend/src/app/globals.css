@@ -8,10 +8,19 @@
 /* Custom animations for stock ticker */
 @keyframes marquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0%);
   }
   100% {
     transform: translateX(-100%);
+  }
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
   }
 }
 
@@ -21,6 +30,11 @@
 
 .animate-marquee-fast {
   animation: marquee 50s linear infinite;
+}
+
+.animate-ticker {
+  animation: ticker 50s linear infinite;
+  width: max-content;
 }
 
 /* Hide scrollbar but keep functionality */

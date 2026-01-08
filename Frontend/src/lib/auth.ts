@@ -15,6 +15,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      enabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    },
+  },
   trustedOrigins: [
     baseURL,
     'http://localhost:3000',
@@ -22,5 +29,4 @@ export const auth = betterAuth({
     // Allow any subdomain of the base URL
     baseURL.replace(/^https?:\/\/([^.]+)/, 'https://*.$1'),
   ].filter(Boolean),
-  // Add other providers here (e.g. Google, GitHub)
 });

@@ -5,6 +5,9 @@ import { requireAuth } from "@/lib/apiAuth";
 
 const MAX_LIMIT = 100;
 
+// Cache for 60 seconds (1 minute) - articles update frequently
+export const revalidate = 60;
+
 export async function GET(request: NextRequest) {
   try {
     // Require authentication
@@ -66,13 +69,20 @@ export async function GET(request: NextRequest) {
       prisma.article.count({ where }),
     ]);
 
-    return NextResponse.json({
-      articles,
-      total: count,
-      offset,
-      limit,
-      hasMore: offset + limit < count,
-    });
+    return NextResponse.json(
+      {
+        articles,
+        total: count,
+        offset,
+        limit,
+        hasMore: offset + limit < count,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
+      }
+    );
   } catch (error) {
     console.error("Error in /api/articles:", error);
     return NextResponse.json(

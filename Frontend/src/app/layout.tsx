@@ -9,7 +9,9 @@ import StockTicker from '@/components/StockTicker'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
 import { AuthProvider, useAuth } from '@/providers/AuthProvider'
+import { QueryProvider } from '@/lib/providers/QueryProvider'
 import { navItems } from '@/constants/navigation'
+import { UserMenu } from '@/components/UserMenu'
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700', '900'],
@@ -57,38 +59,8 @@ function AppFrame({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             {isLoading ? (
               <span className="text-sm text-gray-400">Loading...</span>
-            ) : user ? (
-              <>
-                <span className="hidden text-sm text-gray-500 md:inline">
-                  {user.email ?? 'Account'}
-                </span>
-                <Link
-                  href="/profile"
-                  className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/profile'
-                    ? 'text-black border-b-2 border-black pb-1'
-                    : 'text-gray-500'
-                    }`}
-                >
-                  Profile
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-                >
-                  Sign out
-                </button>
-              </>
             ) : (
-              <Link
-                href="/auth"
-                className={`text-sm font-medium transition-colors hover:text-gray-600 ${pathname === '/auth'
-                  ? 'text-black border-b-2 border-black pb-1'
-                  : 'text-gray-500'
-                  }`}
-              >
-                Sign in
-              </Link>
+              <UserMenu />
             )}
           </div>
 
@@ -123,9 +95,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={merriweather.className}>
       <body suppressHydrationWarning={true}>
-        <AuthProvider>
-          <AppFrame>{children}</AppFrame><Toaster position="top-center" richColors />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <AppFrame>{children}</AppFrame><Toaster position="top-center" richColors />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   )
