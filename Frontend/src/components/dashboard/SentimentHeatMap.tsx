@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
 import {
   useSentimentHeatmap,
   type HeatMapItem,

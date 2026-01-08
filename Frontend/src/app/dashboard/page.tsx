@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { NewspaperLayout } from "@/components/ui/NewspaperLayout";
+import { NewspaperLayout } from "@/components/cards/NewspaperLayout";
 import { RecentNewsSection } from "@/components/dashboard/RecentNewsSection";
 import { PerformersSection } from "@/components/dashboard/PerformersSection";
 import { SentimentHeatMap } from "@/components/dashboard/SentimentHeatMap";

@@ -1,6 +1,6 @@
 "use client";
 
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
 import { ExternalLink } from "lucide-react";
 import { useArticles } from "@/lib/hooks/useArticles";
 

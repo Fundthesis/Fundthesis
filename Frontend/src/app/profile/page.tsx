@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { PageHeader } from "@/components/cards/PageHeader";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuth } from "@/providers/AuthProvider";

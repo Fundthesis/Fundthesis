@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
-interface StockCardProps {
+interface StockListItemProps {
   symbol: string;
   company?: string;
   price: number;
@@ -12,24 +12,24 @@ interface StockCardProps {
   onClick: () => void;
 }
 
-export function StockCard({
+export function StockListItem({
   symbol,
   company,
   price,
   changePercent,
   sector,
   onClick,
-}: StockCardProps) {
+}: StockListItemProps) {
   const isPositive = changePercent >= 0;
 
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-stone-800 border border-gray-200 dark:border-stone-700 rounded-lg p-4 hover:border-[#9DB38A] dark:hover:border-[#9DB38A] hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white dark:bg-stone-800 border border-gray-200 dark:border-stone-700 rounded-lg p-4 hover:border-accent dark:hover:border-accent hover:shadow-md transition-all cursor-pointer group"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-stone-100 group-hover:text-[#9DB38A] transition-colors">
+          <h3 className="font-bold text-lg text-gray-900 dark:text-stone-100 group-hover:text-accent transition-colors">
             {symbol}
           </h3>
           {company && (

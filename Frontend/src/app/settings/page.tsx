@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/ui/PageHeader";
+import { PageHeader } from "@/components/cards/PageHeader";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { DisplaySettings } from "@/components/settings/DisplaySettings";

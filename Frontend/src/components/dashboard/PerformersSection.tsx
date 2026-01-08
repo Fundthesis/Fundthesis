@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useStocks } from "@/lib/hooks/useStocks";

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
-import { IndexCard } from '@/components/ui/IndexCard'
+import { IndexCard } from '@/components/cards/IndexCard'
 
 interface Index {
   color: string

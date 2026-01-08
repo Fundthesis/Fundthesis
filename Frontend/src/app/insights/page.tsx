@@ -1,7 +1,7 @@
 "use client";
 
-import { NewspaperLayout } from "@/components/ui/NewspaperLayout";
-import { ArticleGrid } from "@/components/insights/ArticleGrid";
+import { NewspaperLayout } from "@/components/cards/NewspaperLayout";
+import { ArticleGrid } from "@/components/news/ArticleGrid";
 import { MarketSummarySidebar } from "@/components/insights/MarketSummarySidebar";
 import { AIRecommendationsSidebar } from "@/components/insights/AIRecommendationsSidebar";
 import { useArticles } from "@/lib/hooks/useArticles";

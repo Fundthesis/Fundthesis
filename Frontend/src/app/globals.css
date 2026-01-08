@@ -8,6 +8,13 @@
 @theme {
   --font-serif: "Playfair Display", serif;
   --font-body: "Merriweather", serif;
+
+  /* Brand Colors */
+  --color-accent: #9DB38A;           /* Primary accent green */
+  --color-accent-light: #eff3eb;     /* Light accent background */
+  --color-accent-dark: #7a9168;      /* Darker accent for hover states */
+  --color-negative: #c17b7b;         /* Negative/destructive red */
+  --color-negative-light: #f5e6e6;   /* Light negative background */
 }
 
 body {

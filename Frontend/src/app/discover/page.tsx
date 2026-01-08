@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { StockCard } from "@/components/discover/StockCard";
-import { StockDetailModal } from "@/components/discover/StockDetailModal";
-import { StockFilters } from "@/components/discover/StockFilters";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { StockListItem } from "@/components/stocks/StockListItem";
+import { StockDetailModal } from "@/components/stocks/StockDetailModal";
+import { StockFilters } from "@/components/stocks/StockFilters";
+import { PageHeader } from "@/components/cards/PageHeader";
 import {
   useStocks,
   useStockMetadata,
@@ -252,7 +252,7 @@ export default function DiscoverPage() {
                 handleFiltersChange(DEFAULT_FILTERS);
                 setCurrentPage(1);
               }}
-              className="mt-4 text-[#9DB38A] hover:underline"
+              className="mt-4 text-accent hover:underline"
             >
               Clear all filters
             </button>
@@ -264,7 +264,7 @@ export default function DiscoverPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredAndSortedStocks.map((stock) => (
-                <StockCard
+                <StockListItem
                   key={stock.symbol}
                   symbol={stock.symbol}
                   company={stock.company}

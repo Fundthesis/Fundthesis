@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Settings, User, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { StockCard } from '@/components/StockCard'
+import { StockCard } from '@/components/stocks/StockCard'
 
 interface Stock {
   symbol: string
@@ -128,7 +128,7 @@ export function StockCardStack({
     <>
       <div className="relative flex items-center justify-center w-full max-w-7xl mx-auto px-8">
         <button onClick={goToPrevious} className="absolute left-0 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-          <ChevronLeft className="w-6 h-6 text-gray-900 group-hover:text-[#9DB38A] transition-colors" />
+          <ChevronLeft className="w-6 h-6 text-gray-900 group-hover:text-accent transition-colors" />
         </button>
 
         <div className="relative w-full min-h-[950px] flex items-center justify-center py-8">
@@ -158,12 +158,12 @@ export function StockCardStack({
         </div>
 
         <button onClick={goToNext} className="absolute right-0 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-          <ChevronRight className="w-6 h-6 text-gray-900 group-hover:text-[#9DB38A] transition-colors" />
+          <ChevronRight className="w-6 h-6 text-gray-900 group-hover:text-accent transition-colors" />
         </button>
 
         <div className="absolute bottom-[-60px] left-1/2 transform -translate-x-1/2 flex space-x-2 items-center">
           {stocks.map((_, index) => (
-            <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-[#9DB38A] w-6' : 'bg-gray-400 hover:bg-gray-600'}`} />
+            <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-accent w-6' : 'bg-gray-400 hover:bg-gray-600'}`} />
           ))}
 
         </div>

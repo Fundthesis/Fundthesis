@@ -1,7 +1,7 @@
 "use client";
 
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
-import MarkdownContent from "@/components/MarkdownContent";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
+import MarkdownContent from "@/components/shared/MarkdownContent";
 
 interface MarketSummarySidebarProps {
   summary: string;

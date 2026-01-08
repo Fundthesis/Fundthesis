@@ -1,6 +1,6 @@
 "use client";
 
-import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { NewspaperSection } from "@/components/cards/NewspaperSection";
 
 export function WatchlistSection() {
   return (

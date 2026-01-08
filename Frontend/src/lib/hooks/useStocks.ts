@@ -168,10 +168,11 @@ export function useStockMetadata() {
 export function useStocksInfinite(filters?: StockFilters) {
   return useInfiniteQuery<StocksResponse>({
     queryKey: ["stocks", "infinite", filters],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam }) => {
+      const offset = pageParam as number;
       const queryParams = new URLSearchParams({
         limit: "50",
-        offset: pageParam.toString(),
+        offset: offset.toString(),
       });
       
       if (filters?.search) {
