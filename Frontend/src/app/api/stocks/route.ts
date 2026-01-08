@@ -3,6 +3,11 @@ import { fetchQuotes } from '@/lib/multiApiService';
 import { quoteToStockSummary } from '@/lib/stockUtils';
 import { requireAuth } from '@/lib/apiAuth';
 
+// Debug logging helper - set DEBUG_LOGS=true in .env to enable
+const debugLog = (...args: unknown[]) => {
+  if (process.env.DEBUG_LOGS === 'true') console.log(...args);
+};
+
 const MAX_SYMBOLS = 50;
 
 type PriceSeriesPoint = {
@@ -49,12 +54,12 @@ async function fetchYahooSummaries(symbols: string[]): Promise<StockSummary[]> {
   }
 
   try {
-    console.log(`🌐 Fetching quotes for ${symbols.length} symbols: ${symbols.join(', ')}...`);
+    debugLog(`🌐 Fetching quotes for ${symbols.length} symbols: ${symbols.join(', ')}...`);
 
     // Use the service wrapper which handles caching, rate limiting, and retries
     const quotes = await fetchQuotes(symbols, true);
 
-    console.log(`✅ Received ${quotes.length} quotes from Yahoo Finance service`);
+    debugLog(`✅ Received ${quotes.length} quotes from Yahoo Finance service`);
 
     const summaries: StockSummary[] = [];
 
@@ -87,7 +92,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const symbolsParam = searchParams.get('symbols');
 
-    console.log(`Received symbols param: "${symbolsParam}"`);
+    debugLog(`Received symbols param: "${symbolsParam}"`);
 
     let customSymbols = symbolsParam && symbolsParam !== 'null'
       ? Array.from(
@@ -105,7 +110,7 @@ export async function GET(request: NextRequest) {
       customSymbols = customSymbols.slice(0, MAX_SYMBOLS);
     }
 
-    console.log(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
+    debugLog(`Parsed custom symbols: ${customSymbols ? customSymbols.join(', ') : 'none'}`);
 
     const paginatedSymbols =
       customSymbols && customSymbols.length > 0
@@ -129,11 +134,11 @@ export async function GET(request: NextRequest) {
 
     const symbolsToFetch = paginatedSymbols.map(s => s.toUpperCase());
 
-    console.log(`🌐 Fetching live data for ${symbolsToFetch.length} symbols`);
+    debugLog(`🌐 Fetching live data for ${symbolsToFetch.length} symbols`);
 
     const stocks = await fetchYahooSummaries(symbolsToFetch);
 
-    console.log(`📈 Total stocks to return: ${stocks.length}`);
+    debugLog(`📈 Total stocks to return: ${stocks.length}`);
 
     return NextResponse.json({
       stocks,
