@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { Search } from "lucide-react";
-import { StockCardStack } from "@/components/StockCard";
+import { StockCardStack } from "@/components/stocks/StockCardStack";
 
 interface Stock {
   symbol: string;
@@ -736,13 +736,14 @@ function DiscoverPage() {
           <StockCardStack
             stocks={filteredStocks}
             stockDetails={stockDetails}
-            combinedChartData={combinedChartData}
             currentIndex={safeCurrentIndex}
             setCurrentIndex={setCurrentIndex}
             timeframe={timeframe}
-            setTimeframe={setTimeframe}
-
+            setTimeframe={(tf) => {
+              if (tf !== 'all') setTimeframe(tf);
+            }}
             checkAndLoadMore={checkAndLoadMore}
+            fetchStockDetail={async (symbol) => { await fetchStockDetail(symbol, timeframe); }}
           />
         </div>
       ) : (
