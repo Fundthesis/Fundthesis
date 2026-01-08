@@ -99,3 +99,23 @@ async def insert_article(
         print(f"Error inserting article: {e}")
         return None
 
+
+async def insert_article_without_sentiment(
+    article_db: dict,
+    text: str | None,
+    status: str,
+    error: str | None,
+    http_status: int | None,
+    meta: dict
+):
+    """Insert article without sentiment label (will be added by sentiment job later)."""
+    return await insert_article(
+        article_db=article_db,
+        text=text,
+        status=status,
+        error=error,
+        http_status=http_status,
+        meta=meta,
+        sentiment_label=None
+    )
+
