@@ -3,7 +3,7 @@ export type Article = {
   summary: string | null;
   label: string | null;
   source: string | null;
-  published_at: Date | null;
+  publishedAt: Date | null;
   tickers: string | null;
 };
 

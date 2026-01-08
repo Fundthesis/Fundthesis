@@ -8,6 +8,9 @@ import {
   generateAIRecommendations,
 } from "@/lib/insightsHelpers";
 
+// Cache for 300 seconds (5 minutes) - AI generation is expensive
+export const revalidate = 300;
+
 export async function GET(request: NextRequest) {
   try {
     // Require authentication
@@ -25,12 +28,12 @@ export async function GET(request: NextRequest) {
 
     let articles = await prisma.article.findMany({
       where: {
-        published_at: {
+        publishedAt: {
           gte: twentyFourHoursAgo,
         },
       },
       orderBy: {
-        published_at: "desc",
+        publishedAt: "desc",
       },
       take: 30,
       select: {
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
         summary: true,
         label: true,
         source: true,
-        published_at: true,
+        publishedAt: true,
         tickers: true,
       },
     });
@@ -48,12 +51,12 @@ export async function GET(request: NextRequest) {
       console.log("No articles in last 24 hours, trying last 7 days...");
       articles = await prisma.article.findMany({
         where: {
-          published_at: {
+          publishedAt: {
             gte: sevenDaysAgo,
           },
         },
         orderBy: {
-          published_at: "desc",
+          publishedAt: "desc",
         },
         take: 30,
         select: {
@@ -61,7 +64,7 @@ export async function GET(request: NextRequest) {
           summary: true,
           label: true,
           source: true,
-          published_at: true,
+          publishedAt: true,
           tickers: true,
         },
       });
@@ -84,12 +87,19 @@ export async function GET(request: NextRequest) {
       aiRecommendations = await generateAIRecommendations(articlesText);
     }
 
-    return NextResponse.json({
-      market_summary: marketSummary || undefined,
-      ai_recommendations: aiRecommendations || undefined,
-      articles_analyzed: articlesList.length,
-      generated_at: new Date().toISOString(),
-    });
+    return NextResponse.json(
+      {
+        market_summary: marketSummary || undefined,
+        ai_recommendations: aiRecommendations || undefined,
+        articles_analyzed: articlesList.length,
+        generated_at: new Date().toISOString(),
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (error) {
     console.error("Error generating insights:", error);
 

@@ -39,7 +39,7 @@ jobs:
         with:
           name: python-app
           path: |
-            backend
+            backend/*
             !backend/antenv/
 
       # 🚫 Opting Out of Oryx Build
@@ -74,4 +74,6 @@ jobs:
         with:
           app-name: 'fundthesis-python-backend'
           slot-name: 'Production'
+
           
+

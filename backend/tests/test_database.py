@@ -1,6 +1,7 @@
 """Tests for database operations."""
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
+from prisma import Json
 from app.core.database import insert_cached_forecast, get_cached_forecast
 
 
@@ -102,26 +103,24 @@ async def test_get_cached_forecast_within_24h(db_session):
 @pytest.mark.asyncio
 async def test_get_cached_forecast_stale(db_session):
     """Test that stale forecasts (>24h) return None."""
-    from app.core.database import db
-    
     # Create an old forecast manually
-    old_date = datetime.utcnow() - timedelta(hours=25)
-    await db.stockforecast.create(
+    old_date = datetime.now(UTC) - timedelta(hours=25)
+    await db_session.stockforecast.create(
         data={
             'id': 'test-stale-forecast',
             'symbol': 'TEST_STALE',
-            'priceSeries': [{'date': '2024-01-01', 'close': 100.0}],
-            'forecastResults': {'forecast': []},
+            'priceSeries': Json([{'date': '2024-01-01', 'close': 100.0}]),
+            'forecastResults': Json({'forecast': []}),
             'runDate': old_date
         }
     )
-    
+
     # Should return None for stale data
     cached = await get_cached_forecast('TEST_STALE')
     assert cached is None
-    
+
     # Cleanup
-    await db.stockforecast.delete(where={'id': 'test-stale-forecast'})
+    await db_session.stockforecast.delete(where={'id': 'test-stale-forecast'})
 
 
 @pytest.mark.asyncio

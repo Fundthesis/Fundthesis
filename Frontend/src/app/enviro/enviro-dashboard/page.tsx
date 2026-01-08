@@ -532,40 +532,54 @@ function PortfolioDashboardPageContent() {
   };
 
   return (
-    <div>
-      <main className="p-6 bg-gray-50">
-        <h1 className="text-3xl font-bold mb-6">
-          {sandbox ? sandbox.name : "My Sandbox"}
-        </h1>
+    <div className="bg-[#fcfbf9] min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 py-8 font-serif text-[#1a1a1a]">
 
-        <div className="flex w-full gap-6 max-h-[900px]">
-          {/* Stock Card Section - contained with border */}
-          <div className="w-1/2 border border-black rounded-lg bg-white p-6 overflow-hidden">
-            {/* Search Bar */}
+        {/* Newspaper Masthead */}
+        <div className="border-b-4 border-black pb-4 mb-8">
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Interactive Environment</p>
+              <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black leading-none">
+                {sandbox ? sandbox.name : "Market Sandbox"}
+              </h1>
+            </div>
+            <div className="text-right hidden md:block">
+              <p className="font-serif italic text-sm text-gray-500">Simulated Trading Floor</p>
+              <p className="font-bold text-xs uppercase tracking-widest mt-1">Section E</p>
+            </div>
+          </div>
+          <p className="text-lg font-serif italic text-gray-700 border-t border-black/10 pt-2">
+            Test your thesis in a risk-free environment.
+          </p>
+        </div>
 
-            <h2 className="text-2xl font-bold text-gray-900 pb-4">Explore</h2>
+        <div className="flex flex-col lg:flex-row w-full gap-8 mb-12">
+          {/* Stock Card Section - Newspaper Column */}
+          <div className="w-full lg:w-1/2 border-2 border-black bg-stone-50 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="text-3xl font-black text-black mb-6 uppercase tracking-wide border-b-2 border-black pb-2">Market Scanner</h2>
 
-            <div className="mb-4 relative">
+            <div className="mb-6 relative">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search stocks by symbol or company..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-10 py-3 border-2 border-black/20 focus:border-black bg-white rounded-none focus:outline-none transition-all font-serif placeholder:italic"
                 />
                 {searchQuery && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 )}
               </div>
               {searchQuery && (
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-gray-500 mt-2 italic">
                   {filteredStocks.length} stock
                   {filteredStocks.length !== 1 ? "s" : ""} found
                 </p>
@@ -577,7 +591,8 @@ function PortfolioDashboardPageContent() {
                 style={{
                   transform: "scale(0.9)",
                   transformOrigin: "top center",
-                  width: "650px",
+                  width: "100%",
+                  maxWidth: "650px",
                 }}
               >
                 <StockCardStack
@@ -595,12 +610,12 @@ function PortfolioDashboardPageContent() {
             </div>
           </div>
 
-          {/* Portfolio Chart Section - contained with border */}
-          <div className="w-1/2 border border-black rounded-lg bg-white pl-6 pr-6 pt-6">
-            <h2 className="text-2xl font-bold text-gray-900">Portfolio</h2>
+          {/* Portfolio Chart Section - Newspaper Column */}
+          <div className="w-full lg:w-1/2 border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="text-3xl font-black text-black mb-6 uppercase tracking-wide border-b-2 border-black pb-2">Portfolio Analytics</h2>
 
             <PortfolioChart portfolioHistory={portfolioHistory} />
-            <div className="mt-8 w-full">
+            <div className="mt-8 w-full border-t flex flex-col gap-4 pt-6 border-black/20">
               <PortfolioSummary
                 totalValue={totalValue}
                 cashBalance={cashBalance}
@@ -611,19 +626,34 @@ function PortfolioDashboardPageContent() {
           </div>
         </div>
 
-        <div className="pt-6">
-          <MarketTips />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="border-t-4 border-black pt-6">
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-3 h-3 bg-black inline-block"></span>
+              Advisory Wire
+            </h3>
+            <div className="bg-white border border-black p-4">
+              <MarketTips />
+            </div>
+          </div>
+
+          <div className="border-t-4 border-black pt-6">
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-3 h-3 bg-black inline-block"></span>
+              Transaction Ledger
+            </h3>
+            <div className="bg-white border border-black p-4">
+              <TransactionHistory transactions={transactions} />
+            </div>
+          </div>
         </div>
 
-        <div className="pt-6">
-          <TransactionHistory transactions={transactions} />
-        </div>
         {/* Sandbox actions (delete current sandbox) */}
-        <div className="pt-6 flex justify-end">
+        <div className="pt-6 flex justify-end border-t border-black">
           {sandbox && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded"
+              className="bg-black text-white hover:bg-gray-800 font-bold uppercase tracking-widest py-3 px-6 border-2 border-transparent hover:border-black transition-all"
               title="Delete this sandbox"
             >
               Delete Sandbox
@@ -632,35 +662,34 @@ function PortfolioDashboardPageContent() {
         </div>
 
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-50 flex items-center justify-center font-serif">
             <div
-              className="absolute inset-0 bg-black opacity-40"
+              className="absolute inset-0 bg-black opacity-60"
               onClick={() => {
                 setShowDeleteConfirm(false);
                 setDeleteConfirmText("");
               }}
             />
-            <div className="relative bg-white rounded-lg p-6 w-full max-w-md z-10">
-              <h3 className="text-lg font-semibold mb-2">Confirm delete</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="relative bg-[#fcfbf9] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8 w-full max-w-md z-10">
+              <h3 className="text-2xl font-black mb-4">Confirm Termination</h3>
+              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
                 To permanently delete the sandbox{" "}
-                <span className="font-medium">{sandbox?.name}</span>, type{" "}
-                <span className="font-mono">delete</span> below and press
-                Confirm.
+                <span className="font-bold bg-yellow-200 px-1">{sandbox?.name}</span>, please type{" "}
+                <span className="font-mono font-bold">delete</span> below.
               </p>
               <input
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type delete to confirm"
-                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="Type 'delete' to confirm"
+                className="w-full border-2 border-black p-3 mb-6 focus:outline-none focus:bg-stone-50"
               />
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-4">
                 <button
                   onClick={() => {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmText("");
                   }}
-                  className="px-3 py-2 rounded border"
+                  className="px-6 py-2 border-2 border-black font-bold hover:bg-stone-100"
                 >
                   Cancel
                 </button>
@@ -671,12 +700,12 @@ function PortfolioDashboardPageContent() {
                     }
                   }}
                   disabled={deleteConfirmText.trim().toLowerCase() !== "delete"}
-                  className={`px-3 py-2 rounded text-white ${deleteConfirmText.trim().toLowerCase() === "delete"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-red-300 cursor-not-allowed"
+                  className={`px-6 py-2 border-2 border-black font-bold text-white transition-all ${deleteConfirmText.trim().toLowerCase() === "delete"
+                    ? "bg-red-600 hover:bg-red-700 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    : "bg-gray-400 cursor-not-allowed border-gray-400"
                     }`}
                 >
-                  Confirm Delete
+                  Confirm
                 </button>
               </div>
             </div>

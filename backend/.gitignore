@@ -32,3 +32,9 @@ example_data.csv
 
 # Prisma generated files
 prisma/generated/
+
+# Virtual environments
+venv/
+antenv/
+.venv/
+env/

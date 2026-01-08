@@ -69,62 +69,63 @@ model Verification {
 }
 
 model Article {
-  id            String                   @id @default(uuid())
-  url           String                   @unique
-  headline      String?
-  summary       String?
-  full_text     String?
-  published_at  DateTime?
-  source        String?
-  label         String?
-  related       String?
-  category      String?
-  tickers       String?
-  inserted_at   DateTime                 @default(now())
-  fetch_status  String?
-  fetch_error   String?
-  source_domain String?
-  sqlite_id     String?
-  article_id    String?
-  tsv           Unsupported("tsvector")? @default(dbgenerated())
+  id           String                       @id @default(uuid())
+  url          String                       @unique
+  headline     String?
+  summary      String?
+  fullText     String?                      @map("full_text")
+  publishedAt  DateTime?                    @map("published_at")
+  source       String?
+  label        String?
+  related      String?
+  category     String?
+  tickers      String?
+  insertedAt   DateTime                     @default(now()) @map("inserted_at")
+  fetchStatus  String?                      @map("fetch_status")
+  fetchError   String?                      @map("fetch_error")
+  sourceDomain String?                      @map("source_domain")
+  sqliteId     String?                      @map("sqlite_id")
+  articleId    String?                      @map("article_id")
+  tsv          Unsupported("tsvector")?     @default(dbgenerated())
+  embedding    Unsupported("vector(1536)")? // pgvector for RAG
 
   @@map("articles")
   @@schema("public")
 }
 
 model StockForecast {
-  id               String   @id @default(uuid())
-  symbol           String
-  price_series     Json?
-  forecast_results Json?
-  run_date         DateTime
-  updated_at       DateTime @default(now()) @updatedAt
+  id              String   @id @default(uuid())
+  symbol          String
+  priceSeries     Json?    @map("price_series")
+  forecastResults Json?    @map("forecast_results")
+  runDate         DateTime @map("run_date")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@index([symbol, run_date(sort: Desc)])
+  @@index([symbol, runDate(sort: Desc)])
   @@map("stock_forecasts")
   @@schema("public")
 }
 
 model StockPriceSeries {
-  symbol           String   @id
-  price_series     Json?
-  forecast_results Json?
-  r2Value          Float?   @map("r2_value")
-  updated_at       DateTime @default(now()) @updatedAt
+  symbol          String   @id
+  priceSeries     Json?    @map("price_series")
+  forecastResults Json?    @map("forecast_results")
+  r2Value         Float?   @map("r2_value")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("stock_price_series")
   @@schema("public")
 }
 
 model StockQuoteCache {
-  symbol         String   @id
-  quote_data     Json
-  last_fetched   DateTime @default(now())
-  fetch_attempts Int      @default(0)
-  last_error     String?
-  updated_at     DateTime @default(now()) @updatedAt
+  symbol        String   @id
+  quoteData     Json     @map("quote_data")
+  lastFetched   DateTime @default(now()) @map("last_fetched")
+  fetchAttempts Int      @default(0) @map("fetch_attempts")
+  lastError     String?  @map("last_error")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@index([last_fetched])
+  @@index([lastFetched])
   @@map("stock_quote_cache")
   @@schema("public")
 }
@@ -205,150 +206,150 @@ model StockPriceCache {
 // ============= SUPABASE AUTH MODELS =============
 
 model SupabaseUser {
-  id                          String    @id @db.Uuid
-  instance_id                 String?   @db.Uuid
-  aud                         String?
-  role                        String?
-  email                       String?
-  encrypted_password          String?
-  email_confirmed_at          DateTime? @db.Timestamptz
-  invited_at                  DateTime? @db.Timestamptz
-  confirmation_token          String?
-  confirmation_sent_at        DateTime? @db.Timestamptz
-  recovery_token              String?
-  recovery_sent_at            DateTime? @db.Timestamptz
-  email_change_token_new      String?
-  email_change                String?
-  email_change_sent_at        DateTime? @db.Timestamptz
-  last_sign_in_at             DateTime? @db.Timestamptz
-  raw_app_meta_data           Json?
-  raw_user_meta_data          Json?
-  is_super_admin              Boolean?
-  created_at                  DateTime? @db.Timestamptz
-  updated_at                  DateTime? @db.Timestamptz
-  phone                       String?   @unique
-  phone_confirmed_at          DateTime? @db.Timestamptz
-  phone_change                String?   @default("")
-  phone_change_token          String?   @default("")
-  phone_change_sent_at        DateTime? @db.Timestamptz
-  confirmed_at                DateTime? @db.Timestamptz
-  email_change_token_current  String?   @default("")
-  email_change_confirm_status Int?      @default(0) @db.SmallInt
-  banned_until                DateTime? @db.Timestamptz
-  reauthentication_token      String?   @default("")
-  reauthentication_sent_at    DateTime? @db.Timestamptz
-  is_sso_user                 Boolean   @default(false)
-  deleted_at                  DateTime? @db.Timestamptz
-  is_anonymous                Boolean   @default(false)
+  id                       String    @id @db.Uuid
+  instanceId               String?   @map("instance_id") @db.Uuid
+  aud                      String?
+  role                     String?
+  email                    String?
+  encryptedPassword        String?   @map("encrypted_password")
+  emailConfirmedAt         DateTime? @map("email_confirmed_at") @db.Timestamptz
+  invitedAt                DateTime? @map("invited_at") @db.Timestamptz
+  confirmationToken        String?   @map("confirmation_token")
+  confirmationSentAt       DateTime? @map("confirmation_sent_at") @db.Timestamptz
+  recoveryToken            String?   @map("recovery_token")
+  recoverySentAt           DateTime? @map("recovery_sent_at") @db.Timestamptz
+  emailChangeTokenNew      String?   @map("email_change_token_new")
+  emailChange              String?   @map("email_change")
+  emailChangeSentAt        DateTime? @map("email_change_sent_at") @db.Timestamptz
+  lastSignInAt             DateTime? @map("last_sign_in_at") @db.Timestamptz
+  rawAppMetaData           Json?     @map("raw_app_meta_data")
+  rawUserMetaData          Json?     @map("raw_user_meta_data")
+  isSuperAdmin             Boolean?  @map("is_super_admin")
+  createdAt                DateTime? @map("created_at") @db.Timestamptz
+  updatedAt                DateTime? @map("updated_at") @db.Timestamptz
+  phone                    String?   @unique
+  phoneConfirmedAt         DateTime? @map("phone_confirmed_at") @db.Timestamptz
+  phoneChange              String?   @default("") @map("phone_change")
+  phoneChangeToken         String?   @default("") @map("phone_change_token")
+  phoneChangeSentAt        DateTime? @map("phone_change_sent_at") @db.Timestamptz
+  confirmedAt              DateTime? @map("confirmed_at") @db.Timestamptz
+  emailChangeTokenCurrent  String?   @default("") @map("email_change_token_current")
+  emailChangeConfirmStatus Int?      @default(0) @map("email_change_confirm_status") @db.SmallInt
+  bannedUntil              DateTime? @map("banned_until") @db.Timestamptz
+  reauthenticationToken    String?   @default("") @map("reauthentication_token")
+  reauthenticationSentAt   DateTime? @map("reauthentication_sent_at") @db.Timestamptz
+  isSsoUser                Boolean   @default(false) @map("is_sso_user")
+  deletedAt                DateTime? @map("deleted_at") @db.Timestamptz
+  isAnonymous              Boolean   @default(false) @map("is_anonymous")
 
-  identities  SupabaseIdentity[]
-  mfa_factors SupabaseMfaFactor[]
-  sessions    SupabaseSession[]
+  identities SupabaseIdentity[]
+  mfaFactors SupabaseMfaFactor[]
+  sessions   SupabaseSession[]
 
   @@map("users")
   @@schema("auth")
 }
 
 model SupabaseSession {
-  id              String    @id @db.Uuid
-  user_id         String    @db.Uuid
-  created_at      DateTime? @db.Timestamptz
-  updated_at      DateTime? @db.Timestamptz
-  factor_id       String?   @db.Uuid
-  aal             String?
-  not_after       DateTime? @db.Timestamptz
-  refreshed_at    DateTime? @db.Timestamp
-  user_agent      String?
-  ip              String?
-  tag             String?
-  oauth_client_id String?   @db.Uuid
+  id            String    @id @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  createdAt     DateTime? @map("created_at") @db.Timestamptz
+  updatedAt     DateTime? @map("updated_at") @db.Timestamptz
+  factorId      String?   @map("factor_id") @db.Uuid
+  aal           String?
+  notAfter      DateTime? @map("not_after") @db.Timestamptz
+  refreshedAt   DateTime? @map("refreshed_at") @db.Timestamp
+  userAgent     String?   @map("user_agent")
+  ip            String?
+  tag           String?
+  oauthClientId String?   @map("oauth_client_id") @db.Uuid
 
-  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
   @@schema("auth")
 }
 
 model AuditLogEntry {
-  instance_id String?   @db.Uuid
-  id          String    @id @db.Uuid
-  payload     Json?
-  created_at  DateTime? @db.Timestamptz
-  ip_address  String    @default("")
+  instanceId String?   @map("instance_id") @db.Uuid
+  id         String    @id @db.Uuid
+  payload    Json?
+  createdAt  DateTime? @map("created_at") @db.Timestamptz
+  ipAddress  String    @default("") @map("ip_address")
 
   @@map("audit_log_entries")
   @@schema("auth")
 }
 
 model SupabaseIdentity {
-  provider_id     String
-  user_id         String    @db.Uuid
-  identity_data   Json
-  provider        String
-  last_sign_in_at DateTime? @db.Timestamptz
-  created_at      DateTime? @db.Timestamptz
-  updated_at      DateTime? @db.Timestamptz
-  email           String?
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId   String    @map("provider_id")
+  userId       String    @map("user_id") @db.Uuid
+  identityData Json      @map("identity_data")
+  provider     String
+  lastSignInAt DateTime? @map("last_sign_in_at") @db.Timestamptz
+  createdAt    DateTime? @map("created_at") @db.Timestamptz
+  updatedAt    DateTime? @map("updated_at") @db.Timestamptz
+  email        String?
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("identities")
   @@schema("auth")
 }
 
 model FlowState {
-  id                     String    @id @db.Uuid
-  user_id                String?   @db.Uuid
-  auth_code              String
-  code_challenge_method  String
-  code_challenge         String
-  provider_type          String
-  provider_access_token  String?
-  provider_refresh_token String?
-  created_at             DateTime? @db.Timestamptz
-  updated_at             DateTime? @db.Timestamptz
-  authentication_method  String
-  auth_code_issued_at    DateTime? @db.Timestamptz
+  id                   String    @id @db.Uuid
+  userId               String?   @map("user_id") @db.Uuid
+  authCode             String    @map("auth_code")
+  codeChallengeMethod  String    @map("code_challenge_method")
+  codeChallenge        String    @map("code_challenge")
+  providerType         String    @map("provider_type")
+  providerAccessToken  String?   @map("provider_access_token")
+  providerRefreshToken String?   @map("provider_refresh_token")
+  createdAt            DateTime? @map("created_at") @db.Timestamptz
+  updatedAt            DateTime? @map("updated_at") @db.Timestamptz
+  authenticationMethod String    @map("authentication_method")
+  authCodeIssuedAt     DateTime? @map("auth_code_issued_at") @db.Timestamptz
 
   @@map("flow_state")
   @@schema("auth")
 }
 
 model MfaFactor {
-  id                           String    @id @db.Uuid
-  user_id                      String    @db.Uuid
-  friendly_name                String?
-  factor_type                  String
-  status                       String
-  created_at                   DateTime  @db.Timestamptz
-  updated_at                   DateTime  @db.Timestamptz
-  secret                       String?
-  phone                        String?
-  last_challenged_at           DateTime? @unique @db.Timestamptz
-  web_authn_credential         Json?
-  web_authn_aaguid             String?   @db.Uuid
-  last_webauthn_challenge_data Json?
+  id                        String    @id @db.Uuid
+  userId                    String    @map("user_id") @db.Uuid
+  friendlyName              String?   @map("friendly_name")
+  factorType                String    @map("factor_type")
+  status                    String
+  createdAt                 DateTime  @map("created_at") @db.Timestamptz
+  updatedAt                 DateTime  @map("updated_at") @db.Timestamptz
+  secret                    String?
+  phone                     String?
+  lastChallengedAt          DateTime? @unique @map("last_challenged_at") @db.Timestamptz
+  webAuthnCredential        Json?     @map("web_authn_credential")
+  webAuthnAaguid            String?   @map("web_authn_aaguid") @db.Uuid
+  lastWebauthnChallengeData Json?     @map("last_webauthn_challenge_data")
 
   @@map("mfa_factors")
   @@schema("auth")
 }
 
 model SupabaseMfaFactor {
-  id                 String    @id @db.Uuid
-  user_id            String    @db.Uuid
-  friendly_name      String?
-  factor_type        String
-  status             String
-  created_at         DateTime  @db.Timestamptz
-  updated_at         DateTime  @db.Timestamptz
-  secret             String?
-  phone              String?
-  last_challenged_at DateTime? @unique @db.Timestamptz
+  id               String    @id @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  friendlyName     String?   @map("friendly_name")
+  factorType       String    @map("factor_type")
+  status           String
+  createdAt        DateTime  @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @map("updated_at") @db.Timestamptz
+  secret           String?
+  phone            String?
+  lastChallengedAt DateTime? @unique @map("last_challenged_at") @db.Timestamptz
 
-  user SupabaseUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user SupabaseUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("mfa_factors_deprecated") // Just avoid conflict if naming is same
+  @@map("mfa_factors_deprecated")
   @@schema("auth")
 }
 
@@ -357,10 +358,10 @@ model VaultSecret {
   name        String?
   description String   @default("")
   secret      String
-  key_id      String?  @db.Uuid
+  keyId       String?  @map("key_id") @db.Uuid
   nonce       Bytes?
-  created_at  DateTime @default(now()) @db.Timestamptz
-  updated_at  DateTime @default(now()) @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
   @@map("secrets")
   @@schema("vault")

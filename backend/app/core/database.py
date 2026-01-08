@@ -1,6 +1,6 @@
 """Database client and utilities using Prisma."""
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from prisma import Prisma
 from prisma import Json
 import uuid
@@ -30,7 +30,7 @@ async def get_cached_forecast(symbol: str):
 
         run_date = forecast.runDate
         # Check if within 24 hours
-        now = datetime.now(run_date.tzinfo) if run_date.tzinfo else datetime.utcnow()
+        now = datetime.now(run_date.tzinfo) if run_date.tzinfo else datetime.now(UTC)
         
         if now - run_date <= timedelta(hours=24):
             # Convert to dict to match previous behavior
@@ -53,9 +53,9 @@ async def insert_cached_forecast(symbol: str, price_series, forecast_results):
         # Prisma Python's Json type expects Python objects (dict/list), not JSON strings
         # Pass the objects directly - Prisma will handle serialization internally
         # Use camelCase field names for Prisma Python client
-        
-        now = datetime.utcnow()
-        today_start = datetime(now.year, now.month, now.day)
+
+        now = datetime.now(UTC)
+        today_start = datetime(now.year, now.month, now.day, tzinfo=UTC)
         today_end = today_start + timedelta(days=1)
         
         # Check if there's an existing forecast for today

@@ -12,7 +12,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: pgvector/pgvector:pg15
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
@@ -40,7 +40,14 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-test.txt
       
+      - name: Enable pgvector extension
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U test -d test_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
       - name: Generate Prisma Client
         working-directory: ./backend
         env:
