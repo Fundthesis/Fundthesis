@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -74,4 +75,5 @@ jobs:
         with:
           app-name: 'fundthesis-python-backend'
           slot-name: 'Production'
+
           
