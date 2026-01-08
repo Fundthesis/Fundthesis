@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { requireAuth } from "@/lib/apiAuth";
+
+// Type definition for Article where clause (needed when Prisma client isn't generated)
+type ArticleWhereInput = {
+  category?: string;
+  source?: string;
+  tickers?: { contains: string; mode?: 'insensitive' };
+  OR?: Array<{ headline?: { contains: string; mode?: 'insensitive' }; summary?: { contains: string; mode?: 'insensitive' }; fullText?: { contains: string; mode?: 'insensitive' }; tickers?: { contains: string; mode?: 'insensitive' } }>;
+};
 
 const MAX_LIMIT = 100;
 
@@ -28,7 +35,7 @@ export async function GET(request: NextRequest) {
     const orderBy = searchParams.get("orderBy") || "publishedAt";
     const orderDirection = searchParams.get("orderDirection") || "desc";
 
-    const where: Prisma.ArticleWhereInput = {};
+    const where: ArticleWhereInput = {};
 
     if (category) {
       where.category = category;

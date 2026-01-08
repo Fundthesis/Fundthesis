@@ -1,5 +1,4 @@
 import React from 'react'
-import { Card, CardContent } from '@/components/ui/Card'
 import { NewsCard } from '@/components/ui/NewsCard'
 
 interface Stock {

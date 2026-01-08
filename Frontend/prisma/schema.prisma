@@ -69,24 +69,24 @@ model Verification {
 }
 
 model Article {
-  id           String                   @id @default(uuid())
-  url          String                   @unique
+  id           String                       @id @default(uuid())
+  url          String                       @unique
   headline     String?
   summary      String?
-  fullText     String?                  @map("full_text")
-  publishedAt  DateTime?                @map("published_at")
+  fullText     String?                      @map("full_text")
+  publishedAt  DateTime?                    @map("published_at")
   source       String?
   label        String?
   related      String?
   category     String?
   tickers      String?
-  insertedAt   DateTime                 @default(now()) @map("inserted_at")
-  fetchStatus  String?                  @map("fetch_status")
-  fetchError   String?                  @map("fetch_error")
-  sourceDomain String?                  @map("source_domain")
-  sqliteId     String?                  @map("sqlite_id")
-  articleId    String?                  @map("article_id")
-  tsv          Unsupported("tsvector")? @default(dbgenerated())
+  insertedAt   DateTime                     @default(now()) @map("inserted_at")
+  fetchStatus  String?                      @map("fetch_status")
+  fetchError   String?                      @map("fetch_error")
+  sourceDomain String?                      @map("source_domain")
+  sqliteId     String?                      @map("sqlite_id")
+  articleId    String?                      @map("article_id")
+  tsv          Unsupported("tsvector")?     @default(dbgenerated())
   embedding    Unsupported("vector(1536)")? // pgvector for RAG
 
   @@map("articles")

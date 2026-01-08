@@ -59,10 +59,6 @@ export default function DiscoverPage() {
   const stocks = useMemo(() => stocksData?.stocks || [], [stocksData?.stocks]);
   const isLoading = isLoadingStocks;
 
-  // Memoize stocks to prevent unnecessary re-renders
-  const stocks = useMemo(() => stocksData?.stocks || [], [stocksData?.stocks]);
-  const isLoading = isLoadingStocks;
-
   // Extract sectors and industries from metadata or stocks
   const sectors = useMemo(() => {
     if (metadataData?.sectors && metadataData.sectors.length > 0) {
