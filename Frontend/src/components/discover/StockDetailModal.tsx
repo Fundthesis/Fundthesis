@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { X, ExternalLink } from "lucide-react";
 import {
   LineChart,
@@ -77,12 +78,35 @@ export function StockDetailModal({
     return "$" + cap.toString();
   };
 
-  const combinedChartData = stock
-    ? [
-        ...stock.chartData.map((d) => ({ ...d, type: "historical" })),
-        ...(stock.forecastData || []).map((d) => ({ ...d, type: "forecast" })),
-      ]
-    : [];
+  const combinedChartData = useMemo(() => {
+    if (!stock) return [];
+    return [
+      ...stock.chartData.map((d) => ({ ...d, type: "historical" as const })),
+      ...(stock.forecastData || []).map((d) => ({ ...d, type: "forecast" as const })),
+    ];
+  }, [stock]);
+
+  // Calculate Y-axis domain with padding for better visualization
+  const yAxisDomain = useMemo(() => {
+    if (combinedChartData.length === 0) return [0, 100];
+    const prices = combinedChartData.map((d) => d.price).filter((p) => p != null) as number[];
+    if (prices.length === 0) return [0, 100];
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const range = maxPrice - minPrice;
+    const padding = range * 0.1; // 10% padding on each side
+    return [
+      Math.max(0, minPrice - padding),
+      maxPrice + padding,
+    ];
+  }, [combinedChartData]);
+
+  const forecastPoints = useMemo(
+    () => combinedChartData.filter((point) => point.type === "forecast"),
+    [combinedChartData],
+  );
+
+  const hasForecastData = forecastPoints.length > 0;
 
   return (
     <div
@@ -155,28 +179,110 @@ export function StockDetailModal({
 
           {/* Chart */}
           {showSkeleton ? (
-            <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
+            <div className="h-72 bg-gray-100 rounded-lg animate-pulse"></div>
           ) : isLoadingChart ? (
-            <div className="h-64 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
+            <div className="h-72 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
               <p className="text-gray-500">Loading chart data...</p>
             </div>
           ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={combinedChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="#9DB38A"
-                    strokeWidth={2}
-                    dot={false}
+            <div className="space-y-3">
+              <div className="h-72 bg-gray-50 rounded-lg p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart 
+                    data={combinedChartData}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="date"
+                      tickFormatter={(date) =>
+                        new Date(date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      }
+                      tick={{ fontSize: 11, fill: "#6b7280" }}
+                      axisLine={{ stroke: "#d1d5db" }}
+                      tickLine={{ stroke: "#d1d5db" }}
+                    />
+                    <YAxis 
+                      domain={yAxisDomain}
+                      tickFormatter={(value) => `$${value.toFixed(0)}`}
+                      tick={{ fontSize: 11, fill: "#6b7280" }}
+                      axisLine={{ stroke: "#d1d5db" }}
+                      tickLine={{ stroke: "#d1d5db" }}
+                      width={60}
+                    />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm">
+                              <p className="font-bold text-lg">${data.price?.toFixed(2) || "-"}</p>
+                              <p className="text-gray-500 text-xs">
+                                {new Date(data.date).toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </p>
+                              {data.type === "forecast" && (
+                                <p className="text-blue-600 text-xs font-medium mt-1">📈 Predicted</p>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    {/* Single line that changes style at the forecast boundary */}
+                    <Line
+                      type="monotone"
+                      dataKey="price"
+                      stroke={stock!.changePercent >= 0 ? "#9DB38A" : "#c17b7b"}
+                      strokeWidth={2.5}
+                      dot={false}
+                      connectNulls={true}
+                      activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
+                    />
+                    {/* Forecast overlay line (dashed) */}
+                    {hasForecastData && (
+                      <Line
+                        type="monotone"
+                        dataKey={(d: { type: string; price: number }) => d.type === "forecast" ? d.price : null}
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        strokeDasharray="6 4"
+                        dot={false}
+                        connectNulls={true}
+                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2, fill: "#3b82f6" }}
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-6 h-0.5 rounded" 
+                    style={{ 
+                      backgroundColor: stock!.changePercent >= 0 ? "#9DB38A" : "#c17b7b" 
+                    }}
                   />
-                </LineChart>
-              </ResponsiveContainer>
+                  <span className="text-gray-600">Historical Price</span>
+                </div>
+                {hasForecastData && (
+                  <div className="flex items-center gap-2">
+                    <svg width="24" height="2" className="text-blue-500">
+                      <line x1="0" y1="1" x2="24" y2="1" stroke="currentColor" strokeWidth="2" strokeDasharray="6 4" />
+                    </svg>
+                    <span className="text-blue-600 font-medium">Predicted Price</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
