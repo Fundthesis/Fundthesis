@@ -90,23 +90,23 @@ export default function MentorPage() {
     });
 
     return (
-        <div className="h-[calc(100vh-140px)] bg-stone-50 flex flex-col overflow-hidden">
+        <div className="h-[calc(100vh-140px)] bg-stone-50 dark:bg-stone-900 flex flex-col overflow-hidden">
             <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-4 flex flex-col h-full">
                 {/* Masthead */}
-                <header className="text-center border-b-2 border-black pb-4 mb-4 shrink-0">
-                    <p className="text-xs tracking-widest text-stone-500 uppercase mb-1">
+                <header className="text-center border-b-2 border-black dark:border-stone-600 pb-4 mb-4 shrink-0">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-1">
                         {dateString}
                     </p>
-                    <h1 className="font-serif text-4xl font-black tracking-tight text-black">
+                    <h1 className="font-serif text-4xl font-black tracking-tight text-black dark:text-white">
                         The Editor&apos;s Desk
                     </h1>
-                    <p className="text-sm font-serif italic text-stone-500 mt-1">
+                    <p className="text-sm font-serif italic text-stone-500 dark:text-stone-400 mt-1">
                         A Socratic Dialogue on Markets & Money
                     </p>
                 </header>
 
                 {/* Conversation Container */}
-                <div className="flex-1 border border-stone-200 bg-white flex flex-col min-h-0">
+                <div className="flex-1 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 flex flex-col min-h-0">
                     {/* Messages Area */}
                     <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
                         <div className="max-w-2xl mx-auto space-y-6">
@@ -124,17 +124,17 @@ export default function MentorPage() {
                                     )}
                                     <div
                                         className={`inline-block max-w-[85%] ${msg.role === 'user'
-                                            ? 'bg-stone-100 text-stone-800'
-                                            : 'bg-white border-l-2 border-stone-300 pl-4'
+                                            ? 'bg-stone-100 dark:bg-stone-700 text-stone-800 dark:text-stone-100'
+                                            : 'bg-white dark:bg-stone-800 border-l-2 border-stone-300 dark:border-stone-600 pl-4'
                                             } py-3 px-4`}
                                     >
-                                        <p className="font-serif text-base leading-relaxed whitespace-pre-wrap">
+                                        <p className="font-serif text-base leading-relaxed whitespace-pre-wrap dark:text-stone-100">
                                             {msg.content}
                                         </p>
 
                                         {/* Citations */}
                                         {msg.citations && msg.citations.length > 0 && (
-                                            <div className="mt-4 pt-3 border-t border-stone-200">
+                                            <div className="mt-4 pt-3 border-t border-stone-200 dark:border-stone-600">
                                                 <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
                                                     Reference Material
                                                 </p>
@@ -142,7 +142,7 @@ export default function MentorPage() {
                                                     {msg.citations.map((citation, ci) => (
                                                         <span
                                                             key={ci}
-                                                            className="text-xs text-stone-600 bg-stone-50 px-2 py-1"
+                                                            className="text-xs text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-700 px-2 py-1"
                                                         >
                                                             {citation}
                                                         </span>
@@ -159,7 +159,7 @@ export default function MentorPage() {
                                     <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
                                         The Editor
                                     </p>
-                                    <div className="inline-block border-l-2 border-stone-300 pl-4 py-3">
+                                    <div className="inline-block border-l-2 border-stone-300 dark:border-stone-600 pl-4 py-3">
                                         <p className="font-serif text-stone-400 italic">
                                             Composing response...
                                         </p>
@@ -173,15 +173,15 @@ export default function MentorPage() {
 
                     {/* Suggested Actions */}
                     {lastResponse?.suggestedActions && lastResponse.suggestedActions.length > 0 && (
-                        <div className="px-6 py-3 bg-stone-50 border-t border-stone-200 shrink-0">
-                            <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">
+                        <div className="px-6 py-3 bg-stone-50 dark:bg-stone-900 border-t border-stone-200 dark:border-stone-700 shrink-0">
+                            <p className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
                                 Suggested Next Steps
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 {lastResponse.suggestedActions.map((action, i) => (
                                     <span
                                         key={i}
-                                        className="text-xs text-stone-600 border border-stone-300 px-3 py-1"
+                                        className="text-xs text-stone-600 dark:text-stone-300 border border-stone-300 dark:border-stone-600 px-3 py-1"
                                     >
                                         {action}
                                     </span>
@@ -192,8 +192,8 @@ export default function MentorPage() {
 
                     {/* Suggested Topics (only if few messages) */}
                     {messages.length <= 2 && (
-                        <div className="px-6 py-4 bg-stone-50 border-t border-stone-200 shrink-0">
-                            <p className="text-xs uppercase tracking-widest text-stone-500 mb-3">
+                        <div className="px-6 py-4 bg-stone-50 dark:bg-stone-900 border-t border-stone-200 dark:border-stone-700 shrink-0">
+                            <p className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-3">
                                 Topics to Explore
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export default function MentorPage() {
                                     <button
                                         key={i}
                                         onClick={() => setInput(topic)}
-                                        className="text-sm font-serif text-stone-700 border border-stone-300 px-3 py-2 hover:bg-white hover:border-stone-400 transition-colors"
+                                        className="text-sm font-serif text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-600 px-3 py-2 hover:bg-white dark:hover:bg-stone-700 hover:border-stone-400 dark:hover:border-stone-500 transition-colors"
                                     >
                                         {topic}
                                     </button>
@@ -211,7 +211,7 @@ export default function MentorPage() {
                     )}
 
                     {/* Input Area */}
-                    <div className="p-4 border-t border-stone-200 bg-white shrink-0">
+                    <div className="p-4 border-t border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 shrink-0">
                         <div className="max-w-2xl mx-auto">
                             <div className="flex items-end gap-3">
                                 <div className="flex-1">
@@ -225,15 +225,15 @@ export default function MentorPage() {
                                         onKeyDown={handleKeyDown}
                                         placeholder="Type your question here..."
                                         rows={2}
-                                        className="w-full border border-stone-300 px-4 py-3 font-serif text-base focus:outline-none focus:border-stone-400 resize-none"
+                                        className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-4 py-3 font-serif text-base focus:outline-none focus:border-stone-400 dark:focus:border-stone-500 resize-none"
                                     />
                                 </div>
                                 <button
                                     onClick={sendMessage}
                                     disabled={!input.trim() || isTyping}
                                     className={`px-6 py-3 text-sm uppercase tracking-widest font-medium transition-colors ${input.trim() && !isTyping
-                                        ? 'bg-black text-white hover:bg-stone-800'
-                                        : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                                        ? 'bg-black dark:bg-green-600 text-white hover:bg-stone-800 dark:hover:bg-green-700'
+                                        : 'bg-stone-200 dark:bg-stone-700 text-stone-400 cursor-not-allowed'
                                         }`}
                                 >
                                     Submit

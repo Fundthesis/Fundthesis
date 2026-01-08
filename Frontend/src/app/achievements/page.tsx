@@ -68,17 +68,17 @@ export default function AchievementsPage() {
     const displayArchetype = archetype || archetypes[0];
 
     return (
-        <div className="min-h-screen bg-stone-50">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
             <main className="max-w-6xl mx-auto px-4 py-8">
                 {/* Masthead */}
-                <header className="text-center border-b-4 border-double border-black pb-4 mb-8">
-                    <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+                <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
                         {dateString}
                     </p>
-                    <h1 className="font-serif text-5xl font-black tracking-tight text-black">
+                    <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
                         The Investor&apos;s Record
                     </h1>
-                    <p className="text-sm font-serif italic text-stone-600 mt-2">
+                    <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
                         &ldquo;A Chronicle of Progress & Achievement&rdquo;
                     </p>
                 </header>
@@ -87,19 +87,19 @@ export default function AchievementsPage() {
                     {/* Profile Column */}
                     <div className="lg:col-span-1 space-y-6">
                         {/* Investor Profile Card */}
-                        <article className="border border-stone-200 bg-white p-6">
-                            <h2 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                            <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 Investor Profile
                             </h2>
                             <div className="text-center mb-6">
-                                <p className="font-serif text-3xl font-black text-black mb-1">
+                                <p className="font-serif text-3xl font-black text-black dark:text-white mb-1">
                                     {displayArchetype.name.replace(/[^\w\s]/g, '')}
                                 </p>
-                                <p className="text-sm text-stone-500 italic">
+                                <p className="text-sm text-stone-500 dark:text-stone-400 italic">
                                     {displayArchetype.title}
                                 </p>
                             </div>
-                            <p className="font-serif text-sm text-stone-600 leading-relaxed mb-6">
+                            <p className="font-serif text-sm text-stone-600 dark:text-stone-400 leading-relaxed mb-6">
                                 {displayArchetype.description}
                             </p>
 
@@ -110,7 +110,7 @@ export default function AchievementsPage() {
                                     </h4>
                                     <ul className="space-y-1">
                                         {displayArchetype.strengths.map((s, i) => (
-                                            <li key={i} className="text-sm text-stone-600">
+                                            <li key={i} className="text-sm text-stone-600 dark:text-stone-400">
                                                 — {s}
                                             </li>
                                         ))}
@@ -123,7 +123,7 @@ export default function AchievementsPage() {
                                     </h4>
                                     <ul className="space-y-1">
                                         {displayArchetype.watchOuts.map((w, i) => (
-                                            <li key={i} className="text-sm text-stone-500 italic">
+                                            <li key={i} className="text-sm text-stone-500 dark:text-stone-500 italic">
                                                 — {w}
                                             </li>
                                         ))}
@@ -133,8 +133,8 @@ export default function AchievementsPage() {
                         </article>
 
                         {/* Other Profiles */}
-                        <article className="border border-stone-200 bg-white p-6">
-                            <h2 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                            <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 Investor Archetypes
                             </h2>
                             <div className="space-y-3">
@@ -142,14 +142,14 @@ export default function AchievementsPage() {
                                     <div
                                         key={a.id}
                                         className={`p-3 ${a.id === displayArchetype.id
-                                            ? 'bg-stone-100 border-l-2 border-black'
+                                            ? 'bg-stone-100 dark:bg-stone-700 border-l-2 border-black dark:border-green-500'
                                             : 'opacity-60'
                                             }`}
                                     >
-                                        <p className="font-serif font-bold text-sm text-black">
+                                        <p className="font-serif font-bold text-sm text-black dark:text-white">
                                             {a.name.replace(/[^\w\s]/g, '')}
                                         </p>
-                                        <p className="text-xs text-stone-500">{a.title}</p>
+                                        <p className="text-xs text-stone-500 dark:text-stone-400">{a.title}</p>
                                     </div>
                                 ))}
                             </div>
@@ -159,22 +159,22 @@ export default function AchievementsPage() {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Rank Progress */}
-                        <article className="border border-stone-200 bg-white p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
                             <div className="flex items-start justify-between mb-6">
                                 <div>
-                                    <h2 className="text-xs uppercase tracking-widest text-stone-500 mb-2">
+                                    <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
                                         Current Standing
                                     </h2>
-                                    <p className="font-serif text-3xl font-black text-black">
+                                    <p className="font-serif text-3xl font-black text-black dark:text-white">
                                         {currentRank.title}
                                     </p>
-                                    <p className="text-sm text-stone-500">Level {currentRank.level}</p>
+                                    <p className="text-sm text-stone-500 dark:text-stone-400">Level {currentRank.level}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-serif text-2xl font-bold text-black">
+                                    <p className="font-serif text-2xl font-bold text-black dark:text-white">
                                         {xp.toLocaleString()}
                                     </p>
-                                    <p className="text-xs uppercase tracking-widest text-stone-500">
+                                    <p className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
                                         Total XP
                                     </p>
                                 </div>
@@ -182,13 +182,13 @@ export default function AchievementsPage() {
 
                             {nextRank && (
                                 <div className="mb-6">
-                                    <div className="flex items-center justify-between text-xs text-stone-500 mb-2">
+                                    <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 mb-2">
                                         <span>Progress to {nextRank.title}</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <div className="w-full bg-stone-200 h-2">
+                                    <div className="w-full bg-stone-200 dark:bg-stone-700 h-2">
                                         <div
-                                            className="bg-black h-2 transition-all"
+                                            className="bg-black dark:bg-green-500 h-2 transition-all"
                                             style={{ width: `${progress}%` }}
                                         />
                                     </div>
@@ -199,14 +199,14 @@ export default function AchievementsPage() {
                             )}
 
                             <div>
-                                <h4 className="text-xs uppercase tracking-widest text-stone-500 mb-3">
+                                <h4 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-3">
                                     Current Privileges
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                     {currentRank.perks.map((perk, i) => (
                                         <span
                                             key={i}
-                                            className="text-xs text-stone-600 border border-stone-300 px-3 py-1"
+                                            className="text-xs text-stone-600 dark:text-stone-300 border border-stone-300 dark:border-stone-600 px-3 py-1"
                                         >
                                             {perk}
                                         </span>
@@ -216,8 +216,8 @@ export default function AchievementsPage() {
                         </article>
 
                         {/* Rank Ladder */}
-                        <article className="border border-stone-200 bg-white p-6">
-                            <h2 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                            <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 The Advancement Ladder
                             </h2>
                             <div className="grid grid-cols-6 gap-2">
@@ -225,11 +225,11 @@ export default function AchievementsPage() {
                                     <div
                                         key={rank.id}
                                         className={`text-center p-3 ${rank.level <= currentRank.level
-                                            ? 'bg-stone-100'
+                                            ? 'bg-stone-100 dark:bg-stone-700'
                                             : 'opacity-40'
                                             }`}
                                     >
-                                        <p className="font-serif text-xs font-bold text-black">
+                                        <p className="font-serif text-xs font-bold text-black dark:text-white">
                                             {rank.title}
                                         </p>
                                         <p className="text-xs text-stone-400">Lvl {rank.level}</p>
@@ -239,9 +239,9 @@ export default function AchievementsPage() {
                         </article>
 
                         {/* Achievements */}
-                        <article className="border border-stone-200 bg-white p-6">
-                            <div className="flex items-center justify-between mb-4 border-b border-stone-200 pb-2">
-                                <h2 className="text-xs uppercase tracking-widest text-stone-500">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                            <div className="flex items-center justify-between mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
+                                <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
                                     Distinctions & Honors
                                 </h2>
                                 <span className="text-xs text-stone-400">
@@ -255,14 +255,14 @@ export default function AchievementsPage() {
                                         <div
                                             key={achievement.id}
                                             className={`p-4 border ${isEarned
-                                                ? 'border-stone-400 bg-stone-50'
-                                                : 'border-stone-200 opacity-50'
+                                                ? 'border-stone-400 dark:border-stone-500 bg-stone-50 dark:bg-stone-700'
+                                                : 'border-stone-200 dark:border-stone-700 opacity-50'
                                                 }`}
                                         >
-                                            <h4 className="font-serif font-bold text-sm text-black mb-1">
+                                            <h4 className="font-serif font-bold text-sm text-black dark:text-white mb-1">
                                                 {achievement.title}
                                             </h4>
-                                            <p className="text-xs text-stone-500">
+                                            <p className="text-xs text-stone-500 dark:text-stone-400">
                                                 {achievement.description}
                                             </p>
                                             {isEarned && (

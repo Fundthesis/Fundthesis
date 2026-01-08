@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 
 export interface Stock {
   symbol: string;
@@ -52,6 +52,16 @@ interface UseStocksParams {
   symbols?: string;
   search?: string;
   refetchInterval?: number;
+}
+
+interface StockFilters {
+  search?: string;
+  sector?: string;
+  industry?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minMarketCap?: number;
+  maxMarketCap?: number;
 }
 
 /**
@@ -149,5 +159,52 @@ export function useStockMetadata() {
       return response.json();
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - metadata changes less frequently
+  });
+}
+
+/**
+ * Hook for infinite scrolling stocks list
+ */
+export function useStocksInfinite(filters?: StockFilters) {
+  return useInfiniteQuery<StocksResponse>({
+    queryKey: ["stocks", "infinite", filters],
+    queryFn: async ({ pageParam = 0 }) => {
+      const queryParams = new URLSearchParams({
+        limit: "50",
+        offset: pageParam.toString(),
+      });
+      
+      if (filters?.search) {
+        queryParams.append("search", filters.search);
+      }
+      if (filters?.sector) {
+        queryParams.append("sector", filters.sector);
+      }
+      if (filters?.industry) {
+        queryParams.append("industry", filters.industry);
+      }
+      if (filters?.minPrice !== undefined) {
+        queryParams.append("min_price", filters.minPrice.toString());
+      }
+      if (filters?.maxPrice !== undefined) {
+        queryParams.append("max_price", filters.maxPrice.toString());
+      }
+      if (filters?.minMarketCap !== undefined) {
+        queryParams.append("min_market_cap", filters.minMarketCap.toString());
+      }
+      if (filters?.maxMarketCap !== undefined) {
+        queryParams.append("max_market_cap", filters.maxMarketCap.toString());
+      }
+
+      const response = await fetch(`/api/stocks?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch stocks");
+      }
+      return response.json();
+    },
+    getNextPageParam: (lastPage) => 
+      lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
+    initialPageParam: 0,
+    staleTime: 60 * 1000, // 1 minute
   });
 }

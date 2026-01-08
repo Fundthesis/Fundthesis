@@ -35,6 +35,36 @@ FEEDS = [
         "url": "https://www.prnewswire.com/rss/news-releases-list.rss",
         "enabled": True,
         "needs_filtering": True
+    },
+    {
+        "name": "MarketWatch",
+        "url": "https://www.marketwatch.com/rss/topstories",
+        "enabled": True,
+        "needs_filtering": True
+    },
+    {
+        "name": "Seeking Alpha",
+        "url": "https://seekingalpha.com/feed.xml",
+        "enabled": True,
+        "needs_filtering": True
+    },
+    {
+        "name": "Yahoo Finance",
+        "url": "https://finance.yahoo.com/news/rssindex",
+        "enabled": True,
+        "needs_filtering": True
+    },
+    {
+        "name": "Benzinga",
+        "url": "https://www.benzinga.com/feed",
+        "enabled": True,
+        "needs_filtering": True
+    },
+    {
+        "name": "Reuters Business",
+        "url": "https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best",
+        "enabled": True,
+        "needs_filtering": True
     }
 ]
 

@@ -29,7 +29,7 @@ const StockTicker = () => {
 
   if (loading) {
     return (
-      <div className="ticker-bg text-black py-0.5 overflow-hidden">
+      <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden">
         <div className="text-center text-sm h-8"></div>
       </div>
     );
@@ -38,8 +38,8 @@ const StockTicker = () => {
   if (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return (
-      <div className="ticker-bg text-black py-0.5 overflow-hidden">
-        <div className="text-center text-sm text-red-600">
+      <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden">
+        <div className="text-center text-sm text-red-600 dark:text-red-400">
           Failed to load stock data: {errorMessage}
         </div>
       </div>
@@ -78,7 +78,7 @@ const StockTicker = () => {
   );
 
   return (
-    <div className="ticker-bg text-black py-0.5 overflow-hidden">
+    <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden">
       <div className="flex animate-ticker whitespace-nowrap">
         <div className="flex shrink-0 gap-8 pr-8">
           {stocks.map((stock) => (
