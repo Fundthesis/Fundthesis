@@ -10,6 +10,8 @@ export interface CoachMessage {
     citations?: string[];
 }
 
+export type ChatMessage = CoachMessage;
+
 export interface CoachContext {
     userId?: string;
     currentModule?: string;

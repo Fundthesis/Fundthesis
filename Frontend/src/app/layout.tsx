@@ -3,15 +3,16 @@
 import './globals.css'
 import { Toaster } from 'sonner'
 import type { ReactNode } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import StockTicker from '@/components/StockTicker'
+import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
 import { AuthProvider, useAuth } from '@/providers/AuthProvider'
 import { QueryProvider } from '@/lib/providers/QueryProvider'
 import { navItems } from '@/constants/navigation'
 import { UserMenu } from '@/components/UserMenu'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700', '900'],

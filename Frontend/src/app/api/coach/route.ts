@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Learning module content for RAG context
+ * AI Coach API Route
+ * 
+ * Attempts to use the backend RAG pipeline first (Cohere Embed + Rerank + Azure OpenAI).
+ * Falls back to direct Azure OpenAI if backend is unavailable.
+ */
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+
+/**
+ * Learning module content for fallback RAG context
  */
 const LEARNING_MODULES = [
     { id: '1', title: 'Introduction to FundThesis', topics: ['platform overview', 'getting started', 'goals'] },
@@ -27,25 +36,6 @@ function findRelevantModules(query: string): string[] {
     }
 
     return matches.slice(0, 3);
-}
-
-function buildSystemPrompt(context: { archetype?: string; rank?: string; currentModule?: string }): string {
-    return `You are "The Editor" - an AI investment coach for FundThesis, an educational platform teaching retail investors.
-
-Your teaching method:
-- Use the Socratic method: guide users to discover answers themselves through questions
-- Never give direct investment advice or stock picks
-- Reference learning modules when relevant
-- Keep responses concise (2-3 paragraphs max)
-- Use a gentle, encouraging newspaper-editor tone
-- Ask follow-up questions to deepen understanding
-
-User context:
-- Current archetype: ${context.archetype || 'Not yet determined'}
-- Knowledge rank: ${context.rank || 'Beginner'}
-- Recent focus: ${context.currentModule || 'General learning'}
-
-Remember: Your goal is education, not financial advice. Guide them to think critically about investments.`;
 }
 
 function getSuggestedActions(query: string): string[] {
@@ -79,13 +69,60 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
         }
 
+        // Try backend RAG pipeline first
+        try {
+            console.log('[AI Coach] Trying backend RAG pipeline...');
+            const ragResponse = await fetch(`${BACKEND_URL}/api/coach`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message,
+                    context,
+                    conversation_history: conversationHistory.map((msg: { role: string; content: string }) => ({
+                        role: msg.role,
+                        content: msg.content,
+                    })),
+                }),
+            });
+
+            if (ragResponse.ok) {
+                const ragData = await ragResponse.json();
+                console.log('[AI Coach] Got response from backend RAG');
+                return NextResponse.json({
+                    message: ragData.message,
+                    citations: ragData.citations || [],
+                    suggestedActions: ragData.suggested_actions || getSuggestedActions(message),
+                    relatedModules: ragData.citations?.map((c: string) => c.split(':')[0].replace('Module ', '')) || [],
+                    sources: ragData.sources || [],
+                });
+            }
+            console.log('[AI Coach] Backend RAG returned:', ragResponse.status);
+        } catch (_ragError) {
+            console.log('[AI Coach] Backend RAG unavailable, falling back to Azure OpenAI:', _ragError instanceof Error ? _ragError.message : 'Unknown error');
+        }
+
+        // Fallback to direct Azure OpenAI
         const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
         const apiKey = process.env.AZURE_OPENAI_API_KEY;
-
-        // Find relevant modules for citations
         const relevantModules = findRelevantModules(message);
 
-        // Build conversation for API
+        const systemPrompt = `You are "The Editor" - an AI investment coach for FundThesis, an educational platform teaching retail investors.
+
+Your teaching method:
+- Use the Socratic method: guide users to discover answers themselves through questions
+- Never give direct investment advice or stock picks
+- Reference learning modules when relevant
+- Keep responses concise (2-3 paragraphs max)
+- Use a gentle, encouraging newspaper-editor tone
+- Ask follow-up questions to deepen understanding
+
+User context:
+- Current archetype: ${context.archetype || 'Not yet determined'}
+- Knowledge rank: ${context.rank || 'Beginner'}
+- Recent focus: ${context.currentModule || 'General learning'}
+
+Remember: Your goal is education, not financial advice. Guide them to think critically about investments.`;
+
         const apiMessages = conversationHistory.slice(-6).map((msg: { role: string; content: string }) => ({
             role: msg.role === 'coach' ? 'assistant' : 'user',
             content: msg.content,
@@ -96,8 +133,7 @@ export async function POST(request: NextRequest) {
 
         if (endpoint && apiKey) {
             try {
-                console.log('[AI Coach API] Calling Azure OpenAI...');
-
+                console.log('[AI Coach] Calling Azure OpenAI directly...');
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
@@ -106,7 +142,7 @@ export async function POST(request: NextRequest) {
                     },
                     body: JSON.stringify({
                         messages: [
-                            { role: 'system', content: buildSystemPrompt(context) },
+                            { role: 'system', content: systemPrompt },
                             ...apiMessages,
                         ],
                         max_tokens: 500,
@@ -117,30 +153,24 @@ export async function POST(request: NextRequest) {
                 if (response.ok) {
                     const data = await response.json();
                     aiResponse = data.choices?.[0]?.message?.content || '';
-                    console.log('[AI Coach API] Got response from Azure OpenAI');
+                    console.log('[AI Coach] Got response from Azure OpenAI');
                 } else {
-                    const errorText = await response.text();
-                    console.error('[AI Coach API] Azure error:', response.status, errorText);
+                    console.error('[AI Coach] Azure OpenAI error:', response.status);
                 }
             } catch (error) {
-                console.error('[AI Coach API] Failed to call Azure OpenAI:', error);
+                console.error('[AI Coach] Failed to call Azure OpenAI:', error);
             }
-        } else {
-            console.warn('[AI Coach API] Azure credentials not configured');
         }
 
-        // Fallback if API fails
+        // Fallback response if API fails
         if (!aiResponse) {
             const lowerMessage = message.toLowerCase();
             if (lowerMessage.includes('volatil') || lowerMessage.includes('risk')) {
-                aiResponse =
-                    "Volatility is a fascinating topic. Think about how a stock's price moves up and down over time. What do you think causes some stocks to swing more wildly than others? And more importantly, how might that affect your investment decisions?";
+                aiResponse = "Volatility is a fascinating topic. Think about how a stock's price moves up and down over time. What do you think causes some stocks to swing more wildly than others? And more importantly, how might that affect your investment decisions?";
             } else if (lowerMessage.includes('portfolio') || lowerMessage.includes('diversif')) {
-                aiResponse =
-                    "Building a strong portfolio is about balance. Consider this: if you put all your savings into one company and it fails, what happens? Now, what if you spread it across many? This is the essence of diversification. What sectors are you most drawn to, and why?";
+                aiResponse = "Building a strong portfolio is about balance. Consider this: if you put all your savings into one company and it fails, what happens? Now, what if you spread it across many? This is the essence of diversification. What sectors are you most drawn to, and why?";
             } else {
-                aiResponse =
-                    "That's a thoughtful question to explore. Before I share my perspective, what's your initial thinking on this? Sometimes the best insights come from reflecting on what we already know and building from there.";
+                aiResponse = "That's a thoughtful question to explore. Before I share my perspective, what's your initial thinking on this? Sometimes the best insights come from reflecting on what we already know and building from there.";
             }
         }
 

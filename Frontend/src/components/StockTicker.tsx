@@ -22,11 +22,55 @@ const StockTicker = () => {
   });
 
   const stocks: StockData[] = data?.stocks || [];
+interface StockTickerProps {
+  symbols?: string[];
+  isStatic?: boolean;
+}
+
+const StockTicker: React.FC<StockTickerProps> = ({ symbols = [], isStatic = false }) => {
+  const [stocks, setStocks] = useState<StockData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchStocks = async () => {
+      try {
+        const query = symbols.length > 0
+          ? `?symbols=${symbols.join(',')}`
+          : `?limit=30&offset=0`;
+
+        const response = await fetch(`/api/stocks${query}`);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        const data = await response.json();
+        if (!isMounted) return;
+
+        const stocksArray: StockData[] = data.stocks || data;
+        setStocks(stocksArray);
+        setLoading(false);
+        setError(null);
+      } catch (err) {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : String(err);
+        // Silently fail for ticker to avoid ugliness in header, or just log
+        console.error(`Failed to load stock data: ${message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchStocks();
+    const interval = setInterval(fetchStocks, 60000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [symbols]);
 
   if (loading) {
     return (
-      <div className="ticker-bg text-black py-0.5 overflow-hidden">
-        <div className="text-center text-sm h-6"></div>
+      <div className={`ticker-bg text-black py-0.5 overflow-hidden ${isStatic ? 'flex justify-center' : ''}`}>
+        <div className={`text-center ${isStatic ? 'text-xs' : 'text-sm'} h-8`}></div>
       </div>
     );
   }
