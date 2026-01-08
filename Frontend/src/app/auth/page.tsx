@@ -104,15 +104,15 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-stone-900 dark:to-stone-800 px-4 py-12">
       <div className="w-full max-w-md">
-        <Card className="border-0 shadow-2xl dark:border dark:border-stone-700">
+        <Card className="border-0 shadow-2xl dark:border dark:border-stone-700 bg-white dark:bg-stone-800">
           <CardHeader className="space-y-3 text-center pb-6">
             <div className="mx-auto w-16 h-16 bg-[#9DB38A] rounded-full flex items-center justify-center mb-2">
               <span className="text-2xl font-bold text-white">F</span>
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-900">
+            <CardTitle className="text-3xl font-bold text-gray-900 dark:text-stone-100">
               {isLogin ? "Welcome Back" : "Create Account"}
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
+            <CardDescription className="text-gray-600 dark:text-stone-400 text-base">
               {isLogin
                 ? "Sign in to continue to Fundthesis"
                 : "Join Fundthesis and start your investment journey"}
@@ -124,7 +124,7 @@ export default function AuthPage() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isGoogleLoading || isLoading}
-              className="w-full bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300 py-6 text-base font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-70 flex items-center justify-center gap-3"
+              className="w-full bg-white dark:bg-stone-700 hover:bg-gray-50 dark:hover:bg-stone-600 text-gray-700 dark:text-stone-200 border-2 border-gray-300 dark:border-stone-600 py-6 text-base font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-70 flex items-center justify-center gap-3"
             >
               {isGoogleLoading ? (
                 <>
@@ -158,10 +158,10 @@ export default function AuthPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300 dark:border-stone-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">
+                <span className="px-4 bg-white dark:bg-stone-800 text-gray-500 dark:text-stone-400">
                   Or continue with email
                 </span>
               </div>
@@ -171,7 +171,7 @@ export default function AuthPage() {
               {!isLogin && (
                 <div className="space-y-2">
                   <label
-                    className="text-sm font-semibold text-gray-700"
+                    className="text-sm font-semibold text-gray-700 dark:text-stone-300"
                     htmlFor="name"
                   >
                     Full Name
@@ -183,13 +183,13 @@ export default function AuthPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-stone-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white dark:bg-stone-700 text-black dark:text-stone-100 placeholder:text-gray-400 dark:placeholder:text-stone-500"
                   />
                 </div>
               )}
               <div className="space-y-2">
                 <label
-                  className="text-sm font-semibold text-gray-700"
+                  className="text-sm font-semibold text-gray-700 dark:text-stone-300"
                   htmlFor="email"
                 >
                   Email Address
@@ -201,13 +201,13 @@ export default function AuthPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-stone-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white dark:bg-stone-700 text-black dark:text-stone-100 placeholder:text-gray-400 dark:placeholder:text-stone-500"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label
-                    className="text-sm font-semibold text-gray-700"
+                    className="text-sm font-semibold text-gray-700 dark:text-stone-300"
                     htmlFor="password"
                   >
                     Password
@@ -215,7 +215,7 @@ export default function AuthPage() {
                   {isLogin && (
                     <a
                       href="#"
-                      className="text-sm text-[#9DB38A] hover:underline"
+                      className="text-sm text-[#9DB38A] dark:text-[#9DB38A] hover:underline"
                     >
                       Forgot password?
                     </a>
@@ -229,10 +229,10 @@ export default function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   minLength={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-stone-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] focus:border-transparent transition-all bg-white dark:bg-stone-700 text-black dark:text-stone-100 placeholder:text-gray-400 dark:placeholder:text-stone-500"
                 />
                 {!isLogin && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-stone-400 mt-1">
                     Must be at least 8 characters
                   </p>
                 )}
@@ -256,7 +256,7 @@ export default function AuthPage() {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2 pt-4">
-            <div className="text-sm text-center text-gray-600">
+            <div className="text-sm text-center text-gray-600 dark:text-stone-400">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
                 onClick={() => {
@@ -265,18 +265,18 @@ export default function AuthPage() {
                   setPassword("");
                   setName("");
                 }}
-                className="text-[#9DB38A] font-semibold hover:underline"
+                className="text-[#9DB38A] dark:text-[#9DB38A] font-semibold hover:underline"
               >
                 {isLogin ? "Sign Up" : "Sign In"}
               </button>
             </div>
-            <p className="text-xs text-center text-gray-500 mt-4">
+            <p className="text-xs text-center text-gray-500 dark:text-stone-500 mt-4">
               By continuing, you agree to Fundthesis&apos;s{" "}
-              <a href="#" className="text-[#9DB38A] hover:underline">
+              <a href="#" className="text-[#9DB38A] dark:text-[#9DB38A] hover:underline">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-[#9DB38A] hover:underline">
+              <a href="#" className="text-[#9DB38A] dark:text-[#9DB38A] hover:underline">
                 Privacy Policy
               </a>
             </p>

@@ -14,8 +14,8 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
-    <header className={`bg-[#fcfbf9] border-b-4 border-black/80 ${className}`}>
-      <div className="border-b border-black/10 bg-stone-100 h-8 flex items-center justify-center overflow-hidden">
+    <header className={`bg-[#fcfbf9] dark:bg-stone-900 border-b-4 border-black/80 dark:border-stone-700 ${className}`}>
+      <div className="border-b border-black/10 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 h-8 flex items-center justify-center overflow-hidden">
         <StockTicker />
       </div>
 
@@ -26,32 +26,32 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
           <div className="lg:hidden">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="p-2 -ml-2 text-black hover:bg-stone-100 rounded-md">
+                <button className="p-2 -ml-2 text-black dark:text-stone-100 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content className="min-w-[200px] bg-[#fcfbf9] border border-black shadow-xl ml-4 mt-2 p-2 z-50 animate-in fade-in zoom-in-95" align="start">
+                <DropdownMenu.Content className="min-w-[200px] bg-[#fcfbf9] dark:bg-stone-800 border border-black dark:border-stone-700 shadow-xl ml-4 mt-2 p-2 z-50 animate-in fade-in zoom-in-95" align="start">
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/dashboard" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">DASHBOARD</Link>
+                    <Link href="/dashboard" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DASHBOARD</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/discover" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">DISCOVER</Link>
+                    <Link href="/discover" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DISCOVER</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/learn" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">LEARN</Link>
+                    <Link href="/learn" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">LEARN</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/insights" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">INSIGHTS</Link>
+                    <Link href="/insights" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">INSIGHTS</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/enviro" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">ENVIRO</Link>
+                    <Link href="/enviro" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">ENVIRO</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/missions" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 hover:bg-black/5">MISSIONS</Link>
+                    <Link href="/missions" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MISSIONS</Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item className="outline-none">
-                    <Link href="/mentor" className="block px-4 py-3 text-lg font-serif font-bold hover:bg-black/5">MENTOR</Link>
+                    <Link href="/mentor" className="block px-4 py-3 text-lg font-serif font-bold hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MENTOR</Link>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -59,37 +59,37 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
           </div>
 
           {/* Desktop Navigation (Left Flank) */}
-          <nav className="hidden lg:flex items-center justify-end space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 flex-1">
-            <Link href="/dashboard" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+          <nav className="hidden lg:flex items-center justify-end space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 dark:text-stone-300 flex-1">
+            <Link href="/dashboard" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               DASHBOARD
             </Link>
-            <Link href="/discover" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+            <Link href="/discover" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               DISCOVER
             </Link>
-            <Link href="/insights" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+            <Link href="/insights" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               INSIGHTS
             </Link>
           </nav>
 
           {/* Centered Masthead Logo */}
           <div className="text-center px-8">
-            <Link href="/" className="inline-block text-3xl md:text-4xl font-serif font-black tracking-normal text-black leading-none py-1 border-y-2 border-transparent hover:border-black/5 transition-all">
+            <Link href="/" className="inline-block text-3xl md:text-4xl font-serif font-black tracking-normal text-black dark:text-stone-100 leading-none py-1 border-y-2 border-transparent hover:border-black/5 dark:hover:border-stone-600 transition-all">
               Fundthesis
             </Link>
           </div>
 
           {/* Desktop Navigation (Right Flank) */}
-          <nav className="hidden lg:flex items-center justify-start space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 flex-1">
-            <Link href="/learn" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+          <nav className="hidden lg:flex items-center justify-start space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 dark:text-stone-300 flex-1">
+            <Link href="/learn" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               LEARN
             </Link>
-            <Link href="/enviro" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+            <Link href="/enviro" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               ENVIRO
             </Link>
-            <Link href="/missions" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+            <Link href="/missions" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               MISSIONS
             </Link>
-            <Link href="/mentor" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+            <Link href="/mentor" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               MENTOR
             </Link>
           </nav>

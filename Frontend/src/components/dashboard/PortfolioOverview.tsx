@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
-import { StatsCard } from '@/components/ui/StatsCard'
+import { StatsCard } from '@/components/cards/StatsCard'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 
 interface PortfolioOverviewProps {

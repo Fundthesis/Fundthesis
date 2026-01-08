@@ -68,18 +68,18 @@ export function EditorsDesk({ className }: { className?: string }) {
     };
 
     return (
-        <Card className={`flex flex-col h-[500px] border-black/10 shadow-sm ${className}`}>
-            <CardHeader className="bg-[#fcfbf9] border-b border-black/10 py-3">
-                <CardTitle className="font-serif text-xl italic flex items-center">
+        <Card className={`flex flex-col h-[500px] border-black/10 dark:border-stone-700 shadow-sm bg-white dark:bg-stone-800 ${className}`}>
+            <CardHeader className="bg-[#fcfbf9] dark:bg-stone-800 border-b border-black/10 dark:border-stone-700 py-3">
+                <CardTitle className="font-serif text-xl italic flex items-center text-black dark:text-stone-100">
                     <Bot className="w-5 h-5 mr-2" />
                     The Editor&apos;s Desk
                 </CardTitle>
-                <p className="text-xs text-gray-500 font-serif italic">A Socratic Dialogue on Markets & Money</p>
+                <p className="text-xs text-gray-500 dark:text-stone-400 font-serif italic">A Socratic Dialogue on Markets & Money</p>
             </CardHeader>
 
-            <CardContent className="flex-1 overflow-hidden p-0">
+            <CardContent className="flex-1 overflow-hidden p-0 bg-white dark:bg-stone-800">
                 <div
-                    className="h-full overflow-y-auto p-4 space-y-4 bg-white scrollbar-hide"
+                    className="h-full overflow-y-auto p-4 space-y-4 bg-white dark:bg-stone-800 scrollbar-hide"
                     ref={scrollRef}
                 >
                     {messages.map((msg, idx) => (
@@ -89,8 +89,8 @@ export function EditorsDesk({ className }: { className?: string }) {
                         >
                             <div
                                 className={`max-w-[80%] p-3 rounded-lg text-sm font-serif leading-relaxed ${msg.role === 'user'
-                                    ? 'bg-black text-white rounded-br-none'
-                                    : 'bg-[#fcfbf9] text-gray-800 border border-black/5 rounded-bl-none'
+                                    ? 'bg-black dark:bg-stone-700 text-white rounded-br-none'
+                                    : 'bg-[#fcfbf9] dark:bg-stone-800 text-gray-800 dark:text-stone-200 border border-black/5 dark:border-stone-700 rounded-bl-none'
                                     }`}
                             >
                                 {msg.role === 'coach' && <span className="block text-xs font-bold mb-1 opacity-50 uppercase tracking-widest">The Editor</span>}
@@ -101,27 +101,27 @@ export function EditorsDesk({ className }: { className?: string }) {
                     ))}
                     {isLoading && (
                         <div className="flex justify-start">
-                            <div className="bg-[#fcfbf9] p-3 rounded-lg border border-black/5 rounded-bl-none">
-                                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            <div className="bg-[#fcfbf9] dark:bg-stone-800 p-3 rounded-lg border border-black/5 dark:border-stone-700 rounded-bl-none">
+                                <Loader2 className="w-4 h-4 animate-spin text-gray-400 dark:text-stone-500" />
                             </div>
                         </div>
                     )}
                 </div>
             </CardContent>
 
-            <div className="p-3 bg-[#fcfbf9] border-t border-black/10">
+            <div className="p-3 bg-[#fcfbf9] dark:bg-stone-800 border-t border-black/10 dark:border-stone-700">
                 <div className="flex gap-2">
                     <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder="Type your question here..."
-                        className="flex-1 bg-white border border-gray-200 rounded-md px-3 py-2 text-sm font-serif focus:outline-none focus:ring-1 focus:ring-black/20"
+                        className="flex-1 bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-700 rounded-md px-3 py-2 text-sm font-serif text-black dark:text-stone-100 placeholder:text-gray-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-1 focus:ring-black/20 dark:focus:ring-stone-500"
                     />
                     <Button
                         onClick={handleSend}
                         disabled={isLoading || !input.trim()}
-                        className="bg-black text-white hover:bg-gray-800 font-serif"
+                        className="bg-black dark:bg-stone-700 text-white hover:bg-gray-800 dark:hover:bg-stone-600 font-serif"
                     >
                         <Send className="w-4 h-4" />
                     </Button>

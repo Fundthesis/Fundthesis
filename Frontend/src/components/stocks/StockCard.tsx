@@ -231,16 +231,16 @@ export function StockCard({
 
   return (
     <div
-      className="w-full h-full rounded-lg bg-white shadow-sm p-6 flex flex-col gap-4 border border-gray-200 hover:border-[#9DB38A] transition-all duration-300"
+      className="w-full h-full rounded-lg bg-white dark:bg-stone-800 shadow-sm p-6 flex flex-col gap-4 border border-gray-200 dark:border-stone-700 hover:border-[#9DB38A] transition-all duration-300"
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-gray-900 text-3xl font-bold">{stock.symbol}</h3>
-          <p className="text-gray-600 text-sm mt-1">{stock.company}</p>
+          <h3 className="text-gray-900 dark:text-stone-100 text-3xl font-bold">{stock.symbol}</h3>
+          <p className="text-gray-600 dark:text-stone-400 text-sm mt-1">{stock.company}</p>
         </div>
         <div className="text-right">
-          <p className="text-gray-900 text-3xl font-bold">
+          <p className="text-gray-900 dark:text-stone-100 text-3xl font-bold">
             ${formatNumber(stock.price)}
           </p>
           <p
@@ -256,9 +256,9 @@ export function StockCard({
       </div>
 
       <div className="flex-shrink-0">
-        <div className="w-full h-64 rounded-lg bg-gray-50 border-2 border-gray-200 overflow-hidden relative">
+        <div className="w-full h-64 rounded-lg bg-gray-50 dark:bg-stone-900 border-2 border-gray-200 dark:border-stone-700 overflow-hidden relative">
           {isActive && (
-            <div className="absolute top-2 left-2 text-xs bg-white/80 p-1 rounded z-10">
+            <div className="absolute top-2 left-2 text-xs bg-white/80 dark:bg-stone-800/80 p-1 rounded z-10 text-black dark:text-stone-100">
               H:
               {combinedChartData.filter((d) => d.type !== "forecast").length} F:
               {combinedChartData.filter((d) => d.type === "forecast").length}
@@ -318,11 +318,11 @@ export function StockCard({
             <div className="flex items-center justify-center gap-4 mt-2 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-4 h-0.5 bg-[#9DB38A]"></div>
-                <span className="text-gray-600">Historical</span>
+                <span className="text-gray-600 dark:text-stone-400">Historical</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-4 h-0.5 bg-blue-500 border-dashed border-t-2 border-blue-500"></div>
-                <span className="text-gray-600">Forecast</span>
+                <span className="text-gray-600 dark:text-stone-400">Forecast</span>
               </div>
             </div>
           )}
@@ -352,50 +352,50 @@ export function StockCard({
 
       <div className="grid grid-cols-5 gap-3 h-[240px]">
         <div className="col-span-2 grid grid-rows-2 gap-3">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+          <div className="bg-gray-50 dark:bg-stone-900 rounded-lg p-3 border border-gray-200 dark:border-stone-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-stone-400 uppercase mb-1">
               Price Info
             </p>
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">Open:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-stone-400">Open:</span>
+                <span className="font-medium text-gray-900 dark:text-stone-100">
                   ${formatNumber(currentDetail?.open)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">High:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-stone-400">High:</span>
+                <span className="font-medium text-gray-900 dark:text-stone-100">
                   ${formatNumber(currentDetail?.high)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">Low:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-stone-400">Low:</span>
+                <span className="font-medium text-gray-900 dark:text-stone-100">
                   ${formatNumber(currentDetail?.low)}
                 </span>
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+          <div className="bg-gray-50 dark:bg-stone-900 rounded-lg p-3 border border-gray-200 dark:border-stone-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-stone-400 uppercase mb-1">
               Volume
             </p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-lg font-bold text-gray-900 dark:text-stone-100">
               {formatVolume(currentDetail?.volume)}
             </p>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-600 dark:text-stone-400">
               Avg: {formatVolume(currentDetail?.avgVolume)}
             </p>
           </div>
         </div>
 
         <div className="col-span-2 grid grid-rows-2 gap-3">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+          <div className="bg-gray-50 dark:bg-stone-900 rounded-lg p-3 border border-gray-200 dark:border-stone-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-stone-400 uppercase mb-1">
               52W Range
             </p>
-            <p className="text-xs text-gray-900 font-medium">
+            <p className="text-xs text-gray-900 dark:text-stone-100 font-medium">
               ${formatNumber(currentDetail?.fiftyTwoWeekLow)} - $
               {formatNumber(currentDetail?.fiftyTwoWeekHigh)}
             </p>
@@ -415,20 +415,20 @@ export function StockCard({
                 )}
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+          <div className="bg-gray-50 dark:bg-stone-900 rounded-lg p-3 border border-gray-200 dark:border-stone-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-stone-400 uppercase mb-1">
               Technicals
             </p>
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">P/E:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-stone-400">P/E:</span>
+                <span className="font-medium text-gray-900 dark:text-stone-100">
                   {formatNumber(currentDetail?.peRatio)}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">Sector:</span>
-                <span className="font-medium text-gray-900 truncate ml-2">
+                <span className="text-gray-600 dark:text-stone-400">Sector:</span>
+                <span className="font-medium text-gray-900 dark:text-stone-100 truncate ml-2">
                   {currentDetail?.sector || "-"}
                 </span>
               </div>
@@ -436,9 +436,9 @@ export function StockCard({
           </div>
         </div>
 
-        <div className="col-span-1 bg-gradient-to-br from-[#eff3eb] to-blue-50 rounded-lg p-3 border-2 border-[#9DB38A] flex flex-col justify-between">
+        <div className="col-span-1 bg-gradient-to-br from-[#eff3eb] dark:from-stone-800 to-blue-50 dark:to-stone-900 rounded-lg p-3 border-2 border-[#9DB38A] dark:border-[#9DB38A] flex flex-col justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-700 uppercase mb-2">
+            <p className="text-xs font-bold text-gray-700 dark:text-stone-300 uppercase mb-2">
               AI Signal
             </p>
             <p
@@ -447,14 +447,14 @@ export function StockCard({
             >
               {stock.changePercent >= 0 ? "BUY" : "HOLD"}
             </p>
-            <p className="text-xs text-gray-600 mb-3">
+            <p className="text-xs text-gray-600 dark:text-stone-400 mb-3">
               Confidence:{" "}
               {Math.min(Math.abs(stock.changePercent * 10), 99).toFixed(0)}%
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600">Target:</p>
-            <p className="text-sm font-bold text-gray-900">
+            <p className="text-xs text-gray-600 dark:text-stone-400">Target:</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-stone-100">
               $
               {formatNumber(
                 stock.price * (1 + Math.abs(stock.changePercent) / 100)

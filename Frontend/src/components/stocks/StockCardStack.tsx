@@ -119,7 +119,7 @@ export function StockCardStack({
   }
 
   if (stocks.length === 0) {
-    return <div className="flex items-center justify-center h-auto py-20"><div className="text-gray-600">No stocks available</div></div>
+    return <div className="flex items-center justify-center h-auto py-20"><div className="text-gray-600 dark:text-stone-400">No stocks available</div></div>
   }
 
 
@@ -127,8 +127,8 @@ export function StockCardStack({
   return (
     <>
       <div className="relative flex items-center justify-center w-full max-w-7xl mx-auto px-8">
-        <button onClick={goToPrevious} className="absolute left-0 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-          <ChevronLeft className="w-6 h-6 text-gray-900 group-hover:text-accent transition-colors" />
+        <button onClick={goToPrevious} className="absolute left-0 z-40 p-3 rounded-full bg-white/10 dark:bg-stone-800/80 backdrop-blur-sm border border-white/20 dark:border-stone-700 hover:bg-white/20 dark:hover:bg-stone-700 transition-all duration-300 group">
+          <ChevronLeft className="w-6 h-6 text-gray-900 dark:text-stone-100 group-hover:text-accent transition-colors" />
         </button>
 
         <div className="relative w-full min-h-[950px] flex items-center justify-center py-8">
@@ -157,13 +157,13 @@ export function StockCardStack({
           })}
         </div>
 
-        <button onClick={goToNext} className="absolute right-0 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-          <ChevronRight className="w-6 h-6 text-gray-900 group-hover:text-accent transition-colors" />
+        <button onClick={goToNext} className="absolute right-0 z-40 p-3 rounded-full bg-white/10 dark:bg-stone-800/80 backdrop-blur-sm border border-white/20 dark:border-stone-700 hover:bg-white/20 dark:hover:bg-stone-700 transition-all duration-300 group">
+          <ChevronRight className="w-6 h-6 text-gray-900 dark:text-stone-100 group-hover:text-accent transition-colors" />
         </button>
 
         <div className="absolute bottom-[-60px] left-1/2 transform -translate-x-1/2 flex space-x-2 items-center">
           {stocks.map((_, index) => (
-            <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-accent w-6' : 'bg-gray-400 hover:bg-gray-600'}`} />
+            <button key={index} onClick={() => { setCurrentIndex(index); checkAndLoadMore(index) }} className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-accent w-6' : 'bg-gray-400 dark:bg-stone-600 hover:bg-gray-600 dark:hover:bg-stone-500'}`} />
           ))}
 
         </div>

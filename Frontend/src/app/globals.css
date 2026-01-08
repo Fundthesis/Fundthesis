@@ -10,11 +10,16 @@
   --font-body: "Merriweather", serif;
 
   /* Brand Colors */
-  --color-accent: #9DB38A;           /* Primary accent green */
-  --color-accent-light: #eff3eb;     /* Light accent background */
-  --color-accent-dark: #7a9168;      /* Darker accent for hover states */
-  --color-negative: #c17b7b;         /* Negative/destructive red */
-  --color-negative-light: #f5e6e6;   /* Light negative background */
+  --color-accent: #9DB38A;
+  /* Primary accent green */
+  --color-accent-light: #eff3eb;
+  /* Light accent background */
+  --color-accent-dark: #7a9168;
+  /* Darker accent for hover states */
+  --color-negative: #c17b7b;
+  /* Negative/destructive red */
+  --color-negative-light: #f5e6e6;
+  /* Light negative background */
 }
 
 body {
@@ -64,6 +69,7 @@ h6 {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -78,7 +84,9 @@ h6 {
 }
 
 .animate-ticker {
-  animation: ticker 50s linear infinite;
+  animation: ticker 35s linear infinite;
+  display: flex;
+  /* Ensure flex behavior */
   width: max-content;
 }
 

@@ -598,29 +598,29 @@ function DiscoverPage() {
 
   if (loading) {
     return (
-      <main className="max-w-7xl mx-auto px-4 py-8 bg-[#fcfbf9] text-[#1a1a1a] min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 py-8 bg-[#fcfbf9] dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100 min-h-screen">
         {/* Newspaper Header for Discover (Loading State) */}
-        <div className="border-b-4 border-black pb-4 mb-8">
+        <div className="border-b-4 border-black dark:border-stone-700 pb-4 mb-8">
           <div className="flex justify-between items-end mb-2">
-            <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black">
+            <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black dark:text-stone-100">
               Market Watch
             </h1>
             <div className="text-right hidden md:block">
-              <p className="font-serif italic text-sm text-gray-500">Real-time Data & Analysis</p>
-              <p className="font-bold text-xs uppercase tracking-widest mt-1">Section B</p>
+              <p className="font-serif italic text-sm text-gray-500 dark:text-stone-400">Real-time Data & Analysis</p>
+              <p className="font-bold text-xs uppercase tracking-widest mt-1 text-black dark:text-stone-300">Section B</p>
             </div>
           </div>
-          <p className="text-lg font-serif italic text-gray-700 border-t border-black/10 pt-2">
+          <p className="text-lg font-serif italic text-gray-700 dark:text-stone-300 border-t border-black/10 dark:border-stone-700 pt-2">
             Explore trending equities and sector performance.
           </p>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-20 text-gray-600 font-serif">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
-          <p className="text-xl font-bold text-black mb-2 tracking-wide">
+        <div className="flex flex-col items-center justify-center py-20 text-gray-600 dark:text-stone-400 font-serif">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-stone-500 mb-4"></div>
+          <p className="text-xl font-bold text-black dark:text-stone-100 mb-2 tracking-wide">
             GATHERING INTEL...
           </p>
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-gray-500 dark:text-stone-400 italic">
             Fetching market data and forecasts from the wire.
           </p>
         </div>
@@ -630,15 +630,15 @@ function DiscoverPage() {
 
   if (error && stocks.length === 0) {
     return (
-      <main className="max-w-7xl mx-auto px-4 py-2">
-        <h1 className="text-4xl font-bold text-gray-900 mb-1">
+      <main className="max-w-7xl mx-auto px-4 py-2 bg-[#fcfbf9] dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-stone-100 mb-1">
           Discover Stocks
         </h1>
-        <p className="text-lg text-gray-600 mb-2">
+        <p className="text-lg text-gray-600 dark:text-stone-400 mb-2">
           Explore trending stocks with our interactive card viewer
         </p>
-        <div className="flex flex-col items-center justify-center py-20 text-gray-600">
-          <p className="text-xl font-medium text-red-600 mb-2">
+        <div className="flex flex-col items-center justify-center py-20 text-gray-600 dark:text-stone-400">
+          <p className="text-xl font-medium text-red-600 dark:text-red-400 mb-2">
             Connection Error
           </p>
           <p className="text-sm mb-4">{error}</p>
@@ -648,7 +648,7 @@ function DiscoverPage() {
               setLoading(true);
               void loadInitialStocks();
             }}
-            className="px-6 py-2 bg-[#9DB38A] text-white rounded-lg hover:bg-[#8ca279] transition-colors"
+            className="px-6 py-2 bg-[#9DB38A] dark:bg-[#9DB38A] text-white rounded-lg hover:bg-[#8ca279] dark:hover:bg-[#8ca279] transition-colors"
           >
             Retry
           </button>
@@ -679,7 +679,7 @@ function DiscoverPage() {
   });
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 bg-[#fcfbf9] text-[#1a1a1a] min-h-screen">
+    <main className="max-w-7xl mx-auto px-4 py-8 bg-[#fcfbf9] dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100 min-h-screen">
       <NewspaperLayout
         title="Market Watch"
         subtitle="Real-time Data & Analysis"
@@ -687,12 +687,12 @@ function DiscoverPage() {
       >
 
         {/* Search Bar */}
-        <div className="mb-8 p-6 bg-white border border-black/10 shadow-sm relative">
-          <div className="absolute top-0 left-0 bg-black text-white text-xs font-bold px-2 py-1 uppercase tracking-widest">Search Query</div>
+        <div className="mb-8 p-6 bg-white dark:bg-stone-800 border border-black/10 dark:border-stone-700 shadow-sm relative">
+          <div className="absolute top-0 left-0 bg-black dark:bg-stone-700 text-white dark:text-stone-100 text-xs font-bold px-2 py-1 uppercase tracking-widest">Search Query</div>
           <form className="mt-2 space-y-2" onSubmit={handleSearchSubmit}>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-stone-500 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search by symbol or company name..."
@@ -703,20 +703,20 @@ function DiscoverPage() {
                     }
                     setSearchQuery(e.target.value);
                   }}
-                  className="w-full pl-10 pr-4 py-3 border-b-2 border-gray-200 focus:outline-none focus:border-black font-serif text-lg bg-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border-b-2 border-gray-200 dark:border-stone-600 focus:outline-none focus:border-black dark:focus:border-stone-400 font-serif text-lg bg-transparent dark:bg-stone-800 text-black dark:text-stone-100 placeholder:text-gray-400 dark:placeholder:text-stone-500 transition-colors"
                   disabled={isSearching}
                 />
               </div>
               <button
                 type="submit"
-                className="px-6 py-3 bg-black text-white font-serif font-bold hover:bg-gray-800 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                className="px-6 py-3 bg-black dark:bg-stone-700 text-white dark:text-stone-100 font-serif font-bold hover:bg-gray-800 dark:hover:bg-stone-600 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={isSearching}
               >
                 {isSearching ? "Searching…" : "SEARCH"}
               </button>
             </div>
             {searchFeedback && (
-              <p className="text-sm font-medium text-red-600 font-serif italic">{searchFeedback}</p>
+              <p className="text-sm font-medium text-red-600 dark:text-red-400 font-serif italic">{searchFeedback}</p>
             )}
           </form>
         </div>
@@ -738,15 +738,15 @@ function DiscoverPage() {
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-600 border border-dashed border-gray-300">
-            <Search className="w-16 h-16 text-gray-300 mb-4" />
-            <p className="text-xl font-medium font-serif">No stocks found</p>
+          <div className="flex flex-col items-center justify-center py-20 text-gray-600 dark:text-stone-400 border border-dashed border-gray-300 dark:border-stone-700">
+            <Search className="w-16 h-16 text-gray-300 dark:text-stone-600 mb-4" />
+            <p className="text-xl font-medium font-serif text-black dark:text-stone-100">No stocks found</p>
             <p className="text-sm mt-2 font-serif italic">
               Try searching for a different symbol or company name
             </p>
             <button
               onClick={clearSearch}
-              className="mt-4 px-6 py-2 bg-black text-white font-serif font-bold hover:bg-gray-800 transition-colors"
+              className="mt-4 px-6 py-2 bg-black dark:bg-stone-700 text-white dark:text-stone-100 font-serif font-bold hover:bg-gray-800 dark:hover:bg-stone-600 transition-colors"
             >
               Clear Search
             </button>

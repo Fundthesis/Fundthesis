@@ -21,7 +21,7 @@ function AppFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900 flex flex-col text-[#1a1a1a] dark:text-stone-100">
       <Header />
-      <div className="border-b border-black/10 bg-stone-100 h-8 flex items-center justify-center overflow-hidden">
+      <div className="h-8 overflow-hidden w-full">
         <StockTicker />
       </div>
       <main className="grow">{children}</main>

@@ -69,8 +69,8 @@ const StockTicker = () => {
         (
         {stock.changePercent
           ? (stock.changePercent >= 0 ? "+" : "") +
-            formatNumber(stock.changePercent) +
-            "%"
+          formatNumber(stock.changePercent) +
+          "%"
           : "-"}
         )
       </span>
@@ -78,7 +78,7 @@ const StockTicker = () => {
   );
 
   return (
-    <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden">
+    <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden w-full">
       <div className="flex animate-ticker whitespace-nowrap">
         <div className="flex shrink-0 gap-8 pr-8">
           {stocks.map((stock) => (

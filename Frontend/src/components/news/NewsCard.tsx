@@ -18,15 +18,15 @@ export function NewsCard({ title, source, text, stocks, className = "" }: NewsCa
   return (
     <div className={`${className}`}>
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <span className="text-xs text-gray-500">{source}</span>
+        <h3 className="text-lg font-semibold text-black dark:text-stone-100">{title}</h3>
+        <span className="text-xs text-gray-500 dark:text-stone-400">{source}</span>
       </div>
-      <p className="text-sm text-gray-600 mb-2">{text}</p>
+      <p className="text-sm text-gray-600 dark:text-stone-400 mb-2">{text}</p>
       <div className="flex flex-wrap gap-4">
         {stocks.map((stock, index) => (
           <div key={index} className="flex items-center gap-2">
-            <span className="text-sm font-medium">{stock.symbol}</span>
-            <span className={`text-sm ${stock.positive ? 'text-green-600' : 'text-red-600'}`}>
+            <span className="text-sm font-medium text-black dark:text-stone-200">{stock.symbol}</span>
+            <span className={`text-sm ${stock.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {stock.change}
             </span>
           </div>
