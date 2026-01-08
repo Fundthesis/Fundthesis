@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from 'sonner'
 import type { ReactNode } from 'react'
 import Header from '@/components/Header'
+import StockTicker from '@/components/stocks/StockTicker'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
 import { AuthProvider } from '@/providers/AuthProvider'
@@ -20,6 +21,9 @@ function AppFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900 flex flex-col text-[#1a1a1a] dark:text-stone-100">
       <Header />
+      <div className="border-b border-black/10 bg-stone-100 h-8 flex items-center justify-center overflow-hidden">
+        <StockTicker />
+      </div>
       <main className="grow">{children}</main>
       <Footer />
     </div>

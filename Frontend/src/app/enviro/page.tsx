@@ -132,9 +132,15 @@ export default function EnviroPage() {
           <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
             The Trading Floor
           </h1>
-          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2 mb-4">
             &ldquo;Practice Without Consequence&rdquo;
           </p>
+          <button
+            onClick={() => router.push('/debrief')}
+            className="inline-block border border-black dark:border-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+          >
+            Confidential Debrief
+          </button>
         </header>
 
         {/* New Edition Form */}
@@ -276,8 +282,8 @@ export default function EnviroPage() {
                 }}
                 disabled={deleteConfirmText.trim().toLowerCase() !== 'delete'}
                 className={`px-4 py-2 text-sm uppercase tracking-widest ${deleteConfirmText.trim().toLowerCase() === 'delete'
-                    ? 'bg-black dark:bg-green-600 text-white hover:bg-stone-800 dark:hover:bg-green-700'
-                    : 'bg-stone-200 dark:bg-stone-700 text-stone-400 cursor-not-allowed'
+                  ? 'bg-black dark:bg-green-600 text-white hover:bg-stone-800 dark:hover:bg-green-700'
+                  : 'bg-stone-200 dark:bg-stone-700 text-stone-400 cursor-not-allowed'
                   }`}
               >
                 Confirm

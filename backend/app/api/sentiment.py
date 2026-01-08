@@ -100,7 +100,7 @@ async def get_sentiment_heatmap(
         # Query articles from database
         # Note: Use model field name (publishedAt), not DB column name (published_at)
         where_clause = {
-            'publishedAt': {
+            'published_at': {
                 'gte': start_date
             }
         }
@@ -118,7 +118,7 @@ async def get_sentiment_heatmap(
         if len(articles) < 50:
             print(f"⚠️ Only {len(articles)} articles found, using fallback range")
             fallback_where_clause = {
-                'publishedAt': {
+                'published_at': {
                     'gte': fallback_start
                 }
             }

@@ -15,9 +15,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
   return (
     <header className={`bg-[#fcfbf9] border-b-4 border-black/80 ${className}`}>
-      <div className="border-b border-black/10 bg-stone-100 h-8 flex items-center justify-center overflow-hidden">
-        <StockTicker />
-      </div>
+      {/* Stock Ticker removed from here to be placed in layout */}
 
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between relative">
@@ -69,6 +67,9 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
             <Link href="/insights" className="hover:text-black hover:underline decoration-2 underline-offset-4">
               INSIGHTS
             </Link>
+            <Link href="/mentor" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+              MENTOR
+            </Link>
           </nav>
 
           {/* Centered Masthead Logo */}
@@ -89,8 +90,8 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
             <Link href="/missions" className="hover:text-black hover:underline decoration-2 underline-offset-4">
               MISSIONS
             </Link>
-            <Link href="/mentor" className="hover:text-black hover:underline decoration-2 underline-offset-4">
-              MENTOR
+            <Link href="/achievements" className="hover:text-black hover:underline decoration-2 underline-offset-4">
+              ACHIEVEMENTS
             </Link>
           </nav>
 
