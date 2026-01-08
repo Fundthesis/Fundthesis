@@ -25,11 +25,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-ml.txt
 
       - name: Generate Prisma Client
         working-directory: ./backend
         run: |
-          pip install prisma
           prisma generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

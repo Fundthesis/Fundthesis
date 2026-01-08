@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   return (
     <header className={`bg-[#fcfbf9] border-b-4 border-black/80 ${className}`}>
       <div className="border-b border-black/10 bg-stone-100 h-8 flex items-center justify-center overflow-hidden">
-        <StockTicker symbols={['DIA', 'QQQ', 'SPY', 'IWM', 'GLD', 'USO', 'BTC-USD', 'ETH-USD']} isStatic={true} />
+        <StockTicker />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-4">

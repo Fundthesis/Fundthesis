@@ -1,4 +1,4 @@
-"""FastAPI application entry point."""
+"""FastAPI application entry point with authentication and rate limiting."""
 import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -8,10 +8,13 @@ backend_path = Path(__file__).parent
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import db
-from app.api import routes, news, stocks, insights
+from app.core.config import settings
+from app.api import routes, news, stocks, insights, sentiment, users
+from app.api.dependencies import check_rate_limit, get_optional_user
+from app.models.auth import AuthStatusResponse, UserResponse
 
 
 @asynccontextmanager
@@ -24,27 +27,58 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="FundThesis API", lifespan=lifespan)
 
-# CORS middleware
+# CORS middleware - uses origins from config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
 )
 
-# Include routers
-app.include_router(routes.router)
-app.include_router(news.router, prefix="/api")
-app.include_router(stocks.router, prefix="/api")
-app.include_router(insights.router, prefix="/api")
+# Include routers with rate limiting dependency
+app.include_router(
+    routes.router,
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    news.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    stocks.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    insights.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    sentiment.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    users.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
 
 # Include education routes for Education Track features
 try:
     from app.api.education import router as education_router
-    app.include_router(education_router, prefix="/api")
+    app.include_router(
+        education_router,
+        prefix="/api",
+        dependencies=[Depends(check_rate_limit)]
+    )
 except ImportError as e:
-    print(f"Warning: education routes not available. Education Track features may not work. Error: {e}")
+    print(f"Warning: education routes not available. Error: {e}")
+
 
 # Include RAG routes for AI Coach
 try:
@@ -55,4 +89,19 @@ except ImportError as e:
 
 @app.get("/")
 def read_root():
-    return {"Welcome to fundthesis"}
+    return {"message": "Welcome to FundThesis API"}
+
+
+@app.get("/api/auth/status", response_model=AuthStatusResponse)
+async def auth_status(user=Depends(get_optional_user)):
+    """
+    Check authentication status.
+    Returns authenticated=true with user info if valid token provided,
+    otherwise authenticated=false.
+    """
+    if user:
+        return AuthStatusResponse(
+            authenticated=True,
+            user=UserResponse(id=user.id, email=user.email, name=user.name)
+        )
+    return AuthStatusResponse(authenticated=False, user=None)

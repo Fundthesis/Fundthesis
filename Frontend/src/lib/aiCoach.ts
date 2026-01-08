@@ -83,6 +83,7 @@ export async function getCoachResponse(
 /**
  * Coach's Next Move prompts
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getCoachNextMove(_context: CoachContext): string {
     return "What would you like to explore today? I'm here to guide your learning journey.";
 }

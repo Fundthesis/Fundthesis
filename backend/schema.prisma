@@ -1,7 +1,6 @@
 generator client {
     provider                    = "prisma-client-py"
     enable_experimental_decimal = true
-    previewFeatures             = ["multiSchema"]
 }
 
 datasource db {
@@ -14,10 +13,10 @@ model User {
     id                 String              @id @default(cuid())
     name               String?
     email              String              @unique
-    emailVerified      Boolean?            @map("email_verified")
+    emailVerified      Boolean?
     image              String?
-    createdAt          DateTime            @default(now()) @map("created_at")
-    updatedAt          DateTime            @updatedAt @map("updated_at")
+    createdAt          DateTime            @default(now())
+    updatedAt          DateTime            @updatedAt
     sessions           Session[]
     accounts           Account[]
     userAccounts       UserAccount[]
@@ -29,13 +28,13 @@ model User {
 
 model Session {
     id        String   @id @default(cuid())
-    userId    String   @map("user_id")
+    userId    String
     token     String   @unique
-    expiresAt DateTime @map("expires_at")
-    ipAddress String?  @map("ip_address")
-    userAgent String?  @map("user_agent")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    expiresAt DateTime
+    ipAddress String?
+    userAgent String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@map("session")
@@ -44,15 +43,15 @@ model Session {
 
 model Account {
     id           String    @id @default(cuid())
-    userId       String    @map("user_id")
-    accountId    String    @map("account_id")
-    providerId   String    @map("provider_id")
-    accessToken  String?   @map("access_token")
-    refreshToken String?   @map("refresh_token")
-    expiresAt    DateTime? @map("expires_at")
+    userId       String
+    accountId    String
+    providerId   String
+    accessToken  String?
+    refreshToken String?
+    expiresAt    DateTime?
     password     String?
-    createdAt    DateTime  @default(now()) @map("created_at")
-    updatedAt    DateTime  @updatedAt @map("updated_at")
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
     user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@map("account")
@@ -63,33 +62,33 @@ model Verification {
     id         String   @id @default(cuid())
     identifier String
     value      String
-    expiresAt  DateTime @map("expires_at")
-    createdAt  DateTime @default(now()) @map("created_at")
-    updatedAt  DateTime @updatedAt @map("updated_at")
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
     @@map("verification")
     @@schema("public")
 }
 
 model Article {
-    id           String                   @id @default(uuid())
-    url          String                   @unique
+    id           String                       @id @default(uuid())
+    url          String                       @unique
     headline     String?
     summary      String?
-    fullText     String?                  @map("full_text")
-    publishedAt  DateTime?                @map("published_at")
+    fullText     String?                      @map("full_text")
+    publishedAt  DateTime?                    @map("published_at")
     source       String?
     label        String?
     related      String?
     category     String?
     tickers      String?
-    insertedAt   DateTime                 @default(now()) @map("inserted_at")
-    fetchStatus  String?                  @map("fetch_status")
-    fetchError   String?                  @map("fetch_error")
-    sourceDomain String?                  @map("source_domain")
-    sqliteId     String?                  @map("sqlite_id")
-    articleId    String?                  @map("article_id")
-    tsv          Unsupported("tsvector")? @default(dbgenerated())
+    insertedAt   DateTime                     @default(now()) @map("inserted_at")
+    fetchStatus  String?                      @map("fetch_status")
+    fetchError   String?                      @map("fetch_error")
+    sourceDomain String?                      @map("source_domain")
+    sqliteId     String?                      @map("sqlite_id")
+    articleId    String?                      @map("article_id")
+    tsv          Unsupported("tsvector")?     @default(dbgenerated())
     embedding    Unsupported("vector(1536)")? // pgvector for RAG
 
     @@map("articles")

@@ -10,21 +10,32 @@ load_dotenv()
 
 class Settings:
     """Application settings loaded from environment variables."""
-    
+
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-    
+
     # API Keys
     FINNHUB_KEY: str = os.getenv("FINNHUB_KEY", "")
-    
-    # CORS
+
+    # CORS - collect all frontend URLs
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    CORS_ORIGINS: list = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        FRONTEND_URL
-    ]
-    
+    PRODUCTION_FRONTEND_URL: str = os.getenv("PRODUCTION_FRONTEND_URL", "")
+
+    # Build CORS origins list, filtering empty strings
+    @property
+    def CORS_ORIGINS(self) -> list:
+        origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            self.FRONTEND_URL,
+            self.PRODUCTION_FRONTEND_URL,
+        ]
+        return [o for o in origins if o]
+
+    # Rate Limiting
+    GUEST_RATE_LIMIT: int = int(os.getenv("GUEST_RATE_LIMIT", "30"))
+    RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+
     # Environment
     ENV: str = os.getenv("ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"

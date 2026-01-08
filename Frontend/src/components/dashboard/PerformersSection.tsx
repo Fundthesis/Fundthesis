@@ -1,40 +1,115 @@
-import React from 'react'
-import { Card, CardContent } from '@/components/ui/Card'
-import { PerformerCard } from '@/components/ui/PerformerCard'
-import { TrendingUp } from 'lucide-react'
+"use client";
 
-interface Performer {
-  rank: number
-  symbol: string
-  name: string
-  price: string
-  change: string
-  percent: string
+import { useMemo } from "react";
+import { NewspaperSection } from "@/components/ui/NewspaperSection";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { useStocks } from "@/lib/hooks/useStocks";
+
+interface StockWithRank {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  company?: string;
+  rank: number;
 }
 
-interface PerformersSectionProps {
-  performers: Performer[]
-  className?: string
-}
+export function PerformersSection() {
+  // Fetch stocks with auto-refresh every 60 seconds
+  const { data, isLoading, error } = useStocks({
+    limit: 50,
+    offset: 0,
+    refetchInterval: 60000, // 60 seconds
+  });
 
-export function PerformersSection({ performers, className = "" }: PerformersSectionProps) {
+  // Sort by changePercent descending and take top 10
+  const stocks: StockWithRank[] = useMemo(() => {
+    const stocksList = data?.stocks || [];
+    return stocksList
+      .filter((stock) => stock.changePercent > 0)
+      .sort((a, b) => b.changePercent - a.changePercent)
+      .slice(0, 10)
+      .map((stock, index) => ({
+        ...stock,
+        rank: index + 1,
+      }));
+  }, [data?.stocks]);
+
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
+  };
+
+  const formatChange = (change: number, changePercent: number) => {
+    const sign = change >= 0 ? "+" : "";
+    return `${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;
+  };
+
   return (
-    <Card className={className}>
-      <CardContent>
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-5 h-5" />
-          <h2 className="text-xl font-bold">Best Performers</h2>
-        </div>
+    <NewspaperSection title="Best Performers">
+      {isLoading ? (
         <div className="space-y-3">
-          {performers.map((performer) => (
-            <PerformerCard
-              key={performer.rank}
-              performer={performer}
-            />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-14 bg-stone-200"></div>
+            </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
-  )
+      ) : error ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif text-sm text-stone-600">
+            {error instanceof Error ? error.message : "Failed to load top performers"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-xs uppercase tracking-widest text-black hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : stocks.length === 0 ? (
+        <div className="text-center py-6 text-stone-500">
+          <p className="font-serif italic text-sm text-stone-600">No top performers available</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {stocks.slice(0, 5).map((stock) => (
+            <Link
+              key={stock.symbol}
+              href={`/discover?symbol=${stock.symbol}`}
+              className="block p-3 border border-stone-200 hover:border-black hover:bg-stone-50 transition-all group rounded-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-serif font-bold text-sm text-black">{stock.symbol}</span>
+                    <span className="text-xs text-stone-500 bg-stone-100 px-2 py-1 uppercase tracking-wide">
+                      #{stock.rank}
+                    </span>
+                  </div>
+                  {stock.company && (
+                    <p className="text-xs text-stone-600 truncate font-serif italic">
+                      {stock.company}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 ml-3">
+                  <div className="text-right">
+                    <div className="font-serif font-bold text-sm text-black">
+                      {formatPrice(stock.price)}
+                    </div>
+                    <div className="text-xs text-green-700 font-bold flex items-center gap-1">
+                      <ArrowUpRight className="w-3 h-3" />
+                      {formatChange(stock.change, stock.changePercent)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </NewspaperSection>
+  );
 }
 
