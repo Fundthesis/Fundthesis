@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 import { getProgress, resetAllProgress } from '@/app/lessonmodules/data/userProgress';
 
 const moduleTitles = [
@@ -18,9 +20,22 @@ const moduleTitles = [
 ];
 
 export default function LearnPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const [progress, setProgress] = useState<number[]>(() =>
     Array(moduleTitles.length).fill(0)
   );
+  const [isPreview, setIsPreview] = useState(false);
+
+  useEffect(() => {
+    // Check if this is a preview (from query param)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === 'true') {
+      setIsPreview(true);
+    } else if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
 
   const reloadProgress = () => {
     try {
@@ -68,6 +83,106 @@ export default function LearnPage() {
 
   const completedCount = progress.filter((p) => p >= 100).length;
   const totalModules = moduleTitles.length;
+
+  // Show preview overlay if not logged in
+  if (isPreview || (!isAuthLoading && !user)) {
+    return (
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-900 relative">
+        {/* Overlay for preview mode */}
+        <div className="absolute inset-0 bg-black/20 dark:bg-black/40 z-10 flex items-center justify-center">
+          <div className="bg-white dark:bg-stone-800 border-4 border-black dark:border-stone-700 p-8 max-w-md mx-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] text-center">
+            <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase">Preview Mode</h2>
+            <p className="text-gray-700 dark:text-stone-300 mb-6 font-serif">
+              Sign in to access the full Learning Ledger and track your progress through all modules.
+            </p>
+            <Link
+              href="/auth"
+              className="inline-block px-6 py-3 bg-black dark:bg-green-600 text-white font-bold uppercase tracking-widest hover:bg-gray-800 dark:hover:bg-green-700 transition-colors"
+            >
+              Sign In to Continue
+            </Link>
+          </div>
+        </div>
+
+        <main className="max-w-6xl mx-auto px-4 py-8 opacity-50 pointer-events-none">
+          {/* Masthead */}
+          <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+            <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+              {dateString}
+            </p>
+            <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
+              The Learning Ledger
+            </h1>
+            <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+              &ldquo;Ten Chapters to Financial Literacy&rdquo;
+            </p>
+            <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              <span>Vol. I</span>
+              <span>|</span>
+              <span>Preview Mode</span>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Module List */}
+            <div className="lg:col-span-3">
+              <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 divide-y divide-stone-100 dark:divide-stone-700">
+                {moduleTitles.map((title, i) => {
+                  const moduleNumber = i + 1;
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-6"
+                    >
+                    <div className="flex items-start gap-4">
+                      <div className="text-center min-w-[40px]">
+                        <span className="font-serif text-2xl font-bold text-stone-300 dark:text-stone-600">
+                          {moduleNumber === 10 ? 'X' : moduleNumber}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-widest text-stone-400 mb-1">
+                          Chapter {moduleNumber === 10 ? 'X' : moduleNumber}
+                        </p>
+                        <h3 className="font-serif text-lg font-bold text-black dark:text-white">
+                          {title}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="w-24 hidden sm:block">
+                          <div className="w-full bg-stone-200 dark:bg-stone-700 h-1">
+                            <div className="bg-stone-400 dark:bg-stone-600 h-1" style={{ width: '0%' }} />
+                          </div>
+                          <p className="text-xs text-stone-400 mt-1 text-right">0%</p>
+                        </div>
+                        <span className="text-xs text-stone-400">Locked 🔒</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <aside className="lg:col-span-1">
+              <div className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 sticky top-8">
+                <h3 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
+                  Reading Progress
+                </h3>
+
+                <div className="mb-6">
+                  <p className="font-serif text-4xl font-black text-black dark:text-white">0</p>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">of {totalModules} chapters complete</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-900">

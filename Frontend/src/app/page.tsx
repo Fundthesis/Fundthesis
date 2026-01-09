@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
-import { ArrowRight, BarChart2, Globe, TrendingUp, Users, Brain, Shield } from 'lucide-react';
+import { ArrowRight, BarChart2, Globe, TrendingUp, Users, Brain, Shield, LogIn } from 'lucide-react';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100 font-serif">
       <main className="max-w-7xl mx-auto px-4 py-12">
@@ -11,7 +16,7 @@ export default function Home() {
           <div className="flex justify-between items-end mb-4 border-b border-black/20 dark:border-stone-700 pb-2">
             <div className="text-left">
               <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400">Vol. I, No. 1</p>
-              <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-stone-400">New York, NY</p>
+              <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-stone-400">Dallas</p>
             </div>
             <div className="text-right">
               <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400">Daily Edition</p>
@@ -65,12 +70,23 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              <Link href="/dashboard" className="px-8 py-4 bg-black dark:bg-green-600 text-white text-lg font-bold uppercase tracking-widest hover:bg-gray-800 dark:hover:bg-green-700 transition-colors flex items-center justify-center">
+              <Link 
+                href={user ? "/dashboard" : "/auth"} 
+                className="px-8 py-4 bg-black dark:bg-green-600 text-white text-lg font-bold uppercase tracking-widest hover:bg-gray-800 dark:hover:bg-green-700 transition-colors flex items-center justify-center"
+              >
                 Start Your Journal <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
-              <Link href="/discover" className="px-8 py-4 bg-white dark:bg-stone-800 text-black dark:text-white border-2 border-black dark:border-stone-600 text-lg font-bold uppercase tracking-widest hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center justify-center">
-                Explore Markets
-              </Link>
+              <div className="flex gap-4">
+                <Link href="/insights" className="px-8 py-4 bg-white dark:bg-stone-800 text-black dark:text-white border-2 border-black dark:border-stone-600 text-lg font-bold uppercase tracking-widest hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center justify-center">
+                  Explore Markets
+                </Link>
+                {!user && (
+                  <Link href="/auth" className="px-6 py-4 bg-stone-200 dark:bg-stone-700 text-black dark:text-white text-lg font-bold uppercase tracking-widest hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors flex items-center justify-center gap-2">
+                    <LogIn className="w-5 h-5" />
+                    Sign In
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 
@@ -104,7 +120,10 @@ export default function Home() {
 
             <div className="mt-auto bg-black dark:bg-green-700 text-white p-6 text-center">
               <p className="font-serif italic text-lg mb-4">&quot;The best investment you can make is in yourself.&quot;</p>
-              <Link href="/learn" className="inline-block border-b border-white hover:opacity-80">
+              <Link 
+                href={user ? "/learn" : "/missions?preview=true"} 
+                className="inline-block border-b border-white hover:opacity-80"
+              >
                 Visit Learning Corner &rarr;
               </Link>
             </div>

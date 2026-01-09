@@ -68,10 +68,31 @@ export default function DashboardPage() {
 
     // Note: Market Movers are now handled by PerformersSection component
 
+    // Get today's date
+    const today = new Date();
+    const dateString = today.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+
     // Layout: Newspaper Grid
     return (
-        <main className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
+            <main className="max-w-7xl mx-auto px-4 py-8">
+                {/* Masthead */}
+                <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+                        {dateString}
+                    </p>
+                    <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
+                        Market Chronicle
+                    </h1>
+                    <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+                        &ldquo;Your Daily Briefing on Markets, News & Insights&rdquo;
+                    </p>
+                </header>
 
                 {/* Newspaper Grid Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -110,11 +131,6 @@ export default function DashboardPage() {
 
                         {/* Main Headline Section (Portfolio) */}
                         <section>
-                            <div className="mb-6 pb-4 border-b-4 border-black dark:border-stone-700">
-                                <h2 className="font-serif text-2xl font-black uppercase tracking-wider text-black dark:text-stone-100">
-                                    Market Chronicle
-                                </h2>
-                            </div>
                             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 border-b border-black/10 dark:border-stone-700 pb-8">
                                 <div>
                                     <h1 className="font-serif text-4xl font-black mb-2 text-black dark:text-stone-100">
@@ -195,8 +211,7 @@ export default function DashboardPage() {
                         )}
                     </section>
                 </div>
-
-            </div>
-        </main>
+            </main>
+        </div>
     );
 }

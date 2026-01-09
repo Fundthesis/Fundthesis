@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 import { Mission, getUnlockedMissions } from '@/data/missions';
 
 const STORAGE_KEY = 'ft_completed_missions';
@@ -27,7 +29,20 @@ function getCategoryLabel(category: Mission['category']): string {
 }
 
 export default function MissionsPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const [isPreview, setIsPreview] = useState(false);
+
+    useEffect(() => {
+        // Check if this is a preview (from query param)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('preview') === 'true') {
+            setIsPreview(true);
+        } else if (!isAuthLoading && !user) {
+            router.replace('/auth');
+        }
+    }, [isAuthLoading, user, router]);
+
     const [completedMissions, setCompletedMissions] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -72,6 +87,96 @@ export default function MissionsPage() {
 
     // Featured mission (first unlocked, not completed)
     const featuredMission = missionList.find((m) => m.isUnlocked && !m.isCompleted);
+
+    // Show preview overlay if not logged in
+    if (isPreview || (!isAuthLoading && !user)) {
+        return (
+            <div className="min-h-screen bg-stone-50 dark:bg-stone-900 relative">
+                {/* Overlay for preview mode */}
+                <div className="absolute inset-0 bg-black/20 dark:bg-black/40 z-10 flex items-center justify-center">
+                    <div className="bg-white dark:bg-stone-800 border-4 border-black dark:border-stone-700 p-8 max-w-md mx-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] text-center">
+                        <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase">Preview Mode</h2>
+                        <p className="text-gray-700 dark:text-stone-300 mb-6 font-serif">
+                            Sign in to access the full Mission Chronicle and start trading in realistic market scenarios.
+                        </p>
+                        <Link
+                            href="/auth"
+                            className="inline-block px-6 py-3 bg-black dark:bg-green-600 text-white font-bold uppercase tracking-widest hover:bg-gray-800 dark:hover:bg-green-700 transition-colors"
+                        >
+                            Sign In to Continue
+                        </Link>
+                    </div>
+                </div>
+
+                <main className="max-w-6xl mx-auto px-4 py-8 opacity-50 pointer-events-none">
+                    {/* Newspaper Masthead */}
+                    <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+                        <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+                            {dateString}
+                        </p>
+                        <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black dark:text-white">
+                            The Mission Chronicle
+                        </h1>
+                        <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+                            &ldquo;All the Scenarios Fit to Trade&rdquo;
+                        </p>
+                        <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                            <span>Vol. I, No. {totalCount}</span>
+                            <span>|</span>
+                            <span>Preview Mode</span>
+                        </div>
+                    </header>
+
+                    {/* Section Navigation */}
+                    <nav className="border-b border-stone-300 dark:border-stone-700 mb-8">
+                        <div className="flex justify-center gap-6 py-3">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    className="text-xs uppercase tracking-widest font-medium text-stone-400"
+                                >
+                                    {cat === 'all' ? 'All Sections' : cat}
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    {/* Mission Articles Grid - Preview */}
+                    <section>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {filteredMissions.slice(0, 6).map((mission) => (
+                                <article
+                                    key={mission.id}
+                                    className="border-b border-stone-200 dark:border-stone-700 pb-6 opacity-50"
+                                >
+                                    <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
+                                        {getCategoryLabel(mission.category)}
+                                    </p>
+                                    <h3 className="font-serif text-xl font-bold text-black dark:text-white mb-2 leading-snug">
+                                        {mission.title}
+                                    </h3>
+                                    <p className="font-serif text-sm text-stone-500 dark:text-stone-400 italic mb-3">
+                                        {mission.subtitle}
+                                    </p>
+                                    <p className="text-sm text-stone-600 dark:text-stone-400 line-clamp-3 mb-4">
+                                        {mission.description}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-stone-400">
+                                            {getDifficultyLabel(mission.difficulty)}
+                                        </span>
+                                        <span className="text-xs text-stone-400 italic">
+                                            Locked 🔒
+                                        </span>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-stone-900">

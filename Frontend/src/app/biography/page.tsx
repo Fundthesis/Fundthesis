@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 import { archetypes, getArchetypeById, InvestorArchetype } from '@/data/archetypes';
 import { ranks, getXPProgress } from '@/data/ranks';
 
@@ -30,7 +32,16 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     { id: 'mentor-chat', title: 'Inquisitive Mind', description: 'Submit 10 questions to the editor' },
 ];
 
-export default function AchievementsPage() {
+export default function BiographyPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isAuthLoading && !user) {
+            router.replace('/auth');
+        }
+    }, [isAuthLoading, user, router]);
+
     const [xp, setXP] = useState(0);
     const [archetype, setArchetype] = useState<InvestorArchetype | null>(null);
     const [earnedAchievements, setEarnedAchievements] = useState<string[]>([]);
@@ -76,10 +87,10 @@ export default function AchievementsPage() {
                         {dateString}
                     </p>
                     <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
-                        The Investor&apos;s Record
+                        The Investor&apos;s Biography
                     </h1>
                     <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
-                        &ldquo;A Chronicle of Progress & Achievement&rdquo;
+                        &ldquo;A Chronicle of Your Investment Journey&rdquo;
                     </p>
                 </header>
 

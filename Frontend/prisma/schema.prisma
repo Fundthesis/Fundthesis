@@ -19,6 +19,7 @@ model User {
   accounts           Account[]
   userAccounts       UserAccount[]
   simulationAccounts SimulationAccount[]
+  missionSessions   MissionSession[]
 
   @@map("user")
   @@schema("public")
@@ -156,6 +157,7 @@ model SimulationAccount {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   positions Position[]
   trades    Trade[]
+  missionSessions MissionSession[]
 
   @@map("simulation_accounts")
   @@schema("public")
@@ -187,6 +189,28 @@ model Trade {
   account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@map("trades")
+  @@schema("public")
+}
+
+// ============= MISSION SESSION MODELS =============
+
+model MissionSession {
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  missionId         String   @map("mission_id")
+  accountId         String   @map("account_id")
+  simulatedDate     DateTime @map("simulated_date")
+  isPaused          Boolean  @default(false) @map("is_paused")
+  timeSpeed         Float    @default(1.0) @map("time_speed") // 1.0 = real-time, 2.0 = 2x speed, etc.
+  elapsedSeconds    Int      @default(0) @map("elapsed_seconds")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId])
+  @@map("mission_sessions")
   @@schema("public")
 }
 
