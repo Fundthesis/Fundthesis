@@ -10,7 +10,7 @@
   --font-body: "Merriweather", serif;
 
   /* Brand Colors */
-  --color-accent: #9DB38A;
+  --color-accent: #9db38a;
   /* Primary accent green */
   --color-accent-light: #eff3eb;
   /* Light accent background */
@@ -84,7 +84,7 @@ h6 {
 }
 
 .animate-ticker {
-  animation: ticker 35s linear infinite;
+  animation: ticker 70s linear infinite;
   display: flex;
   /* Ensure flex behavior */
   width: max-content;
