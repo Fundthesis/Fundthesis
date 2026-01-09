@@ -15,25 +15,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Mission } from '@/data/missions';
-
-interface Trade {
-  id: string;
-  day: number;
-  symbol: string;
-  action: 'buy' | 'sell';
-  quantity: number;
-  price: number;
-  total: number;
-  timestamp: Date;
-}
+import { MissionTrade, PortfolioSnapshot, MissionGrade, BehaviorPattern } from '@/lib/types/mission';
 
 interface MissionDebriefProps {
   mission: Mission;
-  grade: 'S' | 'A' | 'B' | 'C' | 'F';
+  grade: MissionGrade;
   returnPercent: number;
   maxDrawdown: number;
-  trades: Trade[];
-  portfolioHistory: { day: number; value: number }[];
+  trades: MissionTrade[];
+  portfolioHistory: PortfolioSnapshot[];
   initialBalance: number;
   finalBalance: number;
   durationDays: number;
@@ -56,7 +46,7 @@ export function MissionDebrief({
 }: MissionDebriefProps) {
   // Analyze trading behavior
   const behaviorAnalysis = useMemo(() => {
-    const patterns: { type: string; detected: boolean; description: string; severity: 'good' | 'warning' | 'bad' }[] = [];
+    const patterns: BehaviorPattern[] = [];
     
     // Panic Selling - selling during drawdowns
     const sellsDuringDrawdown = trades.filter(t => {

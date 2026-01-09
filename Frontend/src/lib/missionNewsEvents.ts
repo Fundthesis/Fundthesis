@@ -4,6 +4,92 @@
  */
 
 import { NewsEvent } from './missionSimulation';
+import { MissionDifficultyLevel } from './types/mission';
+
+// Conflicting news that can be added on Hard difficulty
+const CONFLICTING_NEWS: Record<string, NewsEvent[]> = {
+  inflation: [
+    {
+      id: 'conflict-inf-1',
+      day: 14,
+      headline: 'Analyst: Inflation Fears Overblown, Markets to Rally',
+      summary: 'Top economist predicts CPI will normalize, calls selloff a buying opportunity.',
+      source: 'Contrarian Research',
+      impact: 'positive', // Misleading - actually inflation will hurt
+      affectedSectors: ['Technology', 'Consumer'],
+      priceMultiplier: 1.0, // No real effect - it's misleading
+      timestamp: new Date(),
+    },
+    {
+      id: 'conflict-inf-2',
+      day: 28,
+      headline: 'Fed Governor: Inflation is Transitory, No Rate Hikes Needed',
+      summary: 'Federal Reserve member downplays inflation concerns in speech.',
+      source: 'FundThesis Markets',
+      impact: 'positive', // Misleading
+      affectedSectors: ['Technology', 'Real Estate'],
+      priceMultiplier: 1.0,
+      timestamp: new Date(),
+    },
+  ],
+  'rate-cut': [
+    {
+      id: 'conflict-rate-1',
+      day: 12,
+      headline: 'Hawkish Fed Members Push Back on Rate Cut Talk',
+      summary: 'Two FOMC members express concerns about cutting rates too soon.',
+      source: 'FundThesis Markets',
+      impact: 'negative', // Conflicting signal
+      affectedSectors: ['Technology', 'Real Estate'],
+      priceMultiplier: 0.98,
+      timestamp: new Date(),
+    },
+  ],
+  tariff: [
+    {
+      id: 'conflict-tariff-1',
+      day: 8,
+      headline: 'Trade Negotiations Show Promise, Tariffs May Be Avoided',
+      summary: 'Diplomatic sources suggest a deal could be reached within weeks.',
+      source: 'Political Insider',
+      impact: 'positive', // Misleading - tariffs will happen
+      affectedSectors: ['Technology', 'Consumer', 'Industrial'],
+      priceMultiplier: 1.0,
+      timestamp: new Date(),
+    },
+    {
+      id: 'conflict-tariff-2',
+      day: 18,
+      headline: 'Company Reports: Tariff Impact Will Be Minimal',
+      summary: 'Major retailers claim supply chain adjustments will offset tariff costs.',
+      source: 'Corporate PR',
+      impact: 'positive', // Misleading
+      affectedSectors: ['Consumer'],
+      priceMultiplier: 1.0,
+      timestamp: new Date(),
+    },
+  ],
+  pandemic: [
+    {
+      id: 'conflict-pandemic-1',
+      day: 4,
+      headline: 'Health Officials: New Virus Poses Low Risk to Economy',
+      summary: 'CDC downplays concerns about viral outbreak spreading to US.',
+      source: 'Government Statement',
+      impact: 'positive', // Misleading - pandemic will hit hard
+      affectedSectors: ['Consumer', 'Industrial'],
+      priceMultiplier: 1.0,
+      timestamp: new Date(),
+    },
+  ],
+};
+
+// Easy mode hints that make the news more obvious
+const EASY_MODE_HINTS: Record<string, string> = {
+  'positive': '📈 This is good for the affected sectors!',
+  'negative': '📉 This is bad for the affected sectors!',
+  'neutral': '➡️ This has mixed effects on markets.',
+};
 
 export const MISSION_NEWS_EVENTS: Record<string, NewsEvent[]> = {
   neutral: [
@@ -936,10 +1022,67 @@ export function getMissionNewsEvents(scenario: string): NewsEvent[] {
 }
 
 /**
+ * Get news events modified by difficulty level
+ * - Easy: Adds analysis hints to make impact obvious
+ * - Medium: Standard news as-is
+ * - Hard: Adds conflicting/misleading news articles
+ */
+export function getNewsEventsForDifficulty(
+  scenario: string, 
+  difficulty: MissionDifficultyLevel
+): NewsEvent[] {
+  const baseEvents = [...(MISSION_NEWS_EVENTS[scenario] || MISSION_NEWS_EVENTS.neutral)];
+  
+  if (difficulty === 'easy') {
+    // Add helpful hints to each news event
+    return baseEvents.map(event => ({
+      ...event,
+      summary: `${event.summary} ${EASY_MODE_HINTS[event.impact] || ''}`,
+    }));
+  }
+  
+  if (difficulty === 'hard') {
+    // Add conflicting news that can mislead players
+    const conflictingNews = CONFLICTING_NEWS[scenario] || [];
+    const combinedEvents = [...baseEvents, ...conflictingNews];
+    
+    // Sort by day
+    combinedEvents.sort((a, b) => a.day - b.day);
+    
+    // Mark conflicting news
+    return combinedEvents.map(event => {
+      if (event.id.startsWith('conflict-')) {
+        return {
+          ...event,
+          // Add a subtle indicator it's from a less reliable source
+          source: event.source + ' ⚠️',
+        };
+      }
+      return event;
+    });
+  }
+  
+  // Medium - return as-is
+  return baseEvents;
+}
+
+/**
  * Get triggered events up to a specific day
  */
 export function getTriggeredEvents(scenario: string, currentDay: number): NewsEvent[] {
   const events = getMissionNewsEvents(scenario);
+  return events.filter(event => event.day <= currentDay);
+}
+
+/**
+ * Get triggered events up to a specific day with difficulty modifications
+ */
+export function getTriggeredEventsForDifficulty(
+  scenario: string, 
+  currentDay: number,
+  difficulty: MissionDifficultyLevel
+): NewsEvent[] {
+  const events = getNewsEventsForDifficulty(scenario, difficulty);
   return events.filter(event => event.day <= currentDay);
 }
 
@@ -965,5 +1108,17 @@ export function hasNewEventOnDay(scenario: string, day: number): boolean {
  */
 export function getEventsOnDay(scenario: string, day: number): NewsEvent[] {
   const events = getMissionNewsEvents(scenario);
+  return events.filter(event => event.day === day);
+}
+
+/**
+ * Get events on a specific day with difficulty modifications
+ */
+export function getEventsOnDayForDifficulty(
+  scenario: string, 
+  day: number,
+  difficulty: MissionDifficultyLevel
+): NewsEvent[] {
+  const events = getNewsEventsForDifficulty(scenario, difficulty);
   return events.filter(event => event.day === day);
 }

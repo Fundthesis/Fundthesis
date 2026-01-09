@@ -36,7 +36,11 @@ import {
   getMissionGrade,
   NewsEvent,
 } from '@/lib/missionSimulation';
-import { getMissionNewsEvents, getEventsOnDay, getTriggeredEvents } from '@/lib/missionNewsEvents';
+import { 
+  getNewsEventsForDifficulty, 
+  getEventsOnDayForDifficulty, 
+  getTriggeredEventsForDifficulty 
+} from '@/lib/missionNewsEvents';
 import { 
   MissionDifficultyLevel, 
   MissionTrade, 
@@ -96,7 +100,7 @@ export function MissionSimulatorV2({
     durationDays: difficultyConfig.timePressure || scenarioConfig.durationDays || 60,
     startDate: new Date(),
     phases: scenarioConfig.phases || [],
-    triggerEvents: getMissionNewsEvents(mission.sandboxConfig.scenario),
+    triggerEvents: getNewsEventsForDifficulty(mission.sandboxConfig.scenario, difficulty),
     winCondition: scenarioConfig.winCondition || { type: 'return', target: 5, description: 'Achieve 5% return' },
     failCondition: scenarioConfig.failCondition || { type: 'drawdown', threshold: 30, description: 'Avoid 30% loss' },
   };
@@ -206,7 +210,7 @@ export function MissionSimulatorV2({
     
     // Update stock prices
     setStocks(prevStocks => {
-      const events = getTriggeredEvents(mission.sandboxConfig.scenario, newDay);
+      const events = getTriggeredEventsForDifficulty(mission.sandboxConfig.scenario, newDay, difficulty);
       
       return prevStocks.map(stock => {
         const newPrice = calculateStockPrice(
@@ -229,8 +233,8 @@ export function MissionSimulatorV2({
       });
     });
 
-    // Check for new events
-    const dayEvents = getEventsOnDay(mission.sandboxConfig.scenario, newDay);
+    // Check for new events - use difficulty-aware function
+    const dayEvents = getEventsOnDayForDifficulty(mission.sandboxConfig.scenario, newDay, difficulty);
     if (dayEvents.length > 0) {
       setTriggeredEvents(prev => [...prev, ...dayEvents]);
       setLatestNews(dayEvents[dayEvents.length - 1]);
@@ -249,9 +253,17 @@ export function MissionSimulatorV2({
   // Update portfolio history and drawdown tracking
   useEffect(() => {
     const value = calculatePortfolioValue();
+    const holdingsValue = value - cashBalance;
+    
     setPortfolioHistory(prev => {
       if (prev.length === 0 || prev[prev.length - 1].day !== currentDay) {
-        return [...prev, { day: currentDay, value }];
+        const newSnapshot: PortfolioSnapshot = {
+          day: currentDay,
+          value,
+          cash: cashBalance,
+          holdingsValue,
+        };
+        return [...prev, newSnapshot];
       }
       return prev;
     });

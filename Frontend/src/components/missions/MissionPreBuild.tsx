@@ -29,6 +29,9 @@ import {
   Calendar,
   Eye,
   EyeOff,
+  Sparkles,
+  Flame,
+  Skull,
 } from 'lucide-react';
 
 import { Mission } from '@/data/missions';
@@ -38,7 +41,8 @@ import {
   SCENARIO_CONFIGS,
   calculateDiversificationScore,
 } from '@/lib/missionSimulation';
-import { getMissionNewsEvents } from '@/lib/missionNewsEvents';
+import { getNewsEventsForDifficulty } from '@/lib/missionNewsEvents';
+import { MissionDifficultyLevel, DIFFICULTY_CONFIGS } from '@/lib/types/mission';
 
 // Sector icons mapping
 const SECTOR_ICONS: Record<string, React.ElementType> = {
@@ -52,6 +56,13 @@ const SECTOR_ICONS: Record<string, React.ElementType> = {
   'Utilities': Zap,
   'Real Estate': Landmark,
   'Communications': Radio,
+};
+
+// Difficulty icons
+const DIFFICULTY_ICONS: Record<MissionDifficultyLevel, React.ElementType> = {
+  'easy': Sparkles,
+  'medium': Flame,
+  'hard': Skull,
 };
 
 // Pre-built portfolios for certain scenarios
@@ -87,45 +98,28 @@ const SCENARIOS_WITH_PREBUILT = ['inflation', 'crash-2008', 'tariff', 'pandemic'
 
 interface MissionPreBuildProps {
   mission: Mission;
+  difficulty?: MissionDifficultyLevel;
+  onDifficultyChange?: (difficulty: MissionDifficultyLevel) => void;
   onStartSimulation: (holdings: Record<string, { quantity: number; avgPrice: number }>, cashBalance: number) => void;
   onExit: () => void;
 }
 
-export function MissionPreBuild({ mission, onStartSimulation, onExit }: MissionPreBuildProps) {
+export function MissionPreBuild({ 
+  mission, 
+  difficulty = 'medium',
+  onDifficultyChange,
+  onStartSimulation, 
+  onExit 
+}: MissionPreBuildProps) {
   const scenario = mission.sandboxConfig.scenario;
-  const hasPreBuiltPortfolio = SCENARIOS_WITH_PREBUILT.includes(scenario);
   const scenarioConfig = SCENARIO_CONFIGS[scenario] || SCENARIO_CONFIGS.neutral;
+  const difficultyConfig = DIFFICULTY_CONFIGS[difficulty];
   
-  // Initialize holdings from pre-built portfolio if applicable
-  const [holdings, setHoldings] = useState<Record<string, { quantity: number; avgPrice: number }>>(() => {
-    if (hasPreBuiltPortfolio) {
-      const preBuilt = PRE_BUILT_PORTFOLIOS[scenario] || [];
-      const result: Record<string, { quantity: number; avgPrice: number }> = {};
-      preBuilt.forEach(item => {
-        const stock = MISSION_STOCKS.find(s => s.symbol === item.symbol);
-        if (stock) {
-          result[item.symbol] = { quantity: item.quantity, avgPrice: stock.basePrice };
-        }
-      });
-      return result;
-    }
-    return {};
-  });
+  // Start with empty portfolio - user builds from scratch
+  const [holdings, setHoldings] = useState<Record<string, { quantity: number; avgPrice: number }>>({});
 
-  // Calculate initial cash based on pre-built portfolio
-  const initialCashUsed = useMemo(() => {
-    if (hasPreBuiltPortfolio) {
-      return Object.entries(holdings).reduce((sum, [symbol, h]) => {
-        const stock = MISSION_STOCKS.find(s => s.symbol === symbol);
-        return sum + (stock ? stock.basePrice * h.quantity : 0);
-      }, 0);
-    }
-    return 0;
-  }, [holdings, hasPreBuiltPortfolio]);
-
-  const [cashBalance, setCashBalance] = useState(
-    mission.sandboxConfig.startingBalance - initialCashUsed
-  );
+  // Start with full cash balance
+  const [cashBalance, setCashBalance] = useState(mission.sandboxConfig.startingBalance);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
@@ -224,12 +218,12 @@ export function MissionPreBuild({ mission, onStartSimulation, onExit }: MissionP
     onStartSimulation(holdings, cashBalance);
   };
 
-  const canStart = Object.keys(holdings).length > 0 || hasPreBuiltPortfolio;
+  const canStart = Object.keys(holdings).length > 0;
 
-  // Get news events for this scenario (for preview)
+  // Get news events for this scenario filtered by difficulty
   const newsEvents = useMemo(() => {
-    return getMissionNewsEvents(scenario);
-  }, [scenario]);
+    return getNewsEventsForDifficulty(scenario, difficulty);
+  }, [scenario, difficulty]);
 
   const [showNewsPreview, setShowNewsPreview] = useState(true);
 
@@ -304,19 +298,6 @@ export function MissionPreBuild({ mission, onStartSimulation, onExit }: MissionP
                   <span className="capitalize">{mission.difficulty}</span>
                 </div>
               </div>
-
-              {hasPreBuiltPortfolio && (
-                <div className="bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/50 p-4 rounded">
-                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
-                    <Info className="w-4 h-4" />
-                    <span className="text-sm font-medium">Pre-Built Portfolio Provided</span>
-                  </div>
-                  <p className="text-sm text-stone-600 dark:text-stone-400">
-                    This scenario starts you with an existing portfolio. Your goal is to manage it through the upcoming market event.
-                    You can modify it before starting the simulation.
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="mt-8 flex gap-4">
@@ -348,6 +329,33 @@ export function MissionPreBuild({ mission, onStartSimulation, onExit }: MissionP
               <h1 className="text-2xl font-bold text-stone-900 dark:text-white">{mission.title}</h1>
             </div>
             <div className="flex items-center gap-4">
+              {/* Difficulty Selector */}
+              <div className="flex items-center gap-2 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 p-1 rounded-lg">
+                {(['easy', 'medium', 'hard'] as MissionDifficultyLevel[]).map((level) => {
+                  const config = DIFFICULTY_CONFIGS[level];
+                  const Icon = DIFFICULTY_ICONS[level];
+                  const isActive = difficulty === level;
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => onDifficultyChange?.(level)}
+                      className={`px-3 py-2 flex items-center gap-2 rounded transition-all text-sm font-medium ${
+                        isActive 
+                          ? level === 'easy' 
+                            ? 'bg-green-500 text-white' 
+                            : level === 'medium' 
+                              ? 'bg-amber-500 text-white' 
+                              : 'bg-red-500 text-white'
+                          : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'
+                      }`}
+                      title={config.description}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {config.label}
+                    </button>
+                  );
+                })}
+              </div>
               <button
                 onClick={() => setShowBriefing(true)}
                 className="p-2 border border-stone-400 dark:border-stone-600 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:border-stone-500 transition-colors"
@@ -362,6 +370,37 @@ export function MissionPreBuild({ mission, onStartSimulation, onExit }: MissionP
                 <Play className="w-5 h-5" />
                 Start Simulation
               </button>
+            </div>
+          </div>
+          
+          {/* Difficulty Info Banner */}
+          <div className={`mt-4 p-3 rounded-lg border ${
+            difficulty === 'easy' 
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+              : difficulty === 'medium'
+                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700'
+                : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
+          }`}>
+            <div className="flex items-center gap-3">
+              {React.createElement(DIFFICULTY_ICONS[difficulty], { 
+                className: `w-5 h-5 ${
+                  difficulty === 'easy' ? 'text-green-600 dark:text-green-400' :
+                  difficulty === 'medium' ? 'text-amber-600 dark:text-amber-400' :
+                  'text-red-600 dark:text-red-400'
+                }` 
+              })}
+              <div>
+                <div className={`font-bold text-sm ${
+                  difficulty === 'easy' ? 'text-green-800 dark:text-green-300' :
+                  difficulty === 'medium' ? 'text-amber-800 dark:text-amber-300' :
+                  'text-red-800 dark:text-red-300'
+                }`}>
+                  {difficultyConfig.label} Mode
+                </div>
+                <div className="text-xs text-stone-600 dark:text-stone-400">
+                  {difficultyConfig.description} • {difficultyConfig.timePressure} days • {difficulty === 'hard' ? '+15% grade bonus' : difficulty === 'medium' ? '+5% grade bonus' : 'No bonus'}
+                </div>
+              </div>
             </div>
           </div>
         </header>
