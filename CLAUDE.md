@@ -56,8 +56,15 @@ Fundthesis/
 **Frontend**:
 - App Router with nested layouts
 - Server Components by default, `'use client'` for interactivity
-- TanStack React Query for server state
+- TanStack React Query for server state (see Data Fetching section below)
 - Path alias: `@/*` maps to `src/*`
+- **UI Components**: Always use shadcn/ui components from `@/components/ui/` instead of plain HTML elements
+  - Use `Input` component instead of `<input>`
+  - Use `Button` component instead of `<button>`
+  - Use `Card`, `Dialog`, `Select`, `Tabs`, etc. from shadcn/ui
+  - Icons from `lucide-react` (e.g., `import { X, Search } from "lucide-react"`)
+  - Available components: `button`, `input`, `card`, `dialog`, `select`, `tabs`, `table`, `form`, `label`, `textarea`, `checkbox`, `dropdown-menu`, `alert-dialog`, `tooltip`
+- **localStorage**: Always check `typeof window !== "undefined"` before accessing localStorage to prevent SSR errors
 
 **Backend**:
 - FastAPI with dependency injection via `Depends()`
@@ -91,6 +98,138 @@ Index new articles: `python -m rag.index_articles`
 - `FINNHUB_KEY` - For news scraping
 - `AZURE_OPENAI_*` - For RAG pipeline
 - `AZURE_RERANK_*` - For document reranking
+
+## UI Components (shadcn/ui)
+
+**Always use shadcn/ui components** instead of plain HTML elements for consistency and accessibility:
+
+### Available Components
+Located in `Frontend/src/components/ui/`:
+- `Button` - Use instead of `<button>`, supports variants: `default`, `outline`, `ghost`, `secondary`, `destructive`, `link`
+- `Input` - Use instead of `<input>`, includes proper styling and focus states
+- `Card`, `CardHeader`, `CardTitle`, `CardContent` - For card layouts
+- `Dialog` - For modals and dialogs
+- `Select` - For dropdowns
+- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` - For tabbed interfaces
+- `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableCell` - For tables
+- `Form`, `FormField`, `FormLabel`, `FormMessage` - For forms with validation
+- `Label` - For form labels
+- `Textarea` - For multi-line text input
+- `Checkbox` - For checkboxes
+- `DropdownMenu` - For dropdown menus
+- `AlertDialog` - For confirmation dialogs
+- `Tooltip` - For tooltips
+
+### Icons
+Use icons from `lucide-react`:
+```tsx
+import { X, Search, ChevronDown, Menu } from "lucide-react";
+```
+
+### Example Usage
+```tsx
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
+
+// Good - using shadcn components
+<Button variant="outline" onClick={handleClick}>Click me</Button>
+<Input placeholder="Search..." value={query} onChange={handleChange} />
+
+// Bad - using plain HTML
+<button onClick={handleClick}>Click me</button>
+<input placeholder="Search..." value={query} onChange={handleChange} />
+```
+
+## Data Fetching Patterns
+
+### TanStack Query (React Query)
+
+**Always use TanStack Query hooks** for data fetching instead of manual `useEffect` + `fetch`:
+
+**Available Hooks** (in `Frontend/src/lib/hooks/`):
+- `useArticles(params)` - Fetch articles with search, pagination, filters
+- `useArticleDetail(articleId)` - Fetch single article
+- `useStocks(params)` - Fetch stocks list with search, pagination
+- `useStockDetail(symbol)` - Fetch stock details
+- `useStockChart(symbol, days)` - Fetch stock chart data
+- `useInsights(type)` - Fetch AI-generated market insights
+
+**Example Pattern** (from insights page):
+```tsx
+import { useArticles } from "@/lib/hooks/useArticles";
+import { useInsights } from "@/lib/hooks/useInsights";
+
+export default function MyPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Use hooks instead of manual useEffect
+  const { data, isLoading, error } = useArticles({
+    limit: 100,
+    offset: 0,
+    search: searchQuery || undefined,
+  });
+  
+  const { data: insightsData } = useInsights("both");
+  
+  // Transform data with useMemo
+  const articles = useMemo(() => {
+    return data?.articles || [];
+  }, [data]);
+  
+  // Use useCallback for handlers
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+}
+```
+
+**Benefits**:
+- Automatic caching and refetching
+- Loading and error states handled
+- Query invalidation and updates
+- Optimistic updates support
+
+### Pagination Pattern
+
+**Client-side pagination** (for filtered/searched results):
+```tsx
+const ARTICLES_PER_PAGE = 20;
+const [currentPage, setCurrentPage] = useState(1);
+
+const totalPages = Math.ceil(articles.length / ARTICLES_PER_PAGE);
+const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+const paginatedArticles = articles.slice(startIndex, startIndex + ARTICLES_PER_PAGE);
+
+// Reset page when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery]);
+```
+
+**Server-side pagination** (for large datasets):
+```tsx
+const { data } = useArticles({
+  limit: ARTICLES_PER_PAGE,
+  offset: (currentPage - 1) * ARTICLES_PER_PAGE,
+});
+```
+
+### Sticky Sidebar Pattern
+
+For sticky sidebars that follow scroll:
+```tsx
+<div className="lg:sticky lg:top-32 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+  {/* Sidebar content */}
+</div>
+```
+
+**Key classes**:
+- `lg:sticky` - Makes element sticky on large screens
+- `lg:top-32` - Offset from top (adjust for header height)
+- `lg:self-start` - Aligns to start of flex container
+- `lg:max-h-[calc(100vh-8rem)]` - Limits height to viewport minus offset
+- `lg:overflow-y-auto` - Enables scrolling when content exceeds max-height
 
 ## API Documentation
 

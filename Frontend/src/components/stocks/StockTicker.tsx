@@ -39,9 +39,7 @@ const StockTicker = () => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return (
       <div className="ticker-bg text-black dark:text-stone-100 py-0.5 overflow-hidden">
-        <div className="text-center text-sm text-red-600 dark:text-red-400">
-          Failed to load stock data: {errorMessage}
-        </div>
+        <div className="text-center text-sm text-red-600 dark:text-red-400"></div>
       </div>
     );
   }
@@ -69,8 +67,8 @@ const StockTicker = () => {
         (
         {stock.changePercent
           ? (stock.changePercent >= 0 ? "+" : "") +
-          formatNumber(stock.changePercent) +
-          "%"
+            formatNumber(stock.changePercent) +
+            "%"
           : "-"}
         )
       </span>
