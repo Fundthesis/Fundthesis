@@ -7,6 +7,8 @@ import sys
 import os
 import asyncio
 from pathlib import Path
+import json
+import pandas as pd
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
@@ -14,7 +16,6 @@ sys.path.insert(0, str(backend_dir))
 
 from jobs.forecasting.xgboost_model import get_next_30_day_predictions
 from app.core.database import db, insert_cached_forecast
-import json
 
 # Load stock symbols
 SYMBOLS_FILE = backend_dir / "lib" / "stock_symbols.json"
@@ -61,9 +62,14 @@ async def run_forecast_job():
             # Convert forecast to dict format for storage
             forecast_records = []
             for _, row in forecast_df.iterrows():
+                pred_close = row['Predicted_Close']
+                # Skip NaN values - they cannot be serialized to JSON
+                if pd.isna(pred_close):
+                    continue
+                pred_close_float = float(pred_close)
                 forecast_records.append({
                     'date': str(row['Date']),
-                    'price': float(row['Predicted_Close'])
+                    'price': pred_close_float
                 })
             
             # Get historical price series (last 30 days for context)
@@ -72,9 +78,14 @@ async def run_forecast_job():
             hist = ticker.history(period='1mo')
             price_series = []
             for date_idx, row in hist.iterrows():
+                close_val = row['Close']
+                # Skip NaN values - they cannot be serialized to JSON
+                if pd.isna(close_val):
+                    continue
+                close_float = float(close_val)
                 price_series.append({
                     'date': str(date_idx),
-                    'close': float(row['Close'])
+                    'close': close_float
                 })
             
             # Save to database
