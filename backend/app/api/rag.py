@@ -1,10 +1,15 @@
 """RAG API endpoint for AI Coach queries."""
 
+import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
 from rag.rag_pipeline import get_rag_pipeline
+from rag.vector_search import VectorSearchService
+from services.user_context_service import get_user_context_service
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 router = APIRouter()
 
@@ -20,6 +25,7 @@ class CoachRequest(BaseModel):
     message: str
     context: Optional[Dict[str, Any]] = None
     conversation_history: Optional[List[CoachMessage]] = None
+    userId: Optional[str] = None  # Optional user ID for personalized context
 
 
 class CoachResponse(BaseModel):
@@ -41,7 +47,7 @@ Your teaching method:
 - Use a gentle, encouraging newspaper-editor tone
 - Ask follow-up questions to deepen understanding
 
-When answering, base your response on the context provided. If the context contains relevant information, reference it naturally in your response.
+When answering, base your response on the context provided. If the context contains relevant information, reference it naturally in your response. If no relevant context was found in our database, you can still provide educational guidance based on your knowledge, but acknowledge that you're drawing from general knowledge rather than recent articles from our database.
 
 Remember: Your goal is education, not financial advice. Guide them to think critically about investments."""
 
@@ -70,6 +76,22 @@ User context:
 - Current archetype: {archetype}
 - Knowledge rank: {rank}"""
         
+        # Track coach query as interaction if userId is provided
+        if request.userId:
+            try:
+                context_service = get_user_context_service()
+                await context_service.track_interaction(
+                    user_id=request.userId,
+                    content_type='coach_query',
+                    content_id=None,
+                    metadata={
+                        'query': request.message[:200]  # Store first 200 chars of query
+                    }
+                )
+            except Exception as e:
+                print(f"Error tracking coach query: {e}")
+                # Continue even if tracking fails
+        
         # Convert conversation history
         history = []
         if request.conversation_history:
@@ -78,25 +100,74 @@ User context:
                 for msg in request.conversation_history
             ]
         
-        # Run RAG query
+        # Run RAG query with user_id for personalized context
         result = await pipeline.query(
             user_input=request.message,
             system_prompt=custom_prompt,
             conversation_history=history,
-            include_sources=True
+            include_sources=True,
+            user_id=request.userId
         )
         
-        # Build citations from sources
+        # Build citations from sources with URLs (for backward compatibility)
         citations = []
+        formatted_sources = []
+        
         if result.get('sources'):
-            for source in result['sources'][:3]:  # Top 3 sources
+            for source in result['sources'][:5]:  # Top 5 sources for rich display
+                source_type = source.get('source_type', 'article')
                 headline = source.get('headline', 'Unknown')
                 src = source.get('source', 'Unknown')
-                citations.append(f"{headline} ({src})")
-        
-        # If no citations from RAG, add default module reference
-        if not citations:
-            citations = ["Module 1: Introduction to FundThesis"]
+                url = source.get('url')
+                published_at = source.get('published_at')
+                snippet = source.get('snippet', '')
+
+                # Format citation with URL if available (for backward compatibility)
+                if url:
+                    citation = f"[{headline}]({url}) - {src}"
+                else:
+                    citation = f"{headline} ({src})"
+
+                # Add publication date if available (only for articles)
+                if published_at and source_type == 'article':
+                    # Parse date if it's a string
+                    if isinstance(published_at, str):
+                        try:
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                            date_str = dt.strftime('%b %d, %Y')
+                            citation += f" - {date_str}"
+                        except:
+                            pass
+
+                citations.append(citation)
+                
+                # Format source for rich display with all metadata
+                formatted_source = {
+                    'id': source.get('id'),
+                    'headline': headline,
+                    'source': src,
+                    'url': url,
+                    'publishedAt': published_at,
+                    'snippet': snippet,
+                    'score': source.get('score'),
+                    'sourceType': source_type,  # 'article' or 'module'
+                }
+                
+                # Add article-specific fields
+                if source_type == 'article':
+                    if source.get('tickers'):
+                        formatted_source['tickers'] = source.get('tickers')
+                    if source.get('sentiment'):
+                        formatted_source['sentiment'] = source.get('sentiment')
+                
+                # Add module-specific fields
+                if source_type == 'module':
+                    formatted_source['moduleNumber'] = source.get('module_number')
+                    formatted_source['sectionHeading'] = source.get('section_heading')
+                    formatted_source['chunkType'] = source.get('chunk_type')
+                
+                formatted_sources.append(formatted_source)
         
         # Suggested actions based on query
         suggested = get_suggested_actions(request.message)
@@ -104,7 +175,7 @@ User context:
         return CoachResponse(
             message=result.get('response', 'I apologize, but I had trouble processing your question.'),
             citations=citations,
-            sources=result.get('sources', []),
+            sources=formatted_sources if formatted_sources else None,
             suggested_actions=suggested
         )
         
@@ -131,3 +202,43 @@ def get_suggested_actions(query: str) -> List[str]:
         return ['Review ESG investing', 'Review Module 9: Sustainability Factors']
     
     return ['Explore a mission', 'Continue learning']
+
+
+@router.get("/rag/health")
+async def rag_health():
+    """
+    Health check endpoint for RAG system.
+
+    Verifies:
+    - pgvector extension is installed
+    - Embedding service is configured
+    - Vector search is operational
+    """
+    try:
+        vector_service = VectorSearchService()
+
+        # Check pgvector extension
+        pgvector_status = await vector_service.verify_pgvector_extension()
+
+        # Check if embedding service is configured
+        from rag.embeddings import get_embed_service
+        embed_service = get_embed_service()
+        embeddings_configured = bool(embed_service.endpoint and embed_service.api_key)
+
+        # Overall status
+        healthy = pgvector_status.get("installed", False)
+
+        return {
+            "status": "healthy" if healthy else "degraded",
+            "pgvector": pgvector_status,
+            "embeddings_configured": embeddings_configured,
+            "message": "RAG system is operational" if healthy else "pgvector extension not installed"
+        }
+
+    except Exception as e:
+        logging.error(f"[RAG API] Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "message": "RAG system health check failed"
+        }

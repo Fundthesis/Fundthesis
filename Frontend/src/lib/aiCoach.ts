@@ -3,11 +3,29 @@
  * Calls the /api/coach endpoint which connects to Azure OpenAI
  */
 
+export interface ArticleSource {
+    id?: string;
+    headline: string;
+    source: string;
+    url?: string;
+    publishedAt?: string;
+    snippet?: string;
+    score?: number;
+    tickers?: string;
+    sentiment?: string;
+    sourceType?: 'article' | 'module'; // Distinguish between articles and modules
+    // Module-specific fields
+    moduleNumber?: number;
+    sectionHeading?: string;
+    chunkType?: string;
+}
+
 export interface CoachMessage {
     role: 'user' | 'coach';
     content: string;
     timestamp: Date;
     citations?: string[];
+    sources?: ArticleSource[];
 }
 
 export type ChatMessage = CoachMessage;
@@ -24,6 +42,7 @@ export interface CoachContext {
 export interface CoachResponse {
     message: string;
     citations: string[];
+    sources?: ArticleSource[];
     suggestedActions?: string[];
     relatedModules?: string[];
 }
@@ -64,6 +83,7 @@ export async function getCoachResponse(
         return {
             message: data.message,
             citations: data.citations || [],
+            sources: data.sources || [],
             suggestedActions: data.suggestedActions || [],
             relatedModules: data.relatedModules || [],
         };

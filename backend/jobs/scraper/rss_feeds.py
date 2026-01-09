@@ -168,8 +168,14 @@ def normalize_entry(entry: dict, source: str) -> dict:
     }
     return article_db
 
-async def ingest_feed_once(feed_info: dict):
-    """Fetch a feed, normalize entries, scrape content, and insert into database."""
+async def ingest_feed_once(feed_info: dict, generate_embeddings: bool = False):
+    """
+    Fetch a feed, normalize entries, scrape content, and insert into database.
+
+    Args:
+        feed_info: Dictionary containing feed name, url, enabled status, etc.
+        generate_embeddings: If True, generates embeddings for new articles
+    """
     feed_name = feed_info["name"]
     feed_url = feed_info["url"]
     
@@ -227,30 +233,38 @@ async def ingest_feed_once(feed_info: dict):
                 status=status,
                 error=error,
                 http_status=http_status,
-                meta=meta
+                meta=meta,
+                generate_embedding=generate_embeddings
             )
             new_count += 1
         except Exception as e:
             print(f"[{feed_name}] Error inserting article: {e}")
-    
+
     print(f"[{feed_name}] Inserted {new_count} new articles")
+    if generate_embeddings and new_count > 0:
+        print(f"[{feed_name}] Embeddings generated for {new_count} articles")
     return new_count
 
-async def ingest_all_feeds():
-    """Process all RSS feeds and insert articles into database."""
+async def ingest_all_feeds(generate_embeddings: bool = False):
+    """
+    Process all RSS feeds and insert articles into database.
+
+    Args:
+        generate_embeddings: If True, generates embeddings for new articles
+    """
     total_new = 0
     for feed_info in FEEDS:
         if not feed_info.get("enabled", True):
             print(f"[{feed_info['name']}] Feed disabled, skipping...")
             continue
-        
+
         try:
-            count = await ingest_feed_once(feed_info)
+            count = await ingest_feed_once(feed_info, generate_embeddings=generate_embeddings)
             total_new += count
             time.sleep(2)  # Small delay between feeds
         except Exception as e:
             print(f"Error processing {feed_info['name']}: {e}")
-    
+
     print(f"\n[All Feeds] Total inserted: {total_new} articles")
     return total_new
 
