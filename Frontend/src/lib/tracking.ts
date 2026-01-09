@@ -3,7 +3,10 @@
  * Tracks user interactions with content for personalized RAG context
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.BACKEND_URL ||
+  "http://localhost:8000";
 
 /**
  * Track a user interaction with content
@@ -13,27 +16,27 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_U
  * @param metadata - Additional context (headline, title, etc.)
  */
 export async function trackInteraction(
-  contentType: 'article' | 'module' | 'coach_query',
+  contentType: "article" | "module" | "coach_query",
   contentId: string | null,
-  metadata?: Record<string, any>,
+  metadata?: Record<string, unknown>,
   userId?: string
 ): Promise<void> {
   try {
     // If userId not provided, try to get it from session (client-side only)
-    if (!userId && typeof window !== 'undefined') {
+    if (!userId && typeof window !== "undefined") {
       try {
         // For client-side, we'll need to get userId from the auth context
         // This is a simplified approach - in production you might want to pass userId explicitly
-        const authResponse = await fetch('/api/auth/status');
+        const authResponse = await fetch("/api/auth/status");
         if (authResponse.ok) {
           const authData = await authResponse.json();
           if (authData.authenticated && authData.user?.id) {
             userId = authData.user.id;
           }
         }
-      } catch (error) {
+      } catch {
         // If we can't get userId, skip tracking (non-blocking)
-        console.log('[Tracking] Could not get user session, skipping tracking');
+        console.log("[Tracking] Could not get user session, skipping tracking");
         return;
       }
     }
@@ -45,9 +48,9 @@ export async function trackInteraction(
 
     // Call backend API to track interaction
     await fetch(`${BACKEND_URL}/api/tracking/interaction`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         userId,
@@ -58,7 +61,7 @@ export async function trackInteraction(
     });
   } catch (error) {
     // Non-blocking: log error but don't throw
-    console.error('[Tracking] Error tracking interaction:', error);
+    console.error("[Tracking] Error tracking interaction:", error);
   }
 }
 
@@ -72,11 +75,11 @@ export async function trackArticleView(
   userId?: string
 ): Promise<void> {
   await trackInteraction(
-    'article',
+    "article",
     articleId,
     {
-      headline: headline || 'Unknown Article',
-      source: source || 'Unknown Source',
+      headline: headline || "Unknown Article",
+      source: source || "Unknown Source",
     },
     userId
   );
@@ -91,7 +94,7 @@ export async function trackModuleAccess(
   userId?: string
 ): Promise<void> {
   await trackInteraction(
-    'module',
+    "module",
     moduleName,
     {
       moduleName,
@@ -100,4 +103,3 @@ export async function trackModuleAccess(
     userId
   );
 }
-
