@@ -14,6 +14,10 @@ import {
   TransactionHistory,
   Transaction,
 } from "@/components/enviro/TransactionHistory";
+import { getMissionById, type Mission } from "@/data/missions";
+import { MissionContextPanel } from "@/components/missions/MissionContextPanel";
+import { MissionNewsFeed } from "@/components/missions/MissionNewsFeed";
+import { MissionAICoach } from "@/components/missions/MissionAICoach";
 
 interface StockDetail {
   symbol: string;
@@ -202,8 +206,90 @@ function PortfolioDashboardPageContent() {
 
   const [sandbox, setSandbox] = useState<Sandbox | null>(null);
   const [cashBalance, setCashBalance] = useState<number>(3000);
+  
+  // Mission state
+  const [mission, setMission] = useState<Mission | null>(null);
+  const [completedObjectives, setCompletedObjectives] = useState<string[]>([]);
 
   const router = useRouter();
+
+  // Check mission objectives completion
+  const checkMissionObjectives = (
+    currentMission: Mission,
+    currentTransactions: Transaction[],
+    currentCash: number
+  ) => {
+    const newCompleted: string[] = [];
+    
+    // Compute holdings
+    const holdings: { [symbol: string]: number } = {};
+    currentTransactions.forEach((tx) => {
+      holdings[tx.symbol] =
+        (holdings[tx.symbol] || 0) +
+        (tx.action === "Buy" ? tx.quantity : -tx.quantity);
+    });
+    
+    // Check each objective
+    currentMission.objectives.forEach((objective) => {
+      if (completedObjectives.includes(objective)) {
+        newCompleted.push(objective);
+        return;
+      }
+      
+      // Check diversification (3+ sectors)
+      if (objective.toLowerCase().includes("sector") && objective.toLowerCase().includes("3")) {
+        const sectors = new Set<string>();
+        Object.keys(holdings).forEach((sym) => {
+          const detail = stockDetails[sym] || allStocks.find((s) => s.symbol === sym);
+          if (detail && 'sector' in detail) {
+            sectors.add((detail as StockDetail).sector);
+          }
+        });
+        if (sectors.size >= 3) {
+          newCompleted.push(objective);
+        }
+      }
+      
+      // Check ETF inclusion
+      if (objective.toLowerCase().includes("etf")) {
+        // Simple check - in real implementation, you'd check if symbol is an ETF
+        const hasETF = Object.keys(holdings).some((sym) => 
+          sym.includes('ETF') || ['SPY', 'QQQ', 'VTI', 'IWM'].includes(sym)
+        );
+        if (hasETF) {
+          newCompleted.push(objective);
+        }
+      }
+      
+      // Check inflation rate (for inflation mission)
+      if (objective.toLowerCase().includes("inflation") && objective.toLowerCase().includes("2%")) {
+        const startingBalance = currentMission.sandboxConfig.startingBalance;
+        const totalValue = currentCash + Object.keys(holdings).reduce((acc, sym) => {
+          const qty = holdings[sym] || 0;
+          const detail = stockDetails[sym] || allStocks.find((s) => s.symbol === sym);
+          const price = detail ? (detail as StockDetail | (typeof allStocks)[0]).price : 0;
+          return acc + qty * price;
+        }, 0);
+        const returnPercent = startingBalance > 0 ? ((totalValue - startingBalance) / startingBalance) * 100 : 0;
+        if (returnPercent >= 2) {
+          newCompleted.push(objective);
+        }
+      }
+    });
+    
+    if (newCompleted.length > completedObjectives.length) {
+      setCompletedObjectives(newCompleted);
+      // Save progress
+      try {
+        localStorage.setItem(
+          `mission_progress_${currentMission.id}`,
+          JSON.stringify({ completedObjectives: newCompleted })
+        );
+      } catch (e) {
+        console.warn("Failed to save mission progress", e);
+      }
+    }
+  };
 
   const deleteCurrentSandbox = () => {
     try {
@@ -262,11 +348,71 @@ function PortfolioDashboardPageContent() {
     setStocks(filteredStocks);
   }, [filteredStocks]);
 
-  // Read sandboxId from query params and try to load matching sandbox from localStorage
+  // Read missionId or sandboxId from query params
   useEffect(() => {
+    // Check for mission first
+    const missionId = searchParams?.get("missionId");
+    if (missionId) {
+      const foundMission = getMissionById(missionId);
+      if (foundMission) {
+        console.log('[Mission] Loading mission:', foundMission.id, foundMission.title);
+        setMission(foundMission);
+        
+        // Initialize mission portfolio in localStorage first
+        try {
+          const portRaw = localStorage.getItem("enviro_mission_portfolios");
+          const map = portRaw ? JSON.parse(portRaw) : {};
+          if (!map[missionId]) {
+            map[missionId] = {
+              cashBalance: foundMission.sandboxConfig.startingBalance,
+              transactions: [],
+            };
+            localStorage.setItem("enviro_mission_portfolios", JSON.stringify(map));
+            setCashBalance(foundMission.sandboxConfig.startingBalance);
+            setTransactions([]);
+          } else {
+            setCashBalance(map[missionId].cashBalance);
+            setTransactions(map[missionId].transactions || []);
+          }
+        } catch (e) {
+          console.warn("Failed to initialize mission portfolio", e);
+          setCashBalance(foundMission.sandboxConfig.startingBalance);
+          setTransactions([]);
+        }
+        
+        // Load mission progress
+        try {
+          const progressRaw = localStorage.getItem(`mission_progress_${missionId}`);
+          if (progressRaw) {
+            const progress = JSON.parse(progressRaw);
+            setCompletedObjectives(progress.completedObjectives || []);
+          }
+        } catch (e) {
+          console.warn("Failed to load mission progress", e);
+        }
+      } else {
+        console.warn('[Mission] Mission not found:', missionId);
+      }
+      return;
+    }
+    
+    // Otherwise, try to load sandbox
+    // Clear mission state if we're in sandbox mode
+    if (mission) {
+      setMission(null);
+      setCompletedObjectives([]);
+    }
+    
     try {
       const id = searchParams?.get("sandboxId");
-      if (!id) return;
+      if (!id) {
+        // No mission and no sandbox - clear everything
+        if (mission) {
+          setMission(null);
+          setCompletedObjectives([]);
+        }
+        return;
+      }
       const raw = localStorage.getItem("enviro_sandboxes");
       if (!raw) return;
       const items: Sandbox[] = JSON.parse(raw);
@@ -452,7 +598,24 @@ function PortfolioDashboardPageContent() {
     setTransactions((prev) => {
       const next = [tx, ...prev];
       try {
-        if (sandbox) {
+        if (mission) {
+          // Save to mission portfolio
+          const portRaw = localStorage.getItem("enviro_mission_portfolios");
+          const map = portRaw ? JSON.parse(portRaw) : {};
+          const prevCash =
+            (map[mission.id] && map[mission.id].cashBalance) || cashBalance;
+          const newCash =
+            action === "Buy" ? prevCash - total : prevCash + total;
+          map[mission.id] = { cashBalance: newCash, transactions: next };
+          localStorage.setItem(
+            "enviro_mission_portfolios",
+            JSON.stringify(map)
+          );
+          setCashBalance(newCash);
+          
+          // Check mission objectives after trade
+          checkMissionObjectives(mission, next, newCash);
+        } else if (sandbox) {
           const portRaw = localStorage.getItem("enviro_sandbox_portfolios");
           const map = portRaw ? JSON.parse(portRaw) : {};
           const prevCash =
@@ -466,7 +629,7 @@ function PortfolioDashboardPageContent() {
           );
           setCashBalance(newCash);
         } else {
-          // no sandbox selected: just update cash locally
+          // no sandbox/mission selected: just update cash locally
           setCashBalance((prev) =>
             action === "Buy" ? prev - total : prev + total
           );
@@ -497,8 +660,8 @@ function PortfolioDashboardPageContent() {
 
   const totalValue = cashBalance + holdingsValue;
 
-  // baseline for gain/loss: if sandbox exists use its starting balance, otherwise use initial cash
-  const baseline = sandbox ? sandbox.balance : cashBalance;
+  // baseline for gain/loss: if mission exists use its starting balance, else if sandbox use its balance, otherwise use initial cash
+  const baseline = mission ? mission.sandboxConfig.startingBalance : (sandbox ? sandbox.balance : cashBalance);
   const totalGainLoss = totalValue - baseline;
   const totalGainLossPercent = baseline ? (totalGainLoss / baseline) * 100 : 0;
 
@@ -531,6 +694,9 @@ function PortfolioDashboardPageContent() {
     );
   };
 
+  // Debug: Log mission state
+  console.log('[Render] Mission state:', mission ? mission.title : 'null', 'Cash balance:', cashBalance);
+
   return (
     <div className="bg-[#fcfbf9] dark:bg-stone-900 min-h-screen">
       <main className="max-w-7xl mx-auto px-4 py-8 font-serif text-[#1a1a1a] dark:text-stone-100">
@@ -539,18 +705,22 @@ function PortfolioDashboardPageContent() {
         <div className="border-b-4 border-black dark:border-stone-600 pb-4 mb-8">
           <div className="flex justify-between items-end mb-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-1">Interactive Environment</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-1">
+                {mission ? "Mission Environment" : "Interactive Environment"}
+              </p>
               <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black dark:text-white leading-none">
-                {sandbox ? sandbox.name : "Market Sandbox"}
+                {mission ? mission.title : sandbox ? sandbox.name : "Market Sandbox"}
               </h1>
             </div>
             <div className="text-right hidden md:block">
-              <p className="font-serif italic text-sm text-gray-500 dark:text-stone-400">Simulated Trading Floor</p>
+              <p className="font-serif italic text-sm text-gray-500 dark:text-stone-400">
+                {mission ? "Learning Through Doing" : "Simulated Trading Floor"}
+              </p>
               <p className="font-bold text-xs uppercase tracking-widest mt-1 dark:text-stone-300">Section E</p>
             </div>
           </div>
           <p className="text-lg font-serif italic text-gray-700 dark:text-stone-400 border-t border-black/10 dark:border-stone-700 pt-2">
-            Test your thesis in a risk-free environment.
+            {mission ? mission.description : "Test your thesis in a risk-free environment."}
           </p>
         </div>
 
@@ -626,18 +796,65 @@ function PortfolioDashboardPageContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <div className="border-t-4 border-black dark:border-stone-600 pt-6">
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
-              <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
-              Advisory Wire
-            </h3>
-            <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
-              <MarketTips />
+        {mission ? (
+          /* Mission Mode Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            {/* Left Column: Mission Context */}
+            <div className="lg:col-span-1">
+              <MissionContextPanel
+                mission={mission}
+                completedObjectives={completedObjectives}
+                portfolioValue={totalValue}
+                startingBalance={mission.sandboxConfig.startingBalance}
+              />
+            </div>
+
+            {/* Middle Column: News Feed */}
+            <div className="lg:col-span-1">
+              <MissionNewsFeed mission={mission} />
+            </div>
+
+            {/* Right Column: AI Coach */}
+            <div className="lg:col-span-1">
+              <MissionAICoach
+                mission={mission}
+                portfolioContext={{
+                  cashBalance,
+                  holdings: holdingsMap,
+                  transactions,
+                  totalValue,
+                }}
+              />
             </div>
           </div>
+        ) : (
+          /* Sandbox Mode Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className="border-t-4 border-black dark:border-stone-600 pt-6">
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+                <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+                Advisory Wire
+              </h3>
+              <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+                <MarketTips />
+              </div>
+            </div>
 
-          <div className="border-t-4 border-black dark:border-stone-600 pt-6">
+            <div className="border-t-4 border-black dark:border-stone-600 pt-6">
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+                <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+                Transaction Ledger
+              </h3>
+              <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+                <TransactionHistory transactions={transactions} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Transaction Ledger - Always visible */}
+        {mission && (
+          <div className="mb-12 border-t-4 border-black dark:border-stone-600 pt-6">
             <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
               <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
               Transaction Ledger
@@ -646,7 +863,7 @@ function PortfolioDashboardPageContent() {
               <TransactionHistory transactions={transactions} />
             </div>
           </div>
-        </div>
+        )}
 
         {/* Sandbox actions (delete current sandbox) */}
         <div className="pt-6 flex justify-end border-t border-black dark:border-stone-600">
