@@ -69,7 +69,7 @@ export default function MissionsPage() {
     const launchMission = (mission: Mission) => {
         if (!mission.isUnlocked) return;
         router.push(
-            `/enviro/enviro-dashboard?missionId=${encodeURIComponent(mission.id)}`
+            `/missions/simulation?missionId=${encodeURIComponent(mission.id)}`
         );
     };
 
