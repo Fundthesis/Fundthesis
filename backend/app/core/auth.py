@@ -3,16 +3,7 @@ from datetime import datetime, UTC
 from typing import Optional
 from dataclasses import dataclass
 from prisma import Prisma
-import json, os
-
-# #region agent log
-DEBUG_LOG_PATH = "/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log"
-def _debug_log(hyp_id, location, message, data=None):
-    try:
-        with open(DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps({"hypothesisId": hyp_id, "location": location, "message": message, "data": data or {}, "timestamp": int(datetime.now(UTC).timestamp() * 1000), "sessionId": "debug-session"}) + "\n")
-    except: pass
-# #endregion
+import os
 
 
 @dataclass
@@ -38,20 +29,12 @@ async def validate_session_token(
 
     Returns AuthenticatedUser if valid, None otherwise.
     """
-    # #region agent log
-    _debug_log("H1", "auth.py:validate_session_token:entry", "Function called", {"token_present": bool(token), "token_preview": token[:20] if token else None, "db_connected": db.is_connected() if db else False})
-    # #endregion
-    
     if not token:
         return None
 
     try:
         if not db.is_connected():
             await db.connect()
-        
-        # #region agent log
-        _debug_log("H2", "auth.py:validate_session_token:pre_query", "About to query session table", {"db_url_host": os.environ.get("DATABASE_URL", "")[:50] if os.environ.get("DATABASE_URL") else "NOT_SET"})
-        # #endregion
 
         # Query session table - matches Better Auth schema
         session = await db.session.find_first(
@@ -61,10 +44,6 @@ async def validate_session_token(
             },
             include={'user': True}
         )
-        
-        # #region agent log
-        _debug_log("H3", "auth.py:validate_session_token:post_query", "Query succeeded", {"session_found": session is not None})
-        # #endregion
 
         if not session or not session.user:
             return None
@@ -76,9 +55,6 @@ async def validate_session_token(
             session_id=session.id
         )
     except Exception as e:
-        # #region agent log
-        _debug_log("H1_H2", "auth.py:validate_session_token:error", "Query failed with exception", {"error_type": type(e).__name__, "error_message": str(e)})
-        # #endregion
         print(f"Session validation error: {e}")
         return None
 
