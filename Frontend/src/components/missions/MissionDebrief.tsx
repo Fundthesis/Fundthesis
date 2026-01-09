@@ -4,12 +4,8 @@ import React, { useMemo } from 'react';
 import { 
   Trophy, 
   TrendingUp, 
-  TrendingDown, 
   Brain, 
-  Target, 
   AlertTriangle,
-  BarChart2,
-  BookOpen,
   ArrowRight,
   Lightbulb
 } from 'lucide-react';
@@ -38,7 +34,7 @@ export function MissionDebrief({
   maxDrawdown,
   trades,
   portfolioHistory,
-  initialBalance,
+  initialBalance: _initialBalance,
   finalBalance,
   durationDays,
   onPlayAgain,
@@ -113,8 +109,8 @@ export function MissionDebrief({
     return patterns;
   }, [trades, portfolioHistory, durationDays]);
 
-  // Best and worst trades
-  const tradeAnalysis = useMemo(() => {
+  // Best and worst trades - available for future use
+  const _tradeAnalysis = useMemo(() => {
     // For simplicity, we'll just show trade count by symbol
     const symbolStats: Record<string, { buys: number; sells: number; netVolume: number }> = {};
     trades.forEach(t => {

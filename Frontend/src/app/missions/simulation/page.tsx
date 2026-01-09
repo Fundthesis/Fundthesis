@@ -13,8 +13,6 @@ import {
   MissionTrade,
   PortfolioSnapshot,
   MissionGrade,
-  MissionCompletionData,
-  DIFFICULTY_CONFIGS 
 } from '@/lib/types/mission';
 
 type Phase = 'prebuild' | 'simulation' | 'debrief';

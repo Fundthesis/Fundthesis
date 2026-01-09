@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft, Newspaper, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
 
 import { Mission } from '@/data/missions';
 import { 
@@ -52,9 +51,9 @@ interface MissionSimulatorProps {
 }
 
 export function MissionSimulator({ mission, onComplete, onExit }: MissionSimulatorProps) {
-  // Initialize scenario configuration
+  // Initialize scenario configuration - memoized to prevent recreation on every render
   const scenarioConfig = SCENARIO_CONFIGS[mission.sandboxConfig.scenario] || SCENARIO_CONFIGS.neutral;
-  const fullScenario: MissionScenario = {
+  const fullScenario: MissionScenario = useMemo(() => ({
     id: mission.id,
     name: mission.title,
     description: mission.description,
@@ -64,7 +63,7 @@ export function MissionSimulator({ mission, onComplete, onExit }: MissionSimulat
     triggerEvents: getMissionNewsEvents(mission.sandboxConfig.scenario),
     winCondition: scenarioConfig.winCondition || { type: 'return', target: 5, description: 'Achieve 5% return' },
     failCondition: scenarioConfig.failCondition || { type: 'drawdown', threshold: 30, description: 'Avoid 30% loss' },
-  };
+  }), [mission.id, mission.title, mission.description, mission.sandboxConfig.scenario, scenarioConfig]);
 
   // Simulation state
   const [isRunning, setIsRunning] = useState(false);
@@ -316,7 +315,7 @@ export function MissionSimulator({ mission, onComplete, onExit }: MissionSimulat
     setHoldings(prev => {
       const newQuantity = prev[symbol].quantity - quantity;
       if (newQuantity <= 0) {
-        const { [symbol]: removed, ...rest } = prev;
+        const { [symbol]: _removed, ...rest } = prev;
         return rest;
       }
       return { ...prev, [symbol]: { ...prev[symbol], quantity: newQuantity } };
@@ -345,7 +344,6 @@ export function MissionSimulator({ mission, onComplete, onExit }: MissionSimulat
   );
 
   const portfolioValue = calculatePortfolioValue();
-  const returnPercent = ((portfolioValue - mission.sandboxConfig.startingBalance) / mission.sandboxConfig.startingBalance) * 100;
   const currentPhase = getCurrentPhase();
   const holdingsForDisplay = getHoldingsForDisplay();
 

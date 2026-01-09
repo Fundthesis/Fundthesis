@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Calendar, AlertCircle, TrendingUp, TrendingDown, Clock, Flag, Zap } from 'lucide-react';
-import { NewsEvent } from '@/lib/missionSimulation';
 
 interface TimelineEvent {
   day: number;
@@ -33,8 +32,8 @@ export function MissionTimeline({
   totalDays,
   events,
   phases,
-  portfolioHistory,
-  onDayClick,
+  portfolioHistory: _portfolioHistory,
+  onDayClick: _onDayClick,
 }: MissionTimelineProps) {
   // Calculate progress percentage
   const progressPercent = (currentDay / totalDays) * 100;

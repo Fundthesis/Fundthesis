@@ -19,7 +19,7 @@ export function MissionMarketChart({
   onSelectStock,
   selectedSymbol,
   allStocks,
-  scenario,
+  scenario: _scenario,
 }: MissionMarketChartProps) {
   // Calculate chart dimensions
   const chartWidth = 400;

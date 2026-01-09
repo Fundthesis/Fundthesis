@@ -3,8 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Briefcase, 
-  TrendingUp, 
-  TrendingDown, 
   Target, 
   AlertTriangle,
   Search,
@@ -36,7 +34,6 @@ import {
 
 import { Mission } from '@/data/missions';
 import { 
-  SimulatedStock, 
   MISSION_STOCKS,
   SCENARIO_CONFIGS,
   calculateDiversificationScore,
@@ -64,37 +61,6 @@ const DIFFICULTY_ICONS: Record<MissionDifficultyLevel, React.ElementType> = {
   'medium': Flame,
   'hard': Skull,
 };
-
-// Pre-built portfolios for certain scenarios
-const PRE_BUILT_PORTFOLIOS: Record<string, { symbol: string; quantity: number }[]> = {
-  'inflation': [
-    { symbol: 'SPY', quantity: 50 },
-    { symbol: 'QQQ', quantity: 30 },
-    { symbol: 'AAPL', quantity: 20 },
-    { symbol: 'MSFT', quantity: 15 },
-  ],
-  'crash-2008': [
-    { symbol: 'BAC', quantity: 200 },
-    { symbol: 'JPM', quantity: 80 },
-    { symbol: 'XOM', quantity: 50 },
-    { symbol: 'SPY', quantity: 40 },
-  ],
-  'tariff': [
-    { symbol: 'AAPL', quantity: 30 },
-    { symbol: 'NVDA', quantity: 15 },
-    { symbol: 'AMZN', quantity: 25 },
-    { symbol: 'WMT', quantity: 40 },
-  ],
-  'pandemic': [
-    { symbol: 'NVDA', quantity: 20 },
-    { symbol: 'AAPL', quantity: 30 },
-    { symbol: 'MSFT', quantity: 20 },
-    { symbol: 'SPY', quantity: 30 },
-  ],
-};
-
-// Scenarios that provide a pre-built portfolio
-const SCENARIOS_WITH_PREBUILT = ['inflation', 'crash-2008', 'tariff', 'pandemic'];
 
 interface MissionPreBuildProps {
   mission: Mission;
@@ -207,7 +173,7 @@ export function MissionPreBuild({
     setHoldings(prev => {
       const newQuantity = prev[symbol].quantity - quantity;
       if (newQuantity <= 0) {
-        const { [symbol]: _, ...rest } = prev;
+        const { [symbol]: _removed, ...rest } = prev;
         return rest;
       }
       return { ...prev, [symbol]: { ...prev[symbol], quantity: newQuantity } };
@@ -428,7 +394,7 @@ export function MissionPreBuild({
                   {newsEvents.length === 0 ? (
                     <p className="text-stone-500 dark:text-stone-400 italic text-sm">No specific news events for this scenario.</p>
                   ) : (
-                    newsEvents.map((event, index) => (
+                    newsEvents.map((event) => (
                       <article 
                         key={event.id}
                         className={`p-3 border-l-4 transition-all ${

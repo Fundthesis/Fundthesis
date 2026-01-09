@@ -5,24 +5,17 @@ import {
   ArrowLeft, 
   Play,
   Pause,
-  FastForward,
   SkipForward,
   RotateCcw,
   TrendingUp,
   TrendingDown,
-  Minus,
   AlertCircle,
   Newspaper,
-  Calendar,
-  DollarSign,
   BarChart2,
   Clock,
-  Target,
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
   Activity,
-  Zap,
 } from 'lucide-react';
 
 import { Mission } from '@/data/missions';
@@ -91,9 +84,9 @@ export function MissionSimulatorV2({
   // Difficulty configuration
   const difficultyConfig = DIFFICULTY_CONFIGS[difficulty];
   
-  // Scenario configuration
+  // Scenario configuration - memoized to prevent recreation on every render
   const scenarioConfig = SCENARIO_CONFIGS[mission.sandboxConfig.scenario] || SCENARIO_CONFIGS.neutral;
-  const fullScenario: MissionScenario = {
+  const fullScenario: MissionScenario = useMemo(() => ({
     id: mission.id,
     name: mission.title,
     description: mission.description,
@@ -103,7 +96,7 @@ export function MissionSimulatorV2({
     triggerEvents: getNewsEventsForDifficulty(mission.sandboxConfig.scenario, difficulty),
     winCondition: scenarioConfig.winCondition || { type: 'return', target: 5, description: 'Achieve 5% return' },
     failCondition: scenarioConfig.failCondition || { type: 'drawdown', threshold: 30, description: 'Avoid 30% loss' },
-  };
+  }), [mission.id, mission.title, mission.description, mission.sandboxConfig.scenario, difficulty, difficultyConfig.timePressure, scenarioConfig]);
 
   // Simulation state
   const [isRunning, setIsRunning] = useState(false);
@@ -134,7 +127,6 @@ export function MissionSimulatorV2({
   const [triggeredEvents, setTriggeredEvents] = useState<NewsEvent[]>([]);
   const [latestNews, setLatestNews] = useState<NewsEvent | null>(null);
   const [showTradePanel, setShowTradePanel] = useState(false);
-  const [selectedStock, setSelectedStock] = useState<SimulatedStock | null>(null);
 
   // Refs
   const simulationRef = useRef<NodeJS.Timeout | null>(null);
@@ -248,19 +240,20 @@ export function MissionSimulatorV2({
     }
 
     setCurrentDay(newDay);
-  }, [currentDay, fullScenario, mission.sandboxConfig.scenario]);
+  }, [currentDay, fullScenario, mission.sandboxConfig.scenario, difficulty]);
 
   // Update portfolio history and drawdown tracking
   useEffect(() => {
     const value = calculatePortfolioValue();
-    const holdingsValue = value - cashBalance;
+    const currentCash = cashBalance;
+    const holdingsValue = value - currentCash;
     
     setPortfolioHistory(prev => {
       if (prev.length === 0 || prev[prev.length - 1].day !== currentDay) {
         const newSnapshot: PortfolioSnapshot = {
           day: currentDay,
           value,
-          cash: cashBalance,
+          cash: currentCash,
           holdingsValue,
         };
         return [...prev, newSnapshot];
@@ -282,7 +275,7 @@ export function MissionSimulatorV2({
       setIsRunning(false);
       setGrade('F');
     }
-  }, [currentDay, calculatePortfolioValue, peakValue, maxDrawdown, fullScenario.failCondition.threshold, isComplete]);
+  }, [currentDay, calculatePortfolioValue, cashBalance, peakValue, maxDrawdown, fullScenario.failCondition.threshold, isComplete]);
 
   // Simulation loop
   useEffect(() => {
@@ -320,7 +313,6 @@ export function MissionSimulatorV2({
       
       // Calculate final values
       const finalValue = calculatePortfolioValue();
-      const holdingsValue = finalValue - cashBalance;
       
       // Pass full completion data
       onComplete?.({
@@ -380,7 +372,7 @@ export function MissionSimulatorV2({
     setHoldings(prev => {
       const newQuantity = prev[symbol].quantity - quantity;
       if (newQuantity <= 0) {
-        const { [symbol]: _, ...rest } = prev;
+        const { [symbol]: _removed, ...rest } = prev;
         return rest;
       }
       return { ...prev, [symbol]: { ...prev[symbol], quantity: newQuantity } };

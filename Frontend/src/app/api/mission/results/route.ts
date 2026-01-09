@@ -15,9 +15,6 @@ import {
   MissionGrade 
 } from '@/lib/types/mission';
 
-// Type for Prisma result with explicit any for dynamic model access
-type PrismaAny = ReturnType<typeof prisma.$extends> & Record<string, unknown>;
-
 // GET - Fetch user's mission results
 export async function GET(req: NextRequest) {
   try {
@@ -41,7 +38,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Use dynamic access for newly generated model
-    const db = prisma as unknown as PrismaAny;
+    // Note: db is typed but we use direct prisma access with 'missionResult' check
     
     let results: Array<{
       id: string;
