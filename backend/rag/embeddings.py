@@ -80,23 +80,30 @@ class EmbeddingService:
         try:
             # OpenAI-compatible endpoint format
             # Expected: https://fundthesis.services.ai.azure.com/openai/v1/
+            # But Azure env var might be:
+            # - https://fundthesis.services.ai.azure.com/models/RagEmbed
+            # - https://fundthesis.services.ai.azure.com/openai/v1/RagEmbed
             base_url = self.endpoint.rstrip('/')
 
-            # Handle various endpoint formats
-            # Remove any trailing paths like /models or /models/ModelName
+            # Strip /models and everything after it
             if '/models' in base_url:
-                # Strip everything from /models onwards
                 base_url = base_url.split('/models')[0]
             
-            # Ensure we have the OpenAI-compatible path
+            # If /openai/v1 is present, strip everything after it (including model names)
             if '/openai/v1' in base_url:
-                # Already correct format, just add /embeddings
+                # Keep only up to /openai/v1, remove any model name after it
+                parts = base_url.split('/openai/v1')
+                base_url = parts[0] + '/openai/v1'
+            
+            # Construct final URL - always use /openai/v1/embeddings
+            # The model name goes in the JSON body, not the URL
+            if '/openai/v1' in base_url:
                 url = f"{base_url.rstrip('/')}/embeddings"
             else:
-                # Add /openai/v1/embeddings
+                # If no /openai/v1 found, add it
                 url = f"{base_url.rstrip('/')}/openai/v1/embeddings"
             
-            logging.debug(f"[Embeddings] Using endpoint URL: {url}")
+            logging.info(f"[Embeddings] Constructed URL: {url} (model: {self.model_name} in body)")
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
