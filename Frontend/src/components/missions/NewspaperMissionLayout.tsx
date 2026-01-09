@@ -40,16 +40,16 @@ interface NewspaperMissionLayoutProps {
   onBuy: (symbol: string, quantity: number) => void;
   onSell: (symbol: string, quantity: number) => void;
   holdings: { [symbol: string]: number };
-  // Mission session props
-  isPaused: boolean;
-  onPause: () => void;
-  onResume: () => void;
-  simulatedDate: Date;
-  elapsedSeconds: number;
-  timeSpeed: number;
-  onTimeSpeedChange: (speed: number) => void;
-  // Holdings data
-  holdingsData: Holding[];
+  // Mission session props (optional with defaults)
+  isPaused?: boolean;
+  onPause?: () => void;
+  onResume?: () => void;
+  simulatedDate?: Date;
+  elapsedSeconds?: number;
+  timeSpeed?: number;
+  onTimeSpeedChange?: (speed: number) => void;
+  // Holdings data (optional)
+  holdingsData?: Holding[];
   isLoadingHoldings?: boolean;
   accountId?: string;
 }
@@ -67,15 +67,15 @@ export function NewspaperMissionLayout({
   onBuy,
   onSell,
   holdings,
-  isPaused,
-  onPause,
-  onResume,
+  isPaused = false,
+  onPause = () => {},
+  onResume = () => {},
   simulatedDate,
-  elapsedSeconds,
-  timeSpeed,
-  onTimeSpeedChange,
-  holdingsData,
-  isLoadingHoldings,
+  elapsedSeconds = 0,
+  timeSpeed = 1,
+  onTimeSpeedChange = () => {},
+  holdingsData = [],
+  isLoadingHoldings = false,
   accountId,
 }: NewspaperMissionLayoutProps) {
   const [quantity, setQuantity] = useState<string>('1');
@@ -108,8 +108,8 @@ export function NewspaperMissionLayout({
     }
   };
 
-  // Format simulated date for newspaper
-  const dateString = simulatedDate.toLocaleDateString('en-US', {
+  // Format simulated date for newspaper (fallback to today if not provided)
+  const dateString = (simulatedDate || new Date()).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -131,22 +131,24 @@ export function NewspaperMissionLayout({
   return (
     <div className="bg-[#fcfbf9] dark:bg-stone-900 min-h-screen">
       {/* Top Control Bar */}
-      <MissionControlBar
-        isPaused={isPaused}
-        onPause={onPause}
-        onResume={onResume}
-        simulatedDate={simulatedDate}
-        elapsedSeconds={elapsedSeconds}
-        timeSpeed={timeSpeed}
-        onTimeSpeedChange={onTimeSpeedChange}
-        cashBalance={cashBalance}
-        portfolioValue={portfolioValue}
-        selectedStock={selectedStock}
-        onQuickBuy={handleQuickBuy}
-        onQuickSell={handleQuickSell}
-        canBuy={canBuy}
-        canSell={canSell}
-      />
+      {simulatedDate && (
+        <MissionControlBar
+          isPaused={isPaused}
+          onPause={onPause}
+          onResume={onResume}
+          simulatedDate={simulatedDate}
+          elapsedSeconds={elapsedSeconds}
+          timeSpeed={timeSpeed}
+          onTimeSpeedChange={onTimeSpeedChange}
+          cashBalance={cashBalance}
+          portfolioValue={portfolioValue}
+          selectedStock={selectedStock}
+          onQuickBuy={handleQuickBuy}
+          onQuickSell={handleQuickSell}
+          canBuy={canBuy}
+          canSell={canSell}
+        />
+      )}
       
       <main className="max-w-7xl mx-auto px-4 py-6 font-serif">
         {/* Newspaper Masthead */}

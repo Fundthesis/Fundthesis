@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 import { StockListItem } from "@/components/stocks/StockListItem";
 import { StockDetailModal } from "@/components/stocks/StockDetailModal";
 import { StockFilters } from "@/components/stocks/StockFilters";
@@ -40,6 +42,8 @@ const DEFAULT_FILTERS: FilterOptions = {
 const STOCKS_PER_PAGE = 50;
 
 export default function DiscoverPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const [selectedStockSymbol, setSelectedStockSymbol] = useState<string | null>(
     null
   );
@@ -47,6 +51,12 @@ export default function DiscoverPage() {
   const [timeframe, setTimeframe] = useState<"day" | "month" | "year">("month");
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
 
   // Get today's date formatted like a newspaper
   const today = new Date();

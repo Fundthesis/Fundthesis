@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -28,7 +29,14 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
 const STORAGE_KEY = 'enviro_sandboxes';
 
 export default function EnviroPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
 
   const [sandboxes, setSandboxes] = useState<Sandbox[]>([]);
   const [name, setName] = useState('');

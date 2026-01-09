@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useTheme } from "next-themes";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { User, LogOut, Settings, UserCircle, Moon, Sun } from 'lucide-react';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface HeaderProps {
   className?: string;
@@ -10,11 +11,16 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   const { setTheme, resolvedTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className={`bg-[#fcfbf9] dark:bg-[#2a2a2a] border-b-4 border-black/80 dark:border-stone-700 ${className}`}>
@@ -33,26 +39,30 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content className="min-w-[200px] bg-[#fcfbf9] dark:bg-stone-800 border border-black dark:border-stone-700 shadow-xl ml-4 mt-2 p-2 z-50 animate-in fade-in zoom-in-95" align="start">
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/dashboard" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DASHBOARD</Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/discover" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DISCOVER</Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/learn" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">LEARN</Link>
-                  </DropdownMenu.Item>
+                  {user ? (
+                    <>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/dashboard" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DASHBOARD</Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/discover" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">DISCOVER</Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/learn" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">LEARN</Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/enviro" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">ENVIRO</Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/missions" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MISSIONS</Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="outline-none">
+                        <Link href="/mentor" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MENTOR</Link>
+                      </DropdownMenu.Item>
+                    </>
+                  ) : null}
                   <DropdownMenu.Item className="outline-none">
                     <Link href="/insights" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">INSIGHTS</Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/enviro" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">ENVIRO</Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/missions" className="block px-4 py-3 text-lg font-serif font-bold border-b border-black/10 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MISSIONS</Link>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="outline-none">
-                    <Link href="/mentor" className="block px-4 py-3 text-lg font-serif font-bold hover:bg-black/5 dark:hover:bg-stone-700 text-black dark:text-stone-100">MENTOR</Link>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Portal>
@@ -61,18 +71,31 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
           {/* Desktop Navigation (Left Flank) */}
           <nav className="hidden lg:flex items-center justify-end space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 dark:text-stone-300 flex-1">
-            <Link href="/dashboard" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              DASHBOARD
-            </Link>
-            <Link href="/discover" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              DISCOVER
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  DASHBOARD
+                </Link>
+                <Link href="/discover" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  DISCOVER
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">DASHBOARD</span>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">DISCOVER</span>
+              </>
+            )}
             <Link href="/insights" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
               INSIGHTS
             </Link>
-            <Link href="/mentor" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              MENTOR
-            </Link>
+            {user ? (
+              <Link href="/mentor" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                MENTOR
+              </Link>
+            ) : (
+              <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">MENTOR</span>
+            )}
           </nav>
 
           {/* Centered Masthead Logo */}
@@ -84,18 +107,29 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
           {/* Desktop Navigation (Right Flank) */}
           <nav className="hidden lg:flex items-center justify-start space-x-6 text-xs font-serif font-bold tracking-wider text-black/80 dark:text-stone-300 flex-1">
-            <Link href="/learn" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              LEARN
-            </Link>
-            <Link href="/enviro" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              ENVIRO
-            </Link>
-            <Link href="/missions" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              MISSIONS
-            </Link>
-            <Link href="/achievements" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
-              ACHIEVEMENTS
-            </Link>
+            {user ? (
+              <>
+                <Link href="/learn" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  LEARN
+                </Link>
+                <Link href="/enviro" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  ENVIRO
+                </Link>
+                <Link href="/missions" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  MISSIONS
+                </Link>
+                <Link href="/biography" className="hover:text-black dark:hover:text-stone-100 hover:underline decoration-2 underline-offset-4">
+                  BIOGRAPHY
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">LEARN</span>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">ENVIRO</span>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">MISSIONS</span>
+                <span className="text-gray-400 dark:text-stone-600 cursor-not-allowed">BIOGRAPHY</span>
+              </>
+            )}
           </nav>
 
           {/* Right User Actions */}
@@ -160,7 +194,10 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
                   <DropdownMenu.Separator className="h-px bg-black/10 dark:bg-stone-700 my-1" />
 
-                  <DropdownMenu.Item className="group flex items-center px-3 py-2 text-sm font-serif font-bold text-red-700 dark:text-red-400 outline-none cursor-pointer hover:bg-red-600 dark:hover:bg-red-700 hover:text-white transition-colors">
+                  <DropdownMenu.Item
+                    onSelect={handleSignOut}
+                    className="group flex items-center px-3 py-2 text-sm font-serif font-bold text-red-700 dark:text-red-400 outline-none cursor-pointer hover:bg-red-600 dark:hover:bg-red-700 hover:text-white transition-colors"
+                  >
                     <LogOut className="w-4 h-4 mr-3" />
                     <span>Sign out</span>
                   </DropdownMenu.Item>

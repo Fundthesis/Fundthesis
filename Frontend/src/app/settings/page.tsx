@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { DisplaySettings } from "@/components/settings/DisplaySettings";
@@ -10,7 +11,15 @@ import { useAuth } from "@/providers/AuthProvider";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
+  
   const [isUploading, setIsUploading] = useState(false);
 
   const handleAvatarUpload = async () => {
@@ -54,43 +63,20 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900">
       <main className="max-w-7xl mx-auto px-4 py-6 font-serif">
         {/* Newspaper Masthead */}
-        <header className="border-b-8 border-black dark:border-stone-700 pb-6 mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <div className="flex items-baseline gap-4 mb-2">
-                <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-black dark:text-stone-100 uppercase leading-none">
-                  SETTINGS
-                </h1>
-                <div className="flex-1 border-t-4 border-black dark:border-stone-700 pt-2">
-                  <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-stone-400 font-bold">
-                    {dateString.toUpperCase()}
-                  </p>
-                </div>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-black dark:text-stone-100 italic mb-2">
-                Account & Preferences
-              </h2>
-              <p className="text-lg text-gray-700 dark:text-stone-300 leading-relaxed max-w-3xl">
-                Manage your profile, preferences, and account settings.
-              </p>
-            </div>
-            <div className="text-right hidden lg:block ml-8">
-              <div className="border-4 border-black dark:border-stone-700 p-4 bg-white dark:bg-stone-800">
-                <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-1">Member Since</p>
-                <p className="text-2xl font-black text-black dark:text-stone-100">
-                  {user?.createdAt ? formatDate(user.createdAt) : "Recently"}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-stone-400 mt-1">Status: Active</p>
-              </div>
-            </div>
-          </div>
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+            {dateString}
+          </p>
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
+            Settings
+          </h1>
         </header>
 
-        {/* Main Content - 3 Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Left Column - Profile Header */}
-          <div className="lg:col-span-3">
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+        {/* Newspaper Layout - Multi-column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column - Profile Section */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
               <ProfileHeader
                 name={user?.name || undefined}
                 email={user?.email || undefined}
@@ -103,81 +89,93 @@ export default function SettingsPage() {
               />
             </div>
 
-            {/* Account Information Card */}
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 mt-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
-              <h3 className="text-xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-wide border-b-2 border-black dark:border-stone-700 pb-2">
-                Account Details
+            {/* Account Details Box */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h3 className="text-sm font-black text-black dark:text-stone-100 mb-3 uppercase tracking-widest border-b-2 border-black dark:border-stone-700 pb-2">
+                Account Status
               </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-black/10 dark:border-stone-700">
-                  <span className="text-sm text-gray-600 dark:text-stone-400 font-serif">Name</span>
-                  <span className="text-sm font-bold text-black dark:text-stone-100 font-serif">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center py-1 border-b border-black/10 dark:border-stone-700">
+                  <span className="text-gray-600 dark:text-stone-400 font-serif">Name</span>
+                  <span className="font-bold text-black dark:text-stone-100 font-serif text-right">
                     {user?.name || "Not set"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-black/10 dark:border-stone-700">
-                  <span className="text-sm text-gray-600 dark:text-stone-400 font-serif">Email</span>
-                  <span className="text-sm font-bold text-black dark:text-stone-100 font-serif">
+                <div className="flex justify-between items-center py-1 border-b border-black/10 dark:border-stone-700">
+                  <span className="text-gray-600 dark:text-stone-400 font-serif">Email</span>
+                  <span className="font-bold text-black dark:text-stone-100 font-serif text-right text-xs break-all">
                     {user?.email || "Not set"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-600 dark:text-stone-400 font-serif">Status</span>
-                  <span className="px-3 py-1 bg-green-500 dark:bg-green-600 text-white text-xs font-bold uppercase tracking-widest">
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-gray-600 dark:text-stone-400 font-serif">Status</span>
+                  <span className="px-2 py-1 bg-green-500 dark:bg-green-600 text-white text-xs font-black uppercase tracking-widest">
                     Active
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Connected Accounts Box */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h3 className="text-sm font-black text-black dark:text-stone-100 mb-3 uppercase tracking-widest border-b-2 border-black dark:border-stone-700 pb-2">
+                Connected Accounts
+              </h3>
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center border-2 border-black dark:border-stone-700">
+                    <span className="text-white text-sm font-black">G</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-black dark:text-stone-100 font-serif">Google</div>
+                    <div className="text-xs text-gray-500 dark:text-stone-400 font-serif">
+                      {user?.email?.includes("@gmail.com")
+                        ? "Connected"
+                        : "Not connected"}
+                    </div>
+                  </div>
+                </div>
+                <button className="text-xs font-bold text-[#9DB38A] dark:text-green-400 hover:underline uppercase tracking-widest font-serif">
+                  {user?.email?.includes("@gmail.com")
+                    ? "Disconnect"
+                    : "Connect"}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Center Column - Settings Sections */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+          {/* Center & Right Columns - Settings Sections in Newspaper Style */}
+          <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Account Settings */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-tight border-b-4 border-black dark:border-stone-700 pb-2">
+                Account
+              </h2>
               <AccountSettings />
             </div>
 
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+            {/* Display Settings */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-tight border-b-4 border-black dark:border-stone-700 pb-2">
+                Display
+              </h2>
               <DisplaySettings />
             </div>
 
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+            {/* Notification Settings */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-tight border-b-4 border-black dark:border-stone-700 pb-2">
+                Notifications
+              </h2>
               <NotificationSettings />
             </div>
 
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+            {/* Privacy Settings */}
+            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+              <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-tight border-b-4 border-black dark:border-stone-700 pb-2">
+                Privacy
+              </h2>
               <PrivacySettings />
-            </div>
-          </div>
-
-          {/* Right Column - Connected Accounts */}
-          <div className="lg:col-span-3">
-            <div className="border-4 border-black dark:border-stone-700 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
-              <h3 className="text-xl font-black text-black dark:text-stone-100 mb-4 uppercase tracking-wide border-b-2 border-black dark:border-stone-700 pb-2">
-                Connected Accounts
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-3 border-b border-black/10 dark:border-stone-700">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center border-2 border-black dark:border-stone-700">
-                      <span className="text-white font-bold">G</span>
-                    </div>
-                    <div>
-                      <div className="font-bold text-black dark:text-stone-100 font-serif">Google</div>
-                      <div className="text-xs text-gray-500 dark:text-stone-400 font-serif">
-                        {user?.email?.includes("@gmail.com")
-                          ? "Connected"
-                          : "Not connected"}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="text-xs font-bold text-[#9DB38A] dark:text-green-400 hover:underline uppercase tracking-widest font-serif">
-                    {user?.email?.includes("@gmail.com")
-                      ? "Disconnect"
-                      : "Connect"}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>

@@ -7,9 +7,10 @@ import Header from '@/components/Header'
 import StockTicker from '@/components/stocks/StockTicker'
 import Footer from '@/components/Footer'
 import { Merriweather } from 'next/font/google'
-import { AuthProvider } from '@/providers/AuthProvider'
+import { AuthProvider, useAuth } from '@/providers/AuthProvider'
 import { QueryProvider } from '@/lib/providers/QueryProvider'
 import { ThemeProvider } from '@/providers/ThemeProvider'
+import { usePathname } from 'next/navigation'
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700', '900'],
@@ -18,12 +19,31 @@ const merriweather = Merriweather({
 })
 
 function AppFrame({ children }: { children: ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const pathname = usePathname();
+  
+  // Pages that should hide header/ticker when NOT logged in
+  const hideHeaderWhenNotLoggedIn = ['/', '/auth', '/insights'];
+  
+  // Pages that should always hide header/ticker (even when logged in)
+  const alwaysHideHeader = ['/auth'];
+  
+  const isHideHeaderWhenNotLoggedIn = hideHeaderWhenNotLoggedIn.includes(pathname || '');
+  const isAlwaysHideHeader = alwaysHideHeader.includes(pathname || '');
+  
+  // Show header/ticker if:
+  // - User is logged in: show everywhere except /auth
+  // - User is not logged in: hide on /, /auth, /insights (show nowhere)
+  const showHeaderAndTicker = user ? !isAlwaysHideHeader : false;
+
   return (
     <div className="min-h-screen bg-[#fcfbf9] dark:bg-stone-900 flex flex-col text-[#1a1a1a] dark:text-stone-100">
-      <Header />
-      <div className="h-8 overflow-hidden w-full">
-        <StockTicker />
-      </div>
+      {showHeaderAndTicker && <Header />}
+      {showHeaderAndTicker && (
+        <div className="h-8 overflow-hidden w-full">
+          <StockTicker />
+        </div>
+      )}
       <main className="grow">{children}</main>
       <Footer />
     </div>

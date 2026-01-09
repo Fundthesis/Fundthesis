@@ -9,7 +9,7 @@ export const navItems: NavItem[] = [
   { name: 'Insights', href: '/insights' },
   { name: 'Missions', href: '/missions' },
   { name: 'Debrief', href: '/debrief' },
-  { name: 'Achievements', href: '/achievements' },
+  { name: 'Biography', href: '/biography' },
   { name: 'Mentor', href: '/mentor' },
   { name: 'LearnThesis', href: '/learn' },
   { name: 'EnviroThesis', href: '/enviro' },

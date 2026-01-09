@@ -79,8 +79,8 @@ export default function DashboardPage() {
 
     // Layout: Newspaper Grid
     return (
-        <main className="min-h-screen bg-stone-50 dark:bg-stone-900 text-[#1a1a1a] dark:text-stone-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
+            <main className="max-w-7xl mx-auto px-4 py-8">
                 {/* Masthead */}
                 <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
                     <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
@@ -131,11 +131,6 @@ export default function DashboardPage() {
 
                         {/* Main Headline Section (Portfolio) */}
                         <section>
-                            <div className="mb-6 pb-4 border-b-4 border-black dark:border-stone-700">
-                                <h2 className="font-serif text-2xl font-black uppercase tracking-wider text-black dark:text-stone-100">
-                                    Market Chronicle
-                                </h2>
-                            </div>
                             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 border-b border-black/10 dark:border-stone-700 pb-8">
                                 <div>
                                     <h1 className="font-serif text-4xl font-black mb-2 text-black dark:text-stone-100">
@@ -216,8 +211,7 @@ export default function DashboardPage() {
                         )}
                     </section>
                 </div>
-
-            </div>
-        </main>
+            </main>
+        </div>
     );
 }

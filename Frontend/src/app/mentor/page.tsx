@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 import { getCoachResponse, CoachMessage, CoachResponse } from '@/lib/aiCoach';
 
 export default function MentorPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
     const [messages, setMessages] = useState<CoachMessage[]>([
         {
             role: 'coach',
@@ -18,13 +22,22 @@ export default function MentorPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    useEffect(() => {
+        if (!isAuthLoading && !user) {
+            router.replace('/auth');
+        }
+    }, [isAuthLoading, user, router]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        // Only scroll to bottom when new messages are added, not on initial load
+        if (messages.length > 1) {
+            scrollToBottom();
+        }
+    }, [messages.length]);
 
     const sendMessage = async () => {
         if (!input.trim() || isTyping) return;
@@ -93,15 +106,15 @@ export default function MentorPage() {
         <div className="h-[calc(100vh-140px)] bg-stone-50 dark:bg-stone-900 flex flex-col overflow-hidden">
             <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-4 flex flex-col h-full">
                 {/* Masthead */}
-                <header className="text-center border-b-2 border-black dark:border-stone-600 pb-4 mb-4 shrink-0">
-                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-1">
+                <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-4 shrink-0">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
                         {dateString}
                     </p>
-                    <h1 className="font-serif text-4xl font-black tracking-tight text-black dark:text-white">
+                    <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
                         The Editor&apos;s Desk
                     </h1>
-                    <p className="text-sm font-serif italic text-stone-500 dark:text-stone-400 mt-1">
-                        A Socratic Dialogue on Markets & Money
+                    <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+                        &ldquo;A Socratic Dialogue on Markets & Money&rdquo;
                     </p>
                 </header>
 

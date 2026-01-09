@@ -86,42 +86,67 @@ export default function InsightsPage() {
       try {
         setLoading(true);
         setError(null);
-        console.log("Fetching articles...");
         const response = await fetchArticles({
           limit: 50,
           offset: 0,
           orderBy: "published_at",
           orderDirection: "desc",
         });
-        console.log("Articles response:", response);
 
-        if (response.articles.length === 0) {
-          setError(null); // No error, just no articles
-          console.log("No articles found in response");
-        }
+        // Filter to only show today's articles
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-        setArticles(response.articles || []);
+        const todayArticles = (response.articles || []).filter((article) => {
+          const articleDate = new Date(article.published_at);
+          return articleDate >= today && articleDate < tomorrow;
+        });
+
+        // If no articles, that's fine - don't show an error
+        setArticles(todayArticles);
       } catch (err) {
+        // Only show error for non-401 errors
         const errorMessage =
           err instanceof Error
             ? err.message
             : "Failed to load news articles. Please try again later.";
-        setError(errorMessage);
-        console.error("Error loading news:", err);
+        // Don't set error or log for 401 - it's expected when not logged in
+        if (!errorMessage.includes('401') && !errorMessage.includes('Unauthorized')) {
+          setError(errorMessage);
+          console.error("Error loading news:", err);
+        }
         setArticles([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
     };
 
-    // Fetch market movers
+    // Fetch market movers - handle 401 gracefully
     const fetchMovers = async () => {
       try {
         const res = await fetch('/api/stocks?limit=6&orderBy=changePercent&orderDirection=desc');
+        if (res.status === 401) {
+          // Not logged in - that's okay, just don't show movers
+          setMovers([]);
+          return;
+        }
+        if (!res.ok) {
+          // Only log non-401 errors
+          console.error("Failed to fetch movers:", res.status, res.statusText);
+          setMovers([]);
+          return;
+        }
         const data = await res.json();
         if (data.stocks) setMovers(data.stocks);
       } catch (e) {
-        console.error("Failed to fetch movers", e);
+        // Silently fail for unauthorized - expected when not logged in
+        // Only log unexpected errors
+        if (!(e instanceof Error && (e.message.includes('401') || e.message.includes('Unauthorized')))) {
+          console.error("Failed to fetch movers", e);
+        }
+        setMovers([]);
       }
     };
 
