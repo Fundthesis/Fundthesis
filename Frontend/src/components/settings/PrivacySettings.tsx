@@ -61,37 +61,31 @@ export function PrivacySettings() {
   return (
     <div className="space-y-4">
         {/* Profile Visibility */}
-        <div className="flex items-center justify-between py-2">
-          <div>
-            <div className="font-medium text-gray-900 dark:text-stone-100">Profile Visibility</div>
-            <div className="text-sm text-gray-500 dark:text-stone-400">Control who can see your profile</div>
+        <div>
+          <div className="font-medium text-gray-900 dark:text-stone-100 mb-3">Profile Visibility</div>
+          <div className="space-y-3">
+            <div className="w-full px-4 py-3 border border-gray-300 dark:border-stone-600 bg-gray-100 dark:bg-stone-800 dark:text-stone-400 rounded-lg">
+              <span className="text-sm italic">Coming Soon</span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-stone-400">
+              Profile visibility controls will be available in a future update.
+            </p>
           </div>
-          <select 
-            value={profileVisibility}
-            onChange={(e) => handleVisibilityChange(e.target.value as "private" | "public")}
-            className="px-3 py-2 border border-gray-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9DB38A] dark:focus:ring-green-500"
-          >
-            <option value="private">Private</option>
-            <option value="public">Public</option>
-          </select>
         </div>
 
         {/* Data Sharing */}
-        <div className="flex items-center justify-between py-2 border-t border-gray-200 dark:border-stone-700">
+        <div className="pt-4 border-t border-gray-200 dark:border-stone-700">
           <div>
-            <div className="font-medium text-gray-900 dark:text-stone-100">Data Sharing</div>
-            <div className="text-sm text-gray-500 dark:text-stone-400">Allow anonymous usage data collection</div>
+            <div className="font-medium text-gray-900 dark:text-stone-100 mb-3">Data Sharing</div>
+            <div className="space-y-3">
+              <div className="w-full px-4 py-3 border border-gray-300 dark:border-stone-600 bg-gray-100 dark:bg-stone-800 dark:text-stone-400 rounded-lg">
+                <span className="text-sm italic">Coming Soon</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-stone-400">
+                Data sharing controls will be available in a future update.
+              </p>
+            </div>
           </div>
-          <button 
-            onClick={handleDataSharingToggle}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              dataSharing
-                ? "bg-[#9DB38A] dark:bg-green-600 text-white"
-                : "bg-gray-200 dark:bg-stone-700 text-gray-700 dark:text-stone-200"
-            } hover:opacity-90`}
-          >
-            {dataSharing ? "Enabled" : "Disabled"}
-          </button>
         </div>
 
         {/* Download Data */}
