@@ -19,7 +19,8 @@ model User {
   accounts           Account[]
   userAccounts       UserAccount[]
   simulationAccounts SimulationAccount[]
-  missionSessions   MissionSession[]
+  missionSessions    MissionSession[]
+  missionResults     MissionResult[]
   contentInteractions UserContentInteraction[]
 
   @@map("user")
@@ -248,6 +249,31 @@ model MissionSession {
 
   @@unique([userId, missionId])
   @@map("mission_sessions")
+  @@schema("public")
+}
+
+model MissionResult {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  missionId       String   @map("mission_id")
+  grade           String   // 'S' | 'A' | 'B' | 'C' | 'F'
+  difficulty      String   @default("medium") // 'easy' | 'medium' | 'hard'
+  returnPercent   Float    @map("return_percent")
+  maxDrawdown     Float    @map("max_drawdown")
+  initialBalance  Float    @map("initial_balance")
+  finalBalance    Float    @map("final_balance")
+  durationDays    Int      @map("duration_days")
+  totalTrades     Int      @map("total_trades")
+  trades          Json     @default("[]") // Array of trade objects
+  portfolioHistory Json    @default("[]") @map("portfolio_history") // Array of {day, value}
+  completedAt     DateTime @default(now()) @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, missionId])
+  @@index([userId, completedAt(sort: Desc)])
+  @@map("mission_results")
   @@schema("public")
 }
 

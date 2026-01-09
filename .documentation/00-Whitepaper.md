@@ -69,6 +69,17 @@ Before risking real money, users can practice in a simulated trading environment
 - **Mission-Based Learning:** Practical exercises that reinforce concepts
 - **Trading Debriefs:** Post-trade analysis explaining decisions and outcomes
 
+### Mission System (Historical Market Simulations)
+
+- **Immersive Scenarios:** Simulate historical market events (2008 crash, COVID-19, inflation surges)
+- **Read-and-React Gameplay:** Users analyze news articles and make trading decisions in real-time
+- **Difficulty Levels:**
+  - **Easy:** Clear visual indicators, obvious news hints
+  - **Medium:** Mixed signals, requires analysis
+  - **Hard:** Conflicting/misleading news, no visual aids
+- **Behavioral Analysis:** Detects patterns like panic selling, FOMO trading, overtrading
+- **Performance Grading:** S/A/B/C/F grades based on returns, risk management, and diversification
+
 ### User Experience
 
 - **Modern Interface:** Clean, newspaper-inspired design with dark mode support
