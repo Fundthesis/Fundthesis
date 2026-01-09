@@ -19,16 +19,12 @@ const merriweather = Merriweather({
 })
 
 function AppFrame({ children }: { children: ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
-  
-  // Pages that should hide header/ticker when NOT logged in
-  const hideHeaderWhenNotLoggedIn = ['/', '/auth', '/insights'];
   
   // Pages that should always hide header/ticker (even when logged in)
   const alwaysHideHeader = ['/auth'];
   
-  const isHideHeaderWhenNotLoggedIn = hideHeaderWhenNotLoggedIn.includes(pathname || '');
   const isAlwaysHideHeader = alwaysHideHeader.includes(pathname || '');
   
   // Show header/ticker if:

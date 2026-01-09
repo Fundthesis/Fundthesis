@@ -178,9 +178,9 @@ export function MissionNewsFeed({ mission }: MissionNewsFeedProps) {
                 {article.source && (
                   <span className="font-semibold uppercase tracking-wide">{article.source}</span>
                 )}
-                {article.publishedAt && (
-                  <span>
-                    {new Date(article.publishedAt).toLocaleDateString('en-US', {
+                 {article.published_at && (
+                   <span>
+                     {new Date(article.published_at).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',

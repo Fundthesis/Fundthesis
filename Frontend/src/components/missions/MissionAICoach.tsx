@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Loader2, MessageSquare } from 'lucide-react';
+import { Send, Bot, Loader2 } from 'lucide-react';
 import { Mission } from '@/data/missions';
 
 interface MissionAICoachProps {
@@ -9,7 +9,14 @@ interface MissionAICoachProps {
   portfolioContext?: {
     cashBalance: number;
     holdings: { [symbol: string]: number };
-    transactions: any[];
+    transactions: Array<{
+      id: string;
+      ticker: string;
+      side: 'buy' | 'sell';
+      price: number;
+      quantity: number;
+      executedAt: Date;
+    }>;
     totalValue: number;
   };
 }

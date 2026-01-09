@@ -4,26 +4,12 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
-const STORAGE_KEY_LANGUAGE = 'ft_language';
-const STORAGE_KEY_CURRENCY = 'ft_currency';
-const STORAGE_KEY_DATE_FORMAT = 'ft_date_format';
-
 export function DisplaySettings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [language, setLanguage] = useState("en");
-  const [currency, setCurrency] = useState("USD");
-  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
 
   useEffect(() => {
     setMounted(true);
-    // Load saved preferences
-    const savedLanguage = localStorage.getItem(STORAGE_KEY_LANGUAGE);
-    if (savedLanguage) setLanguage(savedLanguage);
-    const savedCurrency = localStorage.getItem(STORAGE_KEY_CURRENCY);
-    if (savedCurrency) setCurrency(savedCurrency);
-    const savedDateFormat = localStorage.getItem(STORAGE_KEY_DATE_FORMAT);
-    if (savedDateFormat) setDateFormat(savedDateFormat);
   }, []);
 
   return (

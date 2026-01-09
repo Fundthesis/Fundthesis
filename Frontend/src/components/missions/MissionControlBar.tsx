@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Play, Pause, TrendingUp, TrendingDown, Clock, DollarSign } from 'lucide-react';
+import React from 'react';
+import { Play, Pause, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 
 interface MissionControlBarProps {
   isPaused: boolean;

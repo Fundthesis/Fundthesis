@@ -8,6 +8,8 @@ export function PrivacySettings() {
 
   const handleDownloadData = () => {
     // Collect user data from localStorage
+    const profileVisibility = localStorage.getItem('ft_profile_visibility') || 'private';
+    const dataSharing = localStorage.getItem('ft_data_sharing') === 'true';
     const userData = {
       profileVisibility,
       dataSharing,

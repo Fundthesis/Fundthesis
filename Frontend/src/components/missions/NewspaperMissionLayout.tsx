@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Mission } from '@/data/missions';
-import { Search, TrendingUp, TrendingDown, DollarSign, Target, Newspaper, MessageSquare } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { MissionContextPanel } from './MissionContextPanel';
 import { MissionNewsFeed } from './MissionNewsFeed';
 import { MissionAICoach } from './MissionAICoach';
@@ -51,7 +51,6 @@ interface NewspaperMissionLayoutProps {
   // Holdings data (optional)
   holdingsData?: Holding[];
   isLoadingHoldings?: boolean;
-  accountId?: string;
 }
 
 export function NewspaperMissionLayout({
@@ -76,7 +75,6 @@ export function NewspaperMissionLayout({
   onTimeSpeedChange = () => {},
   holdingsData = [],
   isLoadingHoldings = false,
-  accountId,
 }: NewspaperMissionLayoutProps) {
   const [quantity, setQuantity] = useState<string>('1');
   const [showTradingPanel, setShowTradingPanel] = useState(false);
@@ -91,8 +89,8 @@ export function NewspaperMissionLayout({
   }, [selectedStock]);
 
   const selectedHoldings = selectedStock ? (holdings[selectedStock.symbol] || 0) : 0;
-  const canBuy = selectedStock && cashBalance >= (selectedStock.price * parseFloat(quantity || '0'));
-  const canSell = selectedStock && selectedHoldings >= parseFloat(quantity || '0');
+  const canBuy = !!(selectedStock && cashBalance >= (selectedStock.price * parseFloat(quantity || '0')));
+  const canSell = !!(selectedStock && selectedHoldings >= parseFloat(quantity || '0'));
 
   const handleTrade = (action: 'buy' | 'sell') => {
     if (!selectedStock || !quantity) return;

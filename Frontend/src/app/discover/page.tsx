@@ -6,7 +6,6 @@ import { useAuth } from "@/providers/AuthProvider";
 import { StockListItem } from "@/components/stocks/StockListItem";
 import { StockDetailModal } from "@/components/stocks/StockDetailModal";
 import { StockFilters } from "@/components/stocks/StockFilters";
-import { PageHeader } from "@/components/cards/PageHeader";
 import {
   useStocks,
   useStockMetadata,
@@ -88,7 +87,6 @@ export default function DiscoverPage() {
   const stocks = useMemo(() => stocksData?.stocks || [], [stocksData?.stocks]);
   const totalStocks = stocksData?.total || 0;
   const totalPages = Math.ceil(totalStocks / STOCKS_PER_PAGE);
-  const hasMore = stocksData?.hasMore || false;
 
   // Apply client-side filters and sorting
   const filteredAndSortedStocks = useMemo(() => {

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
-    if (!user) {
+    const { session, error } = await requireAuth();
+    if (error || !session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const user = session.user;
 
     const { searchParams } = new URL(request.url);
     const missionId = searchParams.get('missionId');
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'missionId is required' }, { status: 400 });
     }
 
-    const session = await prisma.missionSession.findUnique({
+    const missionSession = await prisma.missionSession.findUnique({
       where: {
         userId_missionId: {
           userId: user.id,
@@ -38,29 +39,29 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!session) {
+    if (!missionSession) {
       return NextResponse.json({ session: null });
     }
 
     return NextResponse.json({
       session: {
-        id: session.id,
-        missionId: session.missionId,
-        accountId: session.accountId,
-        simulatedDate: session.simulatedDate,
-        isPaused: session.isPaused,
-        timeSpeed: session.timeSpeed,
-        elapsedSeconds: session.elapsedSeconds,
+        id: missionSession.id,
+        missionId: missionSession.missionId,
+        accountId: missionSession.accountId,
+        simulatedDate: missionSession.simulatedDate,
+        isPaused: missionSession.isPaused,
+        timeSpeed: missionSession.timeSpeed,
+        elapsedSeconds: missionSession.elapsedSeconds,
         account: {
-          id: session.account.id,
-          balance: session.account.balance.toString(),
-          positions: session.account.positions.map((p) => ({
+          id: missionSession.account.id,
+          balance: missionSession.account.balance.toString(),
+          positions: missionSession.account.positions.map((p) => ({
             id: p.id,
             ticker: p.ticker,
             quantity: p.quantity.toString(),
             avgPrice: p.avgPrice.toString(),
           })),
-          trades: session.account.trades.map((t) => ({
+          trades: missionSession.account.trades.map((t) => ({
             id: t.id,
             ticker: t.ticker,
             side: t.side,
@@ -82,10 +83,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
-    if (!user) {
+    const { session, error } = await requireAuth();
+    if (error || !session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const user = session.user;
 
     const body = await request.json();
     const { missionId, accountId, simulatedDate, isPaused, timeSpeed, elapsedSeconds } = body;
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await prisma.missionSession.upsert({
+    const missionSession = await prisma.missionSession.upsert({
       where: {
         userId_missionId: {
           userId: user.id,
@@ -130,13 +132,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       session: {
-        id: session.id,
-        missionId: session.missionId,
-        accountId: session.accountId,
-        simulatedDate: session.simulatedDate,
-        isPaused: session.isPaused,
-        timeSpeed: session.timeSpeed,
-        elapsedSeconds: session.elapsedSeconds,
+        id: missionSession.id,
+        missionId: missionSession.missionId,
+        accountId: missionSession.accountId,
+        simulatedDate: missionSession.simulatedDate,
+        isPaused: missionSession.isPaused,
+        timeSpeed: missionSession.timeSpeed,
+        elapsedSeconds: missionSession.elapsedSeconds,
       },
     });
   } catch (error) {
@@ -150,10 +152,11 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
-    if (!user) {
+    const { session, error } = await requireAuth();
+    if (error || !session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const user = session.user;
 
     const body = await request.json();
     const { missionId, simulatedDate, isPaused, timeSpeed, elapsedSeconds } = body;
@@ -165,7 +168,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const session = await prisma.missionSession.update({
+    const missionSession = await prisma.missionSession.update({
       where: {
         userId_missionId: {
           userId: user.id,
@@ -182,12 +185,12 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       session: {
-        id: session.id,
-        missionId: session.missionId,
-        simulatedDate: session.simulatedDate,
-        isPaused: session.isPaused,
-        timeSpeed: session.timeSpeed,
-        elapsedSeconds: session.elapsedSeconds,
+        id: missionSession.id,
+        missionId: missionSession.missionId,
+        simulatedDate: missionSession.simulatedDate,
+        isPaused: missionSession.isPaused,
+        timeSpeed: missionSession.timeSpeed,
+        elapsedSeconds: missionSession.elapsedSeconds,
       },
     });
   } catch (error) {

@@ -15,9 +15,6 @@ import {
   Transaction,
 } from "@/components/enviro/TransactionHistory";
 import { getMissionById, type Mission } from "@/data/missions";
-import { MissionContextPanel } from "@/components/missions/MissionContextPanel";
-import { MissionNewsFeed } from "@/components/missions/MissionNewsFeed";
-import { MissionAICoach } from "@/components/missions/MissionAICoach";
 import { NewspaperMissionLayout } from "@/components/missions/NewspaperMissionLayout";
 
 interface StockDetail {
@@ -475,7 +472,7 @@ function PortfolioDashboardPageContent() {
     } catch (e) {
       console.warn("Failed to load sandbox from localStorage", e);
     }
-  }, [searchParams]);
+  }, [searchParams, mission]);
 
   // Function to generate mock chart data
   const generateChartData = useCallback((
