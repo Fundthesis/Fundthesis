@@ -46,13 +46,13 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
   const label = moduleIndex === totalModules ? 'X' : String(moduleIndex);
 
   return (
-    <div className="w-full bg-white border-b-2 border-black">
+    <div className="w-full bg-white dark:bg-stone-800 border-b-2 border-black dark:border-stone-600">
       <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <div>
           {!isFirst ? (
             <Link
               href={`/lessonmodules/${prev}`}
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+              className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white transition-colors"
               aria-label={`Go to chapter ${prev}`}
             >
               Previous Chapter
@@ -60,7 +60,7 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
           ) : (
             <Link
               href="/learn"
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+              className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white transition-colors"
             >
               Back to Ledger
             </Link>
@@ -68,14 +68,14 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
         </div>
 
         <div className="text-center">
-          <p className="text-xs uppercase tracking-widest text-stone-400">
+          <p className="text-xs uppercase tracking-widest text-stone-400 dark:text-stone-500">
             Chapter {label}
           </p>
-          <h2 className="font-serif text-lg font-bold text-black">
+          <h2 className="font-serif text-lg font-bold text-black dark:text-white">
             {title ?? `Chapter ${label}`}
           </h2>
           {moduleIndex !== 10 && (
-            <p className="text-xs text-stone-500 mt-1">
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
               {counts.answered} of {counts.total} questions answered
             </p>
           )}
@@ -85,7 +85,7 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
           {next <= totalModules ? (
             <Link
               href={`/lessonmodules/${next}`}
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+              className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white transition-colors"
               aria-label={`Go to chapter ${next}`}
             >
               Next Chapter
@@ -93,7 +93,7 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
           ) : (
             <Link
               href="/learn"
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+              className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white transition-colors"
             >
               Complete
             </Link>

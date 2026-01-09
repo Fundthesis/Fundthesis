@@ -81,18 +81,18 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
           showResult={showResult}
           locked={!!(showResult && showResult.correct)}
         />
-        <div className="flex items-center justify-between border-t border-stone-200 pt-4">
+        <div className="flex items-center justify-between border-t border-stone-200 dark:border-stone-700 pt-4">
           <div>
             {canGoBack && (
               <button
                 onClick={previous}
-                className="text-xs uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+                className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 Previous Question
               </button>
             )}
           </div>
-          <div className="text-xs text-stone-500">
+          <div className="text-xs text-stone-500 dark:text-stone-400">
             Question {current + 1} of {questions.length}
           </div>
           <div>
@@ -100,8 +100,8 @@ const Quiz: React.FC<Props> = ({ moduleIndex, questions }) => {
               onClick={next}
               disabled={!canGoNext}
               className={`text-xs uppercase tracking-widest transition-colors ${canGoNext
-                  ? 'text-stone-500 hover:text-black'
-                  : 'text-stone-300 cursor-not-allowed'
+                  ? 'text-stone-500 dark:text-stone-400 hover:text-black dark:hover:text-white'
+                  : 'text-stone-300 dark:text-stone-600 cursor-not-allowed'
                 }`}
             >
               Next Question
