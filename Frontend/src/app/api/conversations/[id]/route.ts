@@ -104,7 +104,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verify ownership and update with retry logic
-    let conversation;
+    let conversation: { count: number } | undefined;
     let retries = 3;
     while (retries > 0) {
       try {
@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    if (conversation.count === 0) {
+    if (!conversation || conversation.count === 0) {
       return NextResponse.json(
         { error: 'Conversation not found' },
         { status: 404 }
@@ -163,7 +163,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     // Verify ownership and delete (cascade deletes messages) with retry logic
-    let result;
+    let result: { count: number } | undefined;
     let retries = 3;
     while (retries > 0) {
       try {
@@ -193,7 +193,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    if (result.count === 0) {
+    if (!result || result.count === 0) {
       return NextResponse.json(
         { error: 'Conversation not found' },
         { status: 404 }
