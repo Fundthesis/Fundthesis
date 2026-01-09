@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   };
 
   return (
-    <header className={`bg-[#fcfbf9] dark:bg-[#2a2a2a] border-b-4 border-black/80 dark:border-stone-700 ${className}`}>
+    <header className={`sticky top-0 z-50 bg-[#fcfbf9] dark:bg-[#2a2a2a] border-b-4 border-black/80 dark:border-stone-700 ${className}`}>
       {/* Stock Ticker removed from here to be placed in layout */}
 
       <div className="max-w-7xl mx-auto px-4 py-4">
