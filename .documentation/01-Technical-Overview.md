@@ -70,8 +70,8 @@ FundThesis follows a modern, cloud-native architecture with clear separation bet
   - Transformers/Hugging Face (FinBERT for sentiment)
   - Sentence-Transformers (embeddings)
 - **NLP Libraries:**
-  - LangChain (RAG implementation)
-  - ChromaDB (vector database)
+  - Custom RAG pipeline (rag/ module)
+  - Text cleaning and chunking utilities
 - **Data Processing:**
   - Pandas, NumPy
   - yfinance (stock data)
@@ -88,7 +88,11 @@ FundThesis follows a modern, cloud-native architecture with clear separation bet
 - **Stock Data:** yFinance, Alpha Vantage, Twelve Data
 - **News:** Finnhub API, RSS feeds (BusinessWire, PR Newswire)
 - **Authentication:** Better-Auth (self-hosted)
-- **AI/LLM:** Azure OpenAI (for RAG and insights)
+- **AI/LLM Services:**
+  - Azure OpenAI (GPT-4o Mini for generation, text-embedding-ada-002 for embeddings)
+  - Cohere Embed via Azure AI Foundry (vector embeddings)
+  - Cohere Rerank via Azure AI Foundry (document reranking)
+  - Azure Document Intelligence (document parsing)
 
 ---
 
@@ -139,18 +143,25 @@ FundThesis follows a modern, cloud-native architecture with clear separation bet
 - `/api/news` - News articles
 - `/api/insights` - AI insights
 - `/api/sentiment` - Sentiment analysis
-- `/api/coach` - AI coaching/education
+- `/api/coach` - AI Coach with RAG-enhanced responses
+- `/api/education/explain` - Concept explanation with Socratic method
+- `/api/education/socratic` - Socratic guidance for learning
+- `/api/education/adaptive-learning` - Personalized learning recommendations
+- `/api/education/mentor` - Full AI mentor chat interface
+- `/api/tracking/interaction` - User interaction tracking for personalization
+- `/api/schema` - LLM-driven schema management
 - `/api/mission/results` - Mission completion results (save/retrieve)
 
 #### 3. **Scheduled Jobs**
 - **Forecasting Job:** Daily stock price predictions
 - **Scraper Job:** News article collection (every 4 hours)
 - **Sentiment Job:** Article sentiment analysis (every 4 hours)
+- **RAG Indexing:** Manual article/module embedding via `python -m rag.index_articles` and `python -m rag.index_modules`
 
 #### 4. **Machine Learning Services**
 - XGBoost forecasting models
 - FinBERT sentiment classifier
-- RAG pipeline (in development)
+- RAG pipeline (fully operational with Azure AI Foundry)
 
 ---
 

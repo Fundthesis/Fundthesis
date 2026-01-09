@@ -116,9 +116,13 @@ FundThesis leverages cutting-edge technology to deliver its capabilities:
 
 - **Machine Learning:** XGBoost for price forecasting, FinBERT for sentiment analysis
 - **Natural Language Processing:** Automated text extraction, summarization, and understanding
-- **Real-Time Data:** Integration with multiple financial data providers
-- **Cloud Infrastructure:** Scalable, reliable hosting on Azure
-- **Modern Web Technologies:** Fast, responsive user interface built with React and Next.js
+- **RAG Pipeline:** Retrieval-Augmented Generation for grounded, source-cited AI responses
+  - Cohere Embed via Azure AI Foundry for semantic embeddings
+  - Cohere Rerank for intelligent result refinement
+  - Azure OpenAI GPT-4o Mini for response generation
+- **Real-Time Data:** Integration with multiple financial data providers (yFinance, Finnhub)
+- **Cloud Infrastructure:** Scalable, reliable hosting on Azure (Static Web Apps, App Service, PostgreSQL)
+- **Modern Web Technologies:** Next.js 15, React 19, TypeScript, Tailwind CSS v4
 
 ---
 

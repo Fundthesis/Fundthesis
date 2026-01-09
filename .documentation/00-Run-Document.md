@@ -114,6 +114,16 @@ python -m jobs.scraper.runner
 python -m jobs.sentiment.runner
 ```
 
+**RAG Article Indexing (generate embeddings for articles):**
+```bash
+python -m rag.index_articles
+```
+
+**RAG Module Indexing (index learning modules for RAG):**
+```bash
+python -m rag.index_modules
+```
+
 ---
 
 ## GitHub Actions Workflows
@@ -259,6 +269,22 @@ FINNHUB_KEY="your-finnhub-api-key"
 FRONTEND_URL="http://localhost:3000"
 ENV="development"
 DEBUG="true"
+
+# Azure OpenAI (for LLM generation)
+AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2024-12-01-preview"
+AZURE_OPENAI_API_KEY="your-api-key"
+AZURE_OPENAI_DEPLOYMENT_NAME="PrimaryParser"
+AZURE_OPENAI_API_VERSION="2024-12-01-preview"
+
+# Azure AI Foundry - Embeddings (Cohere Embed)
+AZURE_EMBED_ENDPOINT="https://your-resource.services.ai.azure.com/openai/v1"
+AZURE_EMBED_KEY="your-embed-api-key"
+AZURE_EMBED_MODEL_NAME="RagEmbed"
+
+# Azure AI Foundry - Rerank (Cohere Rerank)
+AZURE_RERANK_ENDPOINT="https://your-resource.services.ai.azure.com/models/rerank-v3.5"
+AZURE_RERANK_KEY="your-rerank-api-key"
+AZURE_RERANK_MODEL_NAME="RagRank"
 ```
 
 ### Production Secrets

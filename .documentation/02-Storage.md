@@ -184,6 +184,50 @@ model Trade {
 
 **Purpose:** Historical trade records for analysis and debriefs
 
+#### LearningModule Model
+```prisma
+model LearningModule {
+  id             String   @id @default(uuid())
+  moduleNumber   Int      @map("module_number")
+  sectionIndex   Int?     @map("section_index")
+  sectionHeading String?  @map("section_heading")
+  title          String
+  content        String
+  chunkType      String   @map("chunk_type")  // 'intro', 'purpose', 'section', 'key_points'
+  urlPath        String?  @map("url_path")
+  embedding      Unsupported("vector(1536)")?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+}
+```
+
+**Purpose:** Stores chunked learning module content for RAG retrieval
+
+**Key Features:**
+- Extracted from TypeScript content files
+- Chunked by section for granular retrieval
+- Vector embeddings for semantic search
+- Links to frontend module URLs
+
+#### UserInteraction Model
+```prisma
+model UserInteraction {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  contentType String   @map("content_type")  // 'article', 'module', 'coach_query'
+  contentId   String?  @map("content_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+}
+```
+
+**Purpose:** Tracks user interactions for personalized RAG context
+
+**Key Features:**
+- Records articles viewed, modules accessed, coach queries
+- Metadata stores additional context (headlines, titles, queries)
+- Used to personalize AI Coach responses
+
 ---
 
 ## Storage Technologies
@@ -207,17 +251,21 @@ model Trade {
 **Purpose:** Vector similarity search for RAG (Retrieval-Augmented Generation)
 
 **Use Cases:**
-- Store article embeddings (1536-dimensional vectors)
-- Semantic search for similar articles
-- Find relevant context for AI queries
+- Store article embeddings (1536-dimensional vectors from Azure OpenAI)
+- Store learning module chunk embeddings
+- Semantic search for similar articles and educational content
+- Find relevant context for AI Coach queries
 
 **Implementation:**
 ```sql
--- Example: Article embeddings stored as vector(1536)
+-- Article embeddings stored as vector(1536)
+embedding vector(1536)
+
+-- Learning module embeddings
 embedding vector(1536)
 ```
 
-**Status:** Extension installed, embeddings stored, but RAG search not fully implemented yet
+**Status:** ✅ Fully operational - powers the AI Coach RAG pipeline
 
 ### Full-Text Search
 
@@ -401,9 +449,15 @@ async def store_article(article_data):
 
 ### Vector Database
 
-**Current:** pgvector extension in PostgreSQL
+**Current:** pgvector extension in PostgreSQL (✅ Fully operational)
 
-**Future Options:**
+- Powers AI Coach RAG pipeline
+- Stores 1536-dimensional embeddings from Azure OpenAI
+- Supports both article and learning module search
+- Uses cosine similarity for semantic matching
+- Cohere Rerank for result refinement
+
+**Future Options:****
 - Dedicated vector database (Pinecone, Weaviate)
 - Better performance for large-scale semantic search
 - Specialized vector operations

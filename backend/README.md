@@ -33,9 +33,22 @@ backend/
 │   ├── stock_data.py     # yfinance wrappers
 │   └── stock_symbols.json  # Tracked stock symbols
 ├── rag/                   # RAG (Retrieval Augmented Generation) module
-│   ├── rag.py           # RAG implementation
-│   ├── llm.py           # LLM integration
-│   └── vector.py        # Vector database operations
+│   ├── rag_pipeline.py   # Main RAG orchestrator
+│   ├── rag.py           # Base RAG implementation
+│   ├── education_rag.py # Education-focused RAG with Socratic method
+│   ├── embeddings.py    # Azure OpenAI embedding service
+│   ├── vector_search.py # pgvector search operations
+│   ├── rerank.py        # Cohere Rerank integration
+│   ├── llm.py           # Azure OpenAI LLM client
+│   ├── chunking.py      # Document chunking utilities
+│   ├── text_cleaning.py # Text preprocessing
+│   ├── query_translation.py # Query augmentation
+│   ├── learning_modules.py  # TypeScript content extraction
+│   ├── index_articles.py    # Article embedding script
+│   └── index_modules.py     # Module embedding script
+├── services/              # Business logic services
+│   ├── user_context_service.py  # User interaction tracking
+│   └── schema_manager.py        # LLM-driven schema management
 ├── main.py               # FastAPI application entry point
 └── schema.prisma        # Prisma database schema
 ```
@@ -166,6 +179,28 @@ Once running, visit:
 - `GET /api/insights/ai-recommendations` - Generate AI investment recommendations
 - `GET /api/insights/both` - Get both summary and recommendations
 
+### AI Coach API (`/api/coach`)
+
+- `POST /api/coach` - Query the AI Coach with RAG-enhanced responses
+  - Request body: `{ message, context?, conversation_history?, userId? }`
+  - Returns: `{ message, citations, sources, suggested_actions? }`
+
+### Education API (`/api/education`)
+
+- `POST /api/education/explain` - Explain a concept using Socratic method
+  - Request body: `{ concept, module_context?, use_analogy? }`
+- `POST /api/education/socratic` - Get Socratic guidance for a question
+  - Request body: `{ question, student_context? }`
+- `POST /api/education/adaptive-learning` - Get personalized learning recommendations
+  - Request body: `{ user_performance, current_behavior? }`
+- `POST /api/education/mentor` - Full AI mentor chat interface
+
+### User Tracking API (`/api/tracking`)
+
+- `POST /api/tracking/interaction` - Track user content interaction
+  - Request body: `{ userId, contentType, contentId?, metadata? }`
+- `GET /api/tracking/health` - Tracking service health check
+
 ## ⏰ Cron Jobs
 
 The backend includes three scheduled jobs that should be run via GitHub Actions or a cron scheduler:
@@ -206,6 +241,28 @@ python -m jobs.sentiment.runner
 
 **Schedule:** Every 4 hours (after scraper job)
 
+## 🔍 RAG Indexing
+
+The RAG (Retrieval-Augmented Generation) system requires indexing articles and learning modules:
+
+### Index Articles
+
+Generate embeddings for articles without embeddings:
+
+```bash
+python -m rag.index_articles
+```
+
+### Index Learning Modules
+
+Extract and index learning module content from TypeScript files:
+
+```bash
+python -m rag.index_modules
+```
+
+**Note:** These are manual commands. Run after adding new content or when embeddings need refreshing.
+
 ## 🧪 Testing
 
 Run tests (when available):
@@ -219,12 +276,13 @@ pytest
 Key dependencies include:
 
 - `fastapi` - Web framework
-- `prisma` - Database ORM
+- `prisma` - Database ORM (Python client)
 - `yfinance` - Stock data fetching
 - `xgboost` - Forecasting model
 - `transformers` - FinBERT sentiment model
 - `beautifulsoup4`, `trafilatura`, `newspaper3k` - Web scraping
-- `langchain-ollama` - RAG implementation
+- `openai` - Azure OpenAI SDK for LLM generation
+- `httpx` - Async HTTP client for Azure AI Foundry APIs
 
 See `requirements.txt` for complete list.
 
