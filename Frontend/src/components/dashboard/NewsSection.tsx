@@ -1,5 +1,5 @@
 import React from 'react'
-import { NewsCard } from '@/components/ui/NewsCard'
+import { NewsCard } from '@/components/news/NewsCard'
 
 interface Stock {
   symbol: string
@@ -29,7 +29,7 @@ export function NewsSection({ newsItems, className = "" }: NewsSectionProps) {
           source={news.source}
           text={news.text}
           stocks={news.stocks}
-          className="bg-white p-6 border border-black/10 shadow-sm"
+          className="bg-white dark:bg-stone-800 p-6 border border-black/10 dark:border-stone-700 shadow-sm"
         />
       ))}
     </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { StockCard } from "@/components/discover/StockCard";
-import { StockDetailModal } from "@/components/discover/StockDetailModal";
-import { StockFilters } from "@/components/discover/StockFilters";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+import { StockListItem } from "@/components/stocks/StockListItem";
+import { StockDetailModal } from "@/components/stocks/StockDetailModal";
+import { StockFilters } from "@/components/stocks/StockFilters";
 import {
   useStocks,
   useStockMetadata,
@@ -37,27 +38,121 @@ const DEFAULT_FILTERS: FilterOptions = {
   sortOrder: "desc",
 };
 
+const STOCKS_PER_PAGE = 50;
+
 export default function DiscoverPage() {
-  const [filteredStocks, setFilteredStocks] = useState<Stock[]>([]);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const [selectedStockSymbol, setSelectedStockSymbol] = useState<string | null>(
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [timeframe, setTimeframe] = useState<"day" | "month" | "year">("month");
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch stocks list and metadata using React Query
-  // Pass search to backend for server-side filtering
-  const { data: stocksData, isLoading: isLoadingStocks } = useStocks({
-    limit: 100,
-    offset: 0,
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
+
+  // Get today's date formatted like a newspaper
+  const today = new Date();
+  const dateString = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  // Reset to page 1 when filters change
+  const handleFiltersChange = useCallback((newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  }, []);
+
+  // Calculate offset for pagination
+  const offset = (currentPage - 1) * STOCKS_PER_PAGE;
+
+  // Fetch stocks with pagination
+  const { data: stocksData, isLoading } = useStocks({
+    limit: STOCKS_PER_PAGE,
+    offset: offset,
     search: filters.search || undefined,
   });
+  
   const { data: metadataData } = useStockMetadata();
 
-  // Memoize stocks to prevent unnecessary re-renders
   const stocks = useMemo(() => stocksData?.stocks || [], [stocksData?.stocks]);
-  const isLoading = isLoadingStocks;
+  const totalStocks = stocksData?.total || 0;
+  const totalPages = Math.ceil(totalStocks / STOCKS_PER_PAGE);
+
+  // Apply client-side filters and sorting
+  const filteredAndSortedStocks = useMemo(() => {
+    let filtered = [...stocks];
+
+    // Apply sector filter
+    if (filters.sector) {
+      filtered = filtered.filter((stock) => stock.sector === filters.sector);
+    }
+
+    // Apply industry filter
+    if (filters.industry) {
+      filtered = filtered.filter(
+        (stock) => stock.industry === filters.industry
+      );
+    }
+
+    // Apply price range filter
+    if (filters.minPrice) {
+      const minPrice = parseFloat(filters.minPrice);
+      if (!isNaN(minPrice)) {
+        filtered = filtered.filter((stock) => stock.price >= minPrice);
+      }
+    }
+    if (filters.maxPrice) {
+      const maxPrice = parseFloat(filters.maxPrice);
+      if (!isNaN(maxPrice)) {
+        filtered = filtered.filter((stock) => stock.price <= maxPrice);
+      }
+    }
+
+    // Apply market cap filter
+    if (filters.minMarketCap) {
+      const minCap = parseFloat(filters.minMarketCap) * 1_000_000;
+      if (!isNaN(minCap)) {
+        filtered = filtered.filter((stock) => (stock.marketCap || 0) >= minCap);
+      }
+    }
+    if (filters.maxMarketCap) {
+      const maxCap = parseFloat(filters.maxMarketCap) * 1_000_000;
+      if (!isNaN(maxCap)) {
+        filtered = filtered.filter((stock) => (stock.marketCap || 0) <= maxCap);
+      }
+    }
+
+    // Sort stocks
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (filters.sortBy) {
+        case "price":
+          comparison = a.price - b.price;
+          break;
+        case "change":
+          comparison = a.changePercent - b.changePercent;
+          break;
+        case "name":
+          comparison = (a.symbol || "").localeCompare(b.symbol || "");
+          break;
+        default:
+          comparison = a.changePercent - b.changePercent;
+      }
+      return filters.sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [stocks, filters]);
 
   // Extract sectors and industries from metadata or stocks
   const sectors = useMemo(() => {
@@ -101,74 +196,25 @@ export default function DiscoverPage() {
   
   const isLoadingDetail = isLoadingStockInfo;
 
-  // Filter and sort stocks (search is now handled by backend)
-  useEffect(() => {
-    let filtered = [...stocks];
-
-    // Note: Search filtering is now done on the backend via useStocks hook
-    // Only apply client-side filters that aren't supported by backend yet
-
-    // Apply sector filter
-    if (filters.sector) {
-      filtered = filtered.filter((stock) => stock.sector === filters.sector);
+  // Pagination handlers
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }, [currentPage]);
 
-    // Apply industry filter
-    if (filters.industry) {
-      filtered = filtered.filter(
-        (stock) => stock.industry === filters.industry
-      );
+  const handleNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }, [currentPage, totalPages]);
 
-    // Apply price range filter
-    if (filters.minPrice) {
-      const minPrice = parseFloat(filters.minPrice);
-      if (!isNaN(minPrice)) {
-        filtered = filtered.filter((stock) => stock.price >= minPrice);
-      }
-    }
-    if (filters.maxPrice) {
-      const maxPrice = parseFloat(filters.maxPrice);
-      if (!isNaN(maxPrice)) {
-        filtered = filtered.filter((stock) => stock.price <= maxPrice);
-      }
-    }
-
-    // Apply market cap filter
-    if (filters.minMarketCap && filters.minMarketCap) {
-      const minCap = parseFloat(filters.minMarketCap) * 1_000_000;
-      if (!isNaN(minCap)) {
-        filtered = filtered.filter((stock) => (stock.marketCap || 0) >= minCap);
-      }
-    }
-    if (filters.maxMarketCap && filters.maxMarketCap) {
-      const maxCap = parseFloat(filters.maxMarketCap) * 1_000_000;
-      if (!isNaN(maxCap)) {
-        filtered = filtered.filter((stock) => (stock.marketCap || 0) <= maxCap);
-      }
-    }
-
-    // Sort stocks
-    filtered.sort((a, b) => {
-      let comparison = 0;
-      switch (filters.sortBy) {
-        case "price":
-          comparison = a.price - b.price;
-          break;
-        case "change":
-          comparison = a.changePercent - b.changePercent;
-          break;
-        case "name":
-          comparison = (a.symbol || "").localeCompare(b.symbol || "");
-          break;
-        default:
-          comparison = a.changePercent - b.changePercent;
-      }
-      return filters.sortOrder === "asc" ? comparison : -comparison;
-    });
-
-    setFilteredStocks(filtered);
-  }, [stocks, filters]);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Handle stock click - open modal and set selected symbol
   const handleStockClick = useCallback((stock: Stock) => {
@@ -185,54 +231,68 @@ export default function DiscoverPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <PageHeader title="Discover Stocks" />
+        {/* Masthead */}
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+            {dateString}
+          </p>
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
+            Discover Stocks
+          </h1>
+          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+            &ldquo;Explore the Market Across All Sectors&rdquo;
+          </p>
+        </header>
 
         {/* Filters */}
         <div className="mt-6 mb-6">
           <StockFilters
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
             sectors={sectors}
             industries={industries}
           />
         </div>
 
         {/* Stock Grid */}
-        {isLoading ? (
+        {isLoading && filteredAndSortedStocks.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="bg-white border border-gray-200 rounded-lg p-4 animate-pulse"
+                className="bg-white dark:bg-stone-800 border border-gray-200 dark:border-stone-700 rounded-lg p-4 animate-pulse"
               >
-                <div className="h-6 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4 mb-4"></div>
+                <div className="h-8 bg-gray-200 dark:bg-stone-700 rounded w-1/2"></div>
               </div>
             ))}
           </div>
-        ) : filteredStocks.length === 0 ? (
+        ) : filteredAndSortedStocks.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
+            <p className="text-gray-500 dark:text-stone-400 text-lg">
               No stocks found matching your filters.
             </p>
             <button
-              onClick={() => setFilters(DEFAULT_FILTERS)}
-              className="mt-4 text-[#9DB38A] hover:underline"
+              onClick={() => {
+                handleFiltersChange(DEFAULT_FILTERS);
+                setCurrentPage(1);
+              }}
+              className="mt-4 text-accent hover:underline"
             >
               Clear all filters
             </button>
           </div>
         ) : (
           <>
-            <div className="mb-4 text-sm text-gray-600">
-              Showing {filteredStocks.length} of {stocks.length} stocks
+            <div className="mb-4 text-sm text-gray-600 dark:text-stone-400">
+              Showing {offset + 1}-{Math.min(offset + STOCKS_PER_PAGE, totalStocks)} of {totalStocks} stocks
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredStocks.map((stock) => (
-                <StockCard
+              {filteredAndSortedStocks.map((stock) => (
+                <StockListItem
                   key={stock.symbol}
                   symbol={stock.symbol}
                   company={stock.company}
@@ -244,6 +304,57 @@ export default function DiscoverPage() {
                 />
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 dark:border-stone-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors text-gray-700 dark:text-stone-300"
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 border rounded-md transition-colors ${
+                          currentPage === pageNum
+                            ? "bg-black dark:bg-stone-100 text-white dark:text-stone-900 border-black dark:border-stone-100"
+                            : "border-gray-300 dark:border-stone-600 hover:bg-gray-50 dark:hover:bg-stone-800 text-gray-700 dark:text-stone-300"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage >= totalPages}
+                  className="px-4 py-2 border border-gray-300 dark:border-stone-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors text-gray-700 dark:text-stone-300"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </>
         )}
 

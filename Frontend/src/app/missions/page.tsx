@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 import { Mission, getUnlockedMissions } from '@/data/missions';
 
 const STORAGE_KEY = 'ft_completed_missions';
@@ -27,7 +29,20 @@ function getCategoryLabel(category: Mission['category']): string {
 }
 
 export default function MissionsPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const [isPreview, setIsPreview] = useState(false);
+
+    useEffect(() => {
+        // Check if this is a preview (from query param)
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('preview') === 'true') {
+            setIsPreview(true);
+        } else if (!isAuthLoading && !user) {
+            router.replace('/auth');
+        }
+    }, [isAuthLoading, user, router]);
+
     const [completedMissions, setCompletedMissions] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -73,21 +88,111 @@ export default function MissionsPage() {
     // Featured mission (first unlocked, not completed)
     const featuredMission = missionList.find((m) => m.isUnlocked && !m.isCompleted);
 
+    // Show preview overlay if not logged in
+    if (isPreview || (!isAuthLoading && !user)) {
+        return (
+            <div className="min-h-screen bg-stone-50 dark:bg-stone-900 relative">
+                {/* Overlay for preview mode */}
+                <div className="absolute inset-0 bg-black/20 dark:bg-black/40 z-10 flex items-center justify-center">
+                    <div className="bg-white dark:bg-stone-800 border-4 border-black dark:border-stone-700 p-8 max-w-md mx-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] text-center">
+                        <h2 className="text-2xl font-black text-black dark:text-stone-100 mb-4 uppercase">Preview Mode</h2>
+                        <p className="text-gray-700 dark:text-stone-300 mb-6 font-serif">
+                            Sign in to access the full Mission Chronicle and start trading in realistic market scenarios.
+                        </p>
+                        <Link
+                            href="/auth"
+                            className="inline-block px-6 py-3 bg-black dark:bg-green-600 text-white font-bold uppercase tracking-widest hover:bg-gray-800 dark:hover:bg-green-700 transition-colors"
+                        >
+                            Sign In to Continue
+                        </Link>
+                    </div>
+                </div>
+
+                <main className="max-w-6xl mx-auto px-4 py-8 opacity-50 pointer-events-none">
+                    {/* Newspaper Masthead */}
+                    <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+                        <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+                            {dateString}
+                        </p>
+                        <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black dark:text-white">
+                            The Mission Chronicle
+                        </h1>
+                        <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+                            &ldquo;All the Scenarios Fit to Trade&rdquo;
+                        </p>
+                        <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                            <span>Vol. I, No. {totalCount}</span>
+                            <span>|</span>
+                            <span>Preview Mode</span>
+                        </div>
+                    </header>
+
+                    {/* Section Navigation */}
+                    <nav className="border-b border-stone-300 dark:border-stone-700 mb-8">
+                        <div className="flex justify-center gap-6 py-3">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    className="text-xs uppercase tracking-widest font-medium text-stone-400"
+                                >
+                                    {cat === 'all' ? 'All Sections' : cat}
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    {/* Mission Articles Grid - Preview */}
+                    <section>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {filteredMissions.slice(0, 6).map((mission) => (
+                                <article
+                                    key={mission.id}
+                                    className="border-b border-stone-200 dark:border-stone-700 pb-6 opacity-50"
+                                >
+                                    <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
+                                        {getCategoryLabel(mission.category)}
+                                    </p>
+                                    <h3 className="font-serif text-xl font-bold text-black dark:text-white mb-2 leading-snug">
+                                        {mission.title}
+                                    </h3>
+                                    <p className="font-serif text-sm text-stone-500 dark:text-stone-400 italic mb-3">
+                                        {mission.subtitle}
+                                    </p>
+                                    <p className="text-sm text-stone-600 dark:text-stone-400 line-clamp-3 mb-4">
+                                        {mission.description}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-stone-400">
+                                            {getDifficultyLabel(mission.difficulty)}
+                                        </span>
+                                        <span className="text-xs text-stone-400 italic">
+                                            Locked 🔒
+                                        </span>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
+                </main>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-stone-50">
+        <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
             <main className="max-w-6xl mx-auto px-4 py-8">
                 {/* Newspaper Masthead */}
-                <header className="text-center border-b-4 border-double border-black pb-4 mb-6">
-                    <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+                <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-6">
+                    <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
                         {dateString}
                     </p>
-                    <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black">
+                    <h1 className="font-serif text-5xl md:text-6xl font-black tracking-tight text-black dark:text-white">
                         The Mission Chronicle
                     </h1>
-                    <p className="text-sm font-serif italic text-stone-600 mt-2">
+                    <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
                         &ldquo;All the Scenarios Fit to Trade&rdquo;
                     </p>
-                    <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500">
+                    <div className="flex justify-center gap-8 mt-4 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
                         <span>Vol. I, No. {totalCount}</span>
                         <span>|</span>
                         <span>{completedCount} Completed</span>
@@ -97,15 +202,15 @@ export default function MissionsPage() {
                 </header>
 
                 {/* Section Navigation */}
-                <nav className="border-b border-stone-300 mb-8">
+                <nav className="border-b border-stone-300 dark:border-stone-700 mb-8">
                     <div className="flex justify-center gap-6 py-3">
                         {categories.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`text-xs uppercase tracking-widest font-medium transition-colors ${selectedCategory === cat
-                                    ? 'text-black border-b-2 border-black pb-1'
-                                    : 'text-stone-400 hover:text-stone-600'
+                                    ? 'text-black dark:text-white border-b-2 border-black dark:border-white pb-1'
+                                    : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
                                     }`}
                             >
                                 {cat === 'all' ? 'All Sections' : cat}
@@ -116,22 +221,22 @@ export default function MissionsPage() {
 
                 {/* Featured Story */}
                 {featuredMission && selectedCategory === 'all' && (
-                    <article className="mb-10 pb-8 border-b border-stone-200">
+                    <article className="mb-10 pb-8 border-b border-stone-200 dark:border-stone-700">
                         <div className="grid md:grid-cols-2 gap-8">
                             <div>
-                                <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">
+                                <p className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
                                     Featured Story
                                 </p>
-                                <h2 className="font-serif text-4xl font-bold text-black leading-tight mb-3">
+                                <h2 className="font-serif text-4xl font-bold text-black dark:text-white leading-tight mb-3">
                                     {featuredMission.title}
                                 </h2>
-                                <p className="font-serif text-lg text-stone-600 italic mb-4">
+                                <p className="font-serif text-lg text-stone-600 dark:text-stone-400 italic mb-4">
                                     {featuredMission.subtitle}
                                 </p>
-                                <p className="text-stone-700 leading-relaxed mb-4">
+                                <p className="text-stone-700 dark:text-stone-300 leading-relaxed mb-4">
                                     {featuredMission.description}
                                 </p>
-                                <div className="flex items-center gap-4 text-xs text-stone-500 mb-4">
+                                <div className="flex items-center gap-4 text-xs text-stone-500 dark:text-stone-400 mb-4">
                                     <span className="uppercase tracking-wide">
                                         {getCategoryLabel(featuredMission.category)}
                                     </span>
@@ -142,29 +247,29 @@ export default function MissionsPage() {
                                 </div>
                                 <button
                                     onClick={() => launchMission(featuredMission)}
-                                    className="bg-black text-white px-6 py-3 text-sm uppercase tracking-widest font-medium hover:bg-stone-800 transition-colors"
+                                    className="bg-black dark:bg-green-600 text-white px-6 py-3 text-sm uppercase tracking-widest font-medium hover:bg-stone-800 dark:hover:bg-green-700 transition-colors"
                                 >
                                     Begin This Mission
                                 </button>
                             </div>
-                            <div className="bg-stone-100 p-6">
-                                <h4 className="text-xs uppercase tracking-widest text-stone-500 mb-3">
+                            <div className="bg-stone-100 dark:bg-stone-800 p-6">
+                                <h4 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-3">
                                     Mission Objectives
                                 </h4>
                                 <ul className="space-y-2">
                                     {featuredMission.objectives.map((obj, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-stone-700">
+                                        <li key={i} className="flex items-start gap-2 text-sm text-stone-700 dark:text-stone-300">
                                             <span className="text-stone-400 font-serif">{i + 1}.</span>
                                             <span>{obj}</span>
                                         </li>
                                     ))}
                                 </ul>
-                                <h4 className="text-xs uppercase tracking-widest text-stone-500 mt-6 mb-3">
+                                <h4 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mt-6 mb-3">
                                     What You Will Learn
                                 </h4>
                                 <ul className="space-y-1">
                                     {featuredMission.learningOutcomes.map((outcome, i) => (
-                                        <li key={i} className="text-sm text-stone-600">
+                                        <li key={i} className="text-sm text-stone-600 dark:text-stone-400">
                                             — {outcome}
                                         </li>
                                     ))}
@@ -182,19 +287,19 @@ export default function MissionsPage() {
                             .map((mission) => (
                                 <article
                                     key={mission.id}
-                                    className={`border-b border-stone-200 pb-6 ${!mission.isUnlocked ? 'opacity-50' : ''
+                                    className={`border-b border-stone-200 dark:border-stone-700 pb-6 ${!mission.isUnlocked ? 'opacity-50' : ''
                                         }`}
                                 >
                                     <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">
                                         {getCategoryLabel(mission.category)}
                                     </p>
-                                    <h3 className="font-serif text-xl font-bold text-black mb-2 leading-snug">
+                                    <h3 className="font-serif text-xl font-bold text-black dark:text-white mb-2 leading-snug">
                                         {mission.title}
                                     </h3>
-                                    <p className="font-serif text-sm text-stone-500 italic mb-3">
+                                    <p className="font-serif text-sm text-stone-500 dark:text-stone-400 italic mb-3">
                                         {mission.subtitle}
                                     </p>
-                                    <p className="text-sm text-stone-600 line-clamp-3 mb-4">
+                                    <p className="text-sm text-stone-600 dark:text-stone-400 line-clamp-3 mb-4">
                                         {mission.description}
                                     </p>
                                     <div className="flex items-center justify-between">
@@ -202,13 +307,13 @@ export default function MissionsPage() {
                                             {getDifficultyLabel(mission.difficulty)}
                                         </span>
                                         {mission.isCompleted ? (
-                                            <span className="text-xs uppercase tracking-wide text-stone-500">
+                                            <span className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
                                                 Completed
                                             </span>
                                         ) : mission.isUnlocked ? (
                                             <button
                                                 onClick={() => launchMission(mission)}
-                                                className="text-xs uppercase tracking-widest font-medium text-black hover:underline"
+                                                className="text-xs uppercase tracking-widest font-medium text-black dark:text-white hover:underline"
                                             >
                                                 Read & Begin →
                                             </button>
@@ -225,7 +330,7 @@ export default function MissionsPage() {
 
                 {filteredMissions.length === 0 && (
                     <div className="text-center py-12">
-                        <p className="font-serif text-stone-500 italic">
+                        <p className="font-serif text-stone-500 dark:text-stone-400 italic">
                             No articles found in this section.
                         </p>
                     </div>

@@ -32,12 +32,13 @@ class LLMClient:
         self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "PrimaryParser")
         self.temperature = temperature
 
-    def chat(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+    def chat(self, prompt: str, system_prompt: Optional[str] = None, use_markdown: bool = True) -> str:
         """Synchronous chat wrapper.
 
         Args:
             prompt: User prompt
             system_prompt: Optional system prompt
+            use_markdown: Whether to request markdown-formatted responses (default: True)
             
         Returns:
             Generated response text
@@ -45,6 +46,10 @@ class LLMClient:
         try:
             messages = []
             if system_prompt:
+                # Add markdown instruction to system prompt if enabled
+                if use_markdown:
+                    markdown_instruction = "\n\nIMPORTANT: Format your responses using Markdown. Use headers, lists, bold text, and code blocks where appropriate to make complex information clear and well-structured."
+                    system_prompt = system_prompt + markdown_instruction
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": prompt})
             
@@ -58,12 +63,13 @@ class LLMClient:
             print(f"Error in LLM chat: {e}")
             return f"[Error: Failed to generate response]"
 
-    async def a_call(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+    async def a_call(self, prompt: str, system_prompt: Optional[str] = None, use_markdown: bool = True) -> str:
         """Async wrapper for chat completions.
 
         Args:
             prompt: User prompt
             system_prompt: Optional system prompt
+            use_markdown: Whether to request markdown-formatted responses (default: True)
             
         Returns:
             Generated response text
@@ -73,6 +79,10 @@ class LLMClient:
             def _call():
                 messages = []
                 if system_prompt:
+                    # Add markdown instruction to system prompt if enabled
+                    if use_markdown:
+                        markdown_instruction = "\n\nIMPORTANT: Format your responses using Markdown. Use headers, lists, bold text, and code blocks where appropriate to make complex information clear and well-structured."
+                        system_prompt = system_prompt + markdown_instruction
                     messages.append({"role": "system", "content": system_prompt})
                 messages.append({"role": "user", "content": prompt})
                 

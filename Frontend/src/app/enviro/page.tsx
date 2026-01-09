@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/providers/AuthProvider';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -28,7 +29,14 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
 const STORAGE_KEY = 'enviro_sandboxes';
 
 export default function EnviroPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace('/auth');
+    }
+  }, [isAuthLoading, user, router]);
 
   const [sandboxes, setSandboxes] = useState<Sandbox[]>([]);
   const [name, setName] = useState('');
@@ -122,24 +130,30 @@ export default function EnviroPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Masthead */}
-        <header className="text-center border-b-4 border-double border-black pb-4 mb-8">
-          <p className="text-xs tracking-widest text-stone-500 uppercase mb-2">
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
             {dateString}
           </p>
-          <h1 className="font-serif text-5xl font-black tracking-tight text-black">
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
             The Trading Floor
           </h1>
-          <p className="text-sm font-serif italic text-stone-600 mt-2">
+          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2 mb-4">
             &ldquo;Practice Without Consequence&rdquo;
           </p>
+          <button
+            onClick={() => router.push('/debrief')}
+            className="inline-block border border-black dark:border-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+          >
+            Confidential Debrief
+          </button>
         </header>
 
         {/* New Edition Form */}
-        <section className="border border-stone-200 bg-white p-6 mb-8">
-          <h2 className="text-xs uppercase tracking-widest text-stone-500 mb-4 border-b border-stone-200 pb-2">
+        <section className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 mb-8">
+          <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
             Start New Edition
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -151,7 +165,7 @@ export default function EnviroPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Optional title"
-                className="w-full border border-stone-300 px-3 py-2 font-serif focus:outline-none focus:border-stone-400"
+                className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-3 py-2 font-serif focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
               />
             </div>
             <div>
@@ -161,7 +175,7 @@ export default function EnviroPage() {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                className="w-full border border-stone-300 px-3 py-2 font-serif focus:outline-none focus:border-stone-400"
+                className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-3 py-2 font-serif focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
               >
                 <option value="easy">
                   {DIFFICULTY_LABELS.easy} (${DIFFICULTY_BALANCE.easy.toLocaleString()})
@@ -177,7 +191,7 @@ export default function EnviroPage() {
             <div className="flex items-end">
               <button
                 onClick={createSandbox}
-                className="w-full bg-black text-white py-2 text-sm uppercase tracking-widest font-medium hover:bg-stone-800 transition-colors"
+                className="w-full bg-black dark:bg-green-600 text-white py-2 text-sm uppercase tracking-widest font-medium hover:bg-stone-800 dark:hover:bg-green-700 transition-colors"
               >
                 Create & Open
               </button>
@@ -186,26 +200,26 @@ export default function EnviroPage() {
         </section>
 
         {/* Existing Editions */}
-        <section className="border border-stone-200 bg-white">
-          <div className="p-4 border-b border-stone-200">
-            <h2 className="text-xs uppercase tracking-widest text-stone-500">
+        <section className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800">
+          <div className="p-4 border-b border-stone-200 dark:border-stone-700">
+            <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Your Editions
             </h2>
           </div>
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-stone-100 dark:divide-stone-700">
             {sandboxes.length === 0 && (
-              <p className="p-6 text-center font-serif text-stone-500 italic">
+              <p className="p-6 text-center font-serif text-stone-500 dark:text-stone-400 italic">
                 No editions created yet.
               </p>
             )}
             {sandboxes.map((sb) => (
               <div
                 key={sb.id}
-                className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors"
+                className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
               >
                 <div>
-                  <h3 className="font-serif font-bold text-black">{sb.name}</h3>
-                  <p className="text-xs text-stone-500">
+                  <h3 className="font-serif font-bold text-black dark:text-white">{sb.name}</h3>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
                     {DIFFICULTY_LABELS[sb.difficulty]} — ${sb.balance.toLocaleString()} starting capital
                   </p>
                   <p className="text-xs text-stone-400 mt-1">
@@ -215,13 +229,13 @@ export default function EnviroPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => openSandbox(sb.id)}
-                    className="text-xs uppercase tracking-widest font-medium text-black hover:underline"
+                    className="text-xs uppercase tracking-widest font-medium text-black dark:text-white hover:underline"
                   >
                     Open
                   </button>
                   <button
                     onClick={() => promptDeleteSandbox(sb.id)}
-                    className="text-xs uppercase tracking-widest text-stone-400 hover:text-stone-600"
+                    className="text-xs uppercase tracking-widest text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
                   >
                     Remove
                   </button>
@@ -236,18 +250,18 @@ export default function EnviroPage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black opacity-40"
+            className="absolute inset-0 bg-black opacity-40 dark:opacity-60"
             onClick={() => {
               setShowDeleteConfirm(false);
               setDeleteConfirmText('');
               setSelectedToDelete(null);
             }}
           />
-          <div className="relative bg-white p-8 w-full max-w-md z-10 border border-stone-200">
-            <h3 className="font-serif text-xl font-bold text-black mb-2">
+          <div className="relative bg-white dark:bg-stone-800 p-8 w-full max-w-md z-10 border border-stone-200 dark:border-stone-700">
+            <h3 className="font-serif text-xl font-bold text-black dark:text-white mb-2">
               Confirm Removal
             </h3>
-            <p className="text-sm text-stone-600 mb-4">
+            <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">
               To permanently remove the edition &ldquo;{selectedToDelete?.name}&rdquo;,
               type <span className="font-mono font-bold">delete</span> below.
             </p>
@@ -255,7 +269,7 @@ export default function EnviroPage() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type delete to confirm"
-              className="w-full border border-stone-300 px-3 py-2 font-serif mb-4 focus:outline-none focus:border-stone-400"
+              className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-3 py-2 font-serif mb-4 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
             />
             <div className="flex justify-end gap-3">
               <button
@@ -264,7 +278,7 @@ export default function EnviroPage() {
                   setDeleteConfirmText('');
                   setSelectedToDelete(null);
                 }}
-                className="px-4 py-2 text-sm text-stone-600 border border-stone-300 hover:bg-stone-50"
+                className="px-4 py-2 text-sm text-stone-600 dark:text-stone-300 border border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-700"
               >
                 Cancel
               </button>
@@ -276,8 +290,8 @@ export default function EnviroPage() {
                 }}
                 disabled={deleteConfirmText.trim().toLowerCase() !== 'delete'}
                 className={`px-4 py-2 text-sm uppercase tracking-widest ${deleteConfirmText.trim().toLowerCase() === 'delete'
-                    ? 'bg-black text-white hover:bg-stone-800'
-                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  ? 'bg-black dark:bg-green-600 text-white hover:bg-stone-800 dark:hover:bg-green-700'
+                  : 'bg-stone-200 dark:bg-stone-700 text-stone-400 cursor-not-allowed'
                   }`}
               >
                 Confirm

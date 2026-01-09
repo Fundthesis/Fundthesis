@@ -11,17 +11,19 @@ datasource db {
 }
 
 model User {
-    id                 String              @id @default(cuid())
-    name               String?
-    email              String              @unique
-    emailVerified      Boolean?
-    image              String?
-    createdAt          DateTime            @default(now())
-    updatedAt          DateTime            @updatedAt
-    sessions           Session[]
-    accounts           Account[]
-    userAccounts       UserAccount[]
-    simulationAccounts SimulationAccount[]
+    id                  String                   @id @default(cuid())
+    name                String?
+    email               String                   @unique
+    emailVerified       Boolean?
+    image               String?
+    createdAt           DateTime                 @default(now())
+    updatedAt           DateTime                 @updatedAt
+    sessions            Session[]
+    accounts            Account[]
+    userAccounts        UserAccount[]
+    simulationAccounts  SimulationAccount[]
+    missionSessions     MissionSession[]
+    contentInteractions UserContentInteraction[]
 
     @@map("user")
     @@schema("public")
@@ -96,6 +98,25 @@ model Article {
     @@schema("public")
 }
 
+model LearningModule {
+    id             String                       @id @default(uuid())
+    moduleNumber   Int                          @map("module_number")
+    sectionIndex   Int?                         @map("section_index")
+    sectionHeading String?                      @map("section_heading")
+    title          String // Full module title
+    content        String // Chunk content
+    chunkType      String                       @map("chunk_type") // 'intro', 'purpose', 'section', 'keyPoints'
+    urlPath        String                       @map("url_path") // e.g., '/lessonmodules/1'
+    embedding      Unsupported("vector(1536)")? // pgvector for RAG
+    createdAt      DateTime                     @default(now()) @map("created_at")
+    updatedAt      DateTime                     @updatedAt @map("updated_at")
+
+    @@index([moduleNumber])
+    @@index([chunkType])
+    @@map("learning_modules")
+    @@schema("public")
+}
+
 model StockForecast {
     id              String   @id @default(uuid())
     symbol          String
@@ -146,6 +167,23 @@ model UserAccount {
     @@schema("public")
 }
 
+// ============= USER CONTENT INTERACTION TRACKING =============
+
+model UserContentInteraction {
+    id           String   @id @default(cuid())
+    userId       String   @map("user_id")
+    contentType  String   @map("content_type") // 'article', 'module', 'coach_query'
+    contentId    String?  @map("content_id") // Article ID, module name, or null for queries
+    metadata     Json? // Additional context (article headline, module title, etc.)
+    interactedAt DateTime @default(now()) @map("interacted_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, interactedAt(sort: Desc)])
+    @@map("user_content_interactions")
+    @@schema("public")
+}
+
 // ============= SIMULATION/PAPER TRADING MODELS =============
 
 model SimulationAccount {
@@ -159,6 +197,7 @@ model SimulationAccount {
     user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     positions Position[]
     trades    Trade[]
+    missionSessions MissionSession[]
 
     @@map("simulation_accounts")
     @@schema("public")
@@ -190,6 +229,28 @@ model Trade {
     account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
     @@map("trades")
+    @@schema("public")
+}
+
+// ============= MISSION SESSION MODELS =============
+
+model MissionSession {
+    id                String   @id @default(uuid())
+    userId            String   @map("user_id")
+    missionId         String   @map("mission_id")
+    accountId         String   @map("account_id")
+    simulatedDate     DateTime @map("simulated_date")
+    isPaused          Boolean  @default(false) @map("is_paused")
+    timeSpeed         Float    @default(1.0) @map("time_speed") // 1.0 = real-time, 2.0 = 2x speed, etc.
+    elapsedSeconds    Int      @default(0) @map("elapsed_seconds")
+    createdAt         DateTime @default(now()) @map("created_at")
+    updatedAt         DateTime @updatedAt @map("updated_at")
+
+    user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, missionId])
+    @@map("mission_sessions")
     @@schema("public")
 }
 

@@ -80,37 +80,91 @@ async def get_sentiment_heatmap(
         return cached_result
     
     try:
-        # Calculate date range based on timeframe
+        # Calculate date range based on timeframe with fallback
         now = datetime.now()
         if timeframe == "1d":
             start_date = now - timedelta(days=1)
+            fallback_start = now - timedelta(days=2)
         elif timeframe == "1w":
             start_date = now - timedelta(weeks=1)
+            fallback_start = now - timedelta(days=10)
         elif timeframe == "1m":
             start_date = now - timedelta(days=30)
+            fallback_start = now - timedelta(days=35)
         else:
             start_date = now - timedelta(days=1)
+            fallback_start = now - timedelta(days=2)
         
         print(f"📊 Fetching sentiment heatmap data for timeframe: {timeframe}")
         
+        # #region agent log
+        import json
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:98","message":"Function entry","data":{"timeframe":timeframe,"start_date":start_date.isoformat()},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
+        
         # Query articles from database
-        # Note: Use model field name (publishedAt), not DB column name (published_at)
+        # Use model field name (publishedAt) - Prisma Python uses camelCase for model fields
+        # #region agent log
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:102","message":"Schema check - expected field name","data":{"expected_field":"publishedAt","used_field":"published_at","note":"Schema maps publishedAt to published_at column"},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
         where_clause = {
             'publishedAt': {
                 'gte': start_date
             }
         }
         
+        # #region agent log
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:108","message":"Where clause before query","data":{"field_name":"publishedAt","field_name_corrected":True},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
+        
         # Filter by sectors if provided (would need sector mapping in articles)
         # For now, we'll filter by tickers mentioned in articles
         
         # Prisma Python doesn't support 'select' parameter - returns all fields by default
+        # #region agent log
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"sentiment.py:112","message":"Before find_many call","data":{"where_clause_keys":list(where_clause.keys())},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
         articles = await db.article.find_many(
             where=where_clause,
             take=1000  # Limit to recent articles for performance
         )
         
-        print(f"✅ Found {len(articles)} articles")
+        # #region agent log
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:130","message":"Query succeeded","data":{"articles_count":len(articles),"query_successful":True},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
+        
+        # If insufficient articles (< 50), use fallback range
+        if len(articles) < 50:
+            print(f"⚠️ Only {len(articles)} articles found, using fallback range")
+            # #region agent log
+            with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+                f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"C","location":"sentiment.py:118","message":"Fallback branch executed","data":{"articles_count":len(articles)},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            # #endregion
+            fallback_where_clause = {
+                'publishedAt': {
+                    'gte': fallback_start
+                }
+            }
+            # #region agent log
+            with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+                f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:121","message":"Fallback where clause","data":{"field_name":"publishedAt","field_name_corrected":True},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            # #endregion
+            articles = await db.article.find_many(
+                where=fallback_where_clause,
+                take=1000
+            )
+            # #region agent log
+            with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+                f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"sentiment.py:135","message":"Fallback query succeeded","data":{"articles_count":len(articles),"query_successful":True},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+            # #endregion
+            print(f"✅ Found {len(articles)} articles with fallback range")
+        else:
+            print(f"✅ Found {len(articles)} articles")
         
         # Aggregate sentiment by ticker
         ticker_sentiments: Dict[str, List[float]] = {}
@@ -176,6 +230,10 @@ async def get_sentiment_heatmap(
         return result
         
     except Exception as e:
+        # #region agent log
+        with open('/Users/alibenrami/Documents/projects/Fundthesis/.cursor/debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"sentiment.py:196","message":"Exception caught","data":{"error_type":type(e).__name__,"error_message":str(e)},"timestamp":int(datetime.now().timestamp()*1000)}) + '\n')
+        # #endregion
         print(f"❌ Error generating sentiment heatmap: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

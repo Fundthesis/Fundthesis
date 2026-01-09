@@ -1,112 +1,187 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
 /**
  * AI Coach API Route
- * 
+ *
  * Attempts to use the backend RAG pipeline first (Cohere Embed + Rerank + Azure OpenAI).
  * Falls back to direct Azure OpenAI if backend is unavailable.
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 /**
  * Learning module content for fallback RAG context
  */
 const LEARNING_MODULES = [
-    { id: '1', title: 'Introduction to FundThesis', topics: ['platform overview', 'getting started', 'goals'] },
-    { id: '2', title: 'What is a Stock and ETF', topics: ['stocks', 'ETFs', 'ownership', 'shares', 'funds'] },
-    { id: '3', title: 'Buying vs Selling', topics: ['buy', 'sell', 'bid', 'ask', 'orders', 'trading'] },
-    { id: '4', title: 'Portfolio Basics', topics: ['portfolio', 'diversification', 'allocation', 'risk'] },
-    { id: '5', title: 'Market Movement & Risk', topics: ['volatility', 'risk', 'beta', 'market', 'movement'] },
-    { id: '6', title: 'Company Research Basics', topics: ['research', 'fundamentals', 'financial statements', 'analysis'] },
-    { id: '7', title: 'Long-Term vs Short-Term', topics: ['long-term', 'short-term', 'investing', 'trading', 'horizon'] },
-    { id: '8', title: 'Reading a Graph', topics: ['charts', 'graphs', 'technical', 'patterns', 'candlestick'] },
-    { id: '9', title: 'Sustainability Factors', topics: ['ESG', 'sustainability', 'environmental', 'social', 'governance'] },
+  {
+    id: "1",
+    title: "Introduction to FundThesis",
+    topics: ["platform overview", "getting started", "goals"],
+  },
+  {
+    id: "2",
+    title: "What is a Stock and ETF",
+    topics: ["stocks", "ETFs", "ownership", "shares", "funds"],
+  },
+  {
+    id: "3",
+    title: "Buying vs Selling",
+    topics: ["buy", "sell", "bid", "ask", "orders", "trading"],
+  },
+  {
+    id: "4",
+    title: "Portfolio Basics",
+    topics: ["portfolio", "diversification", "allocation", "risk"],
+  },
+  {
+    id: "5",
+    title: "Market Movement & Risk",
+    topics: ["volatility", "risk", "beta", "market", "movement"],
+  },
+  {
+    id: "6",
+    title: "Company Research Basics",
+    topics: ["research", "fundamentals", "financial statements", "analysis"],
+  },
+  {
+    id: "7",
+    title: "Long-Term vs Short-Term",
+    topics: ["long-term", "short-term", "investing", "trading", "horizon"],
+  },
+  {
+    id: "8",
+    title: "Reading a Graph",
+    topics: ["charts", "graphs", "technical", "patterns", "candlestick"],
+  },
+  {
+    id: "9",
+    title: "Sustainability Factors",
+    topics: ["ESG", "sustainability", "environmental", "social", "governance"],
+  },
 ];
 
 function findRelevantModules(query: string): string[] {
-    const lowerQuery = query.toLowerCase();
-    const matches: string[] = [];
+  const lowerQuery = query.toLowerCase();
+  const matches: string[] = [];
 
-    for (const learningModule of LEARNING_MODULES) {
-        const hasMatch = learningModule.topics.some((topic) => lowerQuery.includes(topic.toLowerCase()));
-        if (hasMatch) {
-            matches.push(`Module ${learningModule.id}: ${learningModule.title}`);
-        }
+  for (const learningModule of LEARNING_MODULES) {
+    const hasMatch = learningModule.topics.some((topic) =>
+      lowerQuery.includes(topic.toLowerCase())
+    );
+    if (hasMatch) {
+      matches.push(`Module ${learningModule.id}: ${learningModule.title}`);
     }
+  }
 
-    return matches.slice(0, 3);
+  return matches.slice(0, 3);
 }
 
 function getSuggestedActions(query: string): string[] {
-    const lowerQuery = query.toLowerCase();
+  const lowerQuery = query.toLowerCase();
 
-    if (lowerQuery.includes('buy') || lowerQuery.includes('sell') || lowerQuery.includes('trade')) {
-        return ['Practice in the Sandbox', 'Review Module 3: Buying vs Selling'];
-    }
-    if (lowerQuery.includes('chart') || lowerQuery.includes('graph') || lowerQuery.includes('pattern')) {
-        return ['Study chart patterns', 'Review Module 8: Reading a Graph'];
-    }
-    if (lowerQuery.includes('research') || lowerQuery.includes('analys')) {
-        return ['Research a company', 'Review Module 6: Company Research'];
-    }
-    if (lowerQuery.includes('volatil') || lowerQuery.includes('risk')) {
-        return ['Review the volatility section', 'Try a practice trade'];
-    }
-    if (lowerQuery.includes('portfolio') || lowerQuery.includes('diversif')) {
-        return ['Explore the Portfolio mission', 'Add different sectors to your sandbox'];
-    }
+  if (
+    lowerQuery.includes("buy") ||
+    lowerQuery.includes("sell") ||
+    lowerQuery.includes("trade")
+  ) {
+    return ["Practice in the Sandbox", "Review Module 3: Buying vs Selling"];
+  }
+  if (
+    lowerQuery.includes("chart") ||
+    lowerQuery.includes("graph") ||
+    lowerQuery.includes("pattern")
+  ) {
+    return ["Study chart patterns", "Review Module 8: Reading a Graph"];
+  }
+  if (lowerQuery.includes("research") || lowerQuery.includes("analys")) {
+    return ["Research a company", "Review Module 6: Company Research"];
+  }
+  if (lowerQuery.includes("volatil") || lowerQuery.includes("risk")) {
+    return ["Review the volatility section", "Try a practice trade"];
+  }
+  if (lowerQuery.includes("portfolio") || lowerQuery.includes("diversif")) {
+    return [
+      "Explore the Portfolio mission",
+      "Add different sectors to your sandbox",
+    ];
+  }
 
-    return ['Explore a mission', 'Continue learning'];
+  return ["Explore a mission", "Continue learning"];
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { message, context = {}, conversationHistory = [] } = body;
+
+    if (!message) {
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get user ID from session if available
+    let userId: string | undefined;
     try {
-        const body = await request.json();
-        const { message, context = {}, conversationHistory = [] } = body;
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      });
+      userId = session?.user?.id;
+    } catch (error) {
+      console.log("[AI Coach] Could not get user session:", error);
+      // Continue without userId - tracking is optional
+    }
 
-        if (!message) {
-            return NextResponse.json({ error: 'Message is required' }, { status: 400 });
-        }
+    // Try backend RAG pipeline first
+    try {
+      console.log("[AI Coach] Trying backend RAG pipeline...");
+      const ragResponse = await fetch(`${BACKEND_URL}/api/coach`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          context,
+          conversation_history: conversationHistory.map(
+            (msg: { role: string; content: string }) => ({
+              role: msg.role,
+              content: msg.content,
+            })
+          ),
+          userId: userId, // Pass userId for personalized context
+        }),
+      });
 
-        // Try backend RAG pipeline first
-        try {
-            console.log('[AI Coach] Trying backend RAG pipeline...');
-            const ragResponse = await fetch(`${BACKEND_URL}/api/coach`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message,
-                    context,
-                    conversation_history: conversationHistory.map((msg: { role: string; content: string }) => ({
-                        role: msg.role,
-                        content: msg.content,
-                    })),
-                }),
-            });
+      if (ragResponse.ok) {
+        const ragData = await ragResponse.json();
+        console.log("[AI Coach] Got response from backend RAG");
+        return NextResponse.json({
+          message: ragData.message,
+          citations: ragData.citations || [],
+          suggestedActions:
+            ragData.suggested_actions || getSuggestedActions(message),
+          relatedModules:
+            ragData.citations?.map((c: string) =>
+              c.split(":")[0].replace("Module ", "")
+            ) || [],
+          sources: ragData.sources || [],
+        });
+      }
+      console.log("[AI Coach] Backend RAG returned:", ragResponse.status);
+    } catch (_ragError) {
+      console.log(
+        "[AI Coach] Backend RAG unavailable, falling back to Azure OpenAI:",
+        _ragError instanceof Error ? _ragError.message : "Unknown error"
+      );
+    }
 
-            if (ragResponse.ok) {
-                const ragData = await ragResponse.json();
-                console.log('[AI Coach] Got response from backend RAG');
-                return NextResponse.json({
-                    message: ragData.message,
-                    citations: ragData.citations || [],
-                    suggestedActions: ragData.suggested_actions || getSuggestedActions(message),
-                    relatedModules: ragData.citations?.map((c: string) => c.split(':')[0].replace('Module ', '')) || [],
-                    sources: ragData.sources || [],
-                });
-            }
-            console.log('[AI Coach] Backend RAG returned:', ragResponse.status);
-        } catch (_ragError) {
-            console.log('[AI Coach] Backend RAG unavailable, falling back to Azure OpenAI:', _ragError instanceof Error ? _ragError.message : 'Unknown error');
-        }
+    // Fallback to direct Azure OpenAI
+    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+    const apiKey = process.env.AZURE_OPENAI_API_KEY;
+    const relevantModules = findRelevantModules(message);
 
-        // Fallback to direct Azure OpenAI
-        const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-        const apiKey = process.env.AZURE_OPENAI_API_KEY;
-        const relevantModules = findRelevantModules(message);
-
-        const systemPrompt = `You are "The Editor" - an AI investment coach for FundThesis, an educational platform teaching retail investors.
+    const systemPrompt = `You are "The Editor" - an AI investment coach for FundThesis, an educational platform teaching retail investors.
 
 Your teaching method:
 - Use the Socratic method: guide users to discover answers themselves through questions
@@ -117,71 +192,85 @@ Your teaching method:
 - Ask follow-up questions to deepen understanding
 
 User context:
-- Current archetype: ${context.archetype || 'Not yet determined'}
-- Knowledge rank: ${context.rank || 'Beginner'}
-- Recent focus: ${context.currentModule || 'General learning'}
+- Current archetype: ${context.archetype || "Not yet determined"}
+- Knowledge rank: ${context.rank || "Beginner"}
+- Recent focus: ${context.currentModule || "General learning"}
 
 Remember: Your goal is education, not financial advice. Guide them to think critically about investments.`;
 
-        const apiMessages = conversationHistory.slice(-6).map((msg: { role: string; content: string }) => ({
-            role: msg.role === 'coach' ? 'assistant' : 'user',
-            content: msg.content,
-        }));
-        apiMessages.push({ role: 'user', content: message });
+    const apiMessages = conversationHistory
+      .slice(-6)
+      .map((msg: { role: string; content: string }) => ({
+        role: msg.role === "coach" ? "assistant" : "user",
+        content: msg.content,
+      }));
+    apiMessages.push({ role: "user", content: message });
 
-        let aiResponse = '';
+    let aiResponse = "";
 
-        if (endpoint && apiKey) {
-            try {
-                console.log('[AI Coach] Calling Azure OpenAI directly...');
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'api-key': apiKey,
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            ...apiMessages,
-                        ],
-                        max_tokens: 500,
-                        temperature: 0.7,
-                    }),
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    aiResponse = data.choices?.[0]?.message?.content || '';
-                    console.log('[AI Coach] Got response from Azure OpenAI');
-                } else {
-                    console.error('[AI Coach] Azure OpenAI error:', response.status);
-                }
-            } catch (error) {
-                console.error('[AI Coach] Failed to call Azure OpenAI:', error);
-            }
-        }
-
-        // Fallback response if API fails
-        if (!aiResponse) {
-            const lowerMessage = message.toLowerCase();
-            if (lowerMessage.includes('volatil') || lowerMessage.includes('risk')) {
-                aiResponse = "Volatility is a fascinating topic. Think about how a stock's price moves up and down over time. What do you think causes some stocks to swing more wildly than others? And more importantly, how might that affect your investment decisions?";
-            } else if (lowerMessage.includes('portfolio') || lowerMessage.includes('diversif')) {
-                aiResponse = "Building a strong portfolio is about balance. Consider this: if you put all your savings into one company and it fails, what happens? Now, what if you spread it across many? This is the essence of diversification. What sectors are you most drawn to, and why?";
-            } else {
-                aiResponse = "That's a thoughtful question to explore. Before I share my perspective, what's your initial thinking on this? Sometimes the best insights come from reflecting on what we already know and building from there.";
-            }
-        }
-
-        return NextResponse.json({
-            message: aiResponse,
-            citations: relevantModules.length ? relevantModules : ['Module 1: Introduction to FundThesis'],
-            suggestedActions: getSuggestedActions(message),
-            relatedModules: relevantModules.map((m) => m.split(':')[0].replace('Module ', '')),
+    if (endpoint && apiKey) {
+      try {
+        console.log("[AI Coach] Calling Azure OpenAI directly...");
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": apiKey,
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...apiMessages,
+            ],
+            max_tokens: 500,
+            temperature: 0.7,
+          }),
         });
-    } catch (error) {
-        console.error('[AI Coach API] Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+        if (response.ok) {
+          const data = await response.json();
+          aiResponse = data.choices?.[0]?.message?.content || "";
+          console.log("[AI Coach] Got response from Azure OpenAI");
+        } else {
+          console.error("[AI Coach] Azure OpenAI error:", response.status);
+        }
+      } catch (error) {
+        console.error("[AI Coach] Failed to call Azure OpenAI:", error);
+      }
     }
+
+    // Fallback response if API fails
+    if (!aiResponse) {
+      const lowerMessage = message.toLowerCase();
+      if (lowerMessage.includes("volatil") || lowerMessage.includes("risk")) {
+        aiResponse =
+          "Volatility is a fascinating topic. Think about how a stock's price moves up and down over time. What do you think causes some stocks to swing more wildly than others? And more importantly, how might that affect your investment decisions?";
+      } else if (
+        lowerMessage.includes("portfolio") ||
+        lowerMessage.includes("diversif")
+      ) {
+        aiResponse =
+          "Building a strong portfolio is about balance. Consider this: if you put all your savings into one company and it fails, what happens? Now, what if you spread it across many? This is the essence of diversification. What sectors are you most drawn to, and why?";
+      } else {
+        aiResponse =
+          "That's a thoughtful question to explore. Before I share my perspective, what's your initial thinking on this? Sometimes the best insights come from reflecting on what we already know and building from there.";
+      }
+    }
+
+    return NextResponse.json({
+      message: aiResponse,
+      citations: relevantModules.length ? relevantModules : [],
+      sources: [], // No article sources in fallback mode
+      suggestedActions: getSuggestedActions(message),
+      relatedModules: relevantModules.map((m) =>
+        m.split(":")[0].replace("Module ", "")
+      ),
+    });
+  } catch (error) {
+    console.error("[AI Coach API] Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

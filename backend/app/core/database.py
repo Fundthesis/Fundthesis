@@ -1,5 +1,4 @@
 """Database client and utilities using Prisma."""
-import json
 from datetime import datetime, timedelta, UTC
 from prisma import Prisma
 from prisma import Json

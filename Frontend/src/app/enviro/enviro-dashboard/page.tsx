@@ -5,15 +5,17 @@ import { Search, X } from "lucide-react";
 import {
   PortfolioChart,
   PortfolioHistoryPoint,
-} from "@/components/enviro-components/Portfolio";
-import { PortfolioSummary } from "@/components/enviro-components/PortfolioSummary";
-import MarketTips from "@/components/enviro-components/market-tips";
-import { StockCardStack } from "@/components/StockCardStack";
-import StockTradeModal from "@/components/StockTradeModal";
+} from "@/components/enviro/Portfolio";
+import { PortfolioSummary } from "@/components/enviro/PortfolioSummary";
+import MarketTips from "@/components/enviro/MarketTips";
+import { StockCardStack } from "@/components/stocks/StockCardStack";
+import StockTradeModal from "@/components/stocks/StockTradeModal";
 import {
   TransactionHistory,
   Transaction,
-} from "@/components/enviro-components/sandbox-transaction";
+} from "@/components/enviro/TransactionHistory";
+import { getMissionById, type Mission } from "@/data/missions";
+import { NewspaperMissionLayout } from "@/components/missions/NewspaperMissionLayout";
 
 interface StockDetail {
   symbol: string;
@@ -202,8 +204,91 @@ function PortfolioDashboardPageContent() {
 
   const [sandbox, setSandbox] = useState<Sandbox | null>(null);
   const [cashBalance, setCashBalance] = useState<number>(3000);
+  
+  // Mission state
+  const [mission, setMission] = useState<Mission | null>(null);
+  const [completedObjectives, setCompletedObjectives] = useState<string[]>([]);
+  const [selectedStock, setSelectedStock] = useState<(typeof allStocks[0]) | null>(null);
 
   const router = useRouter();
+
+  // Check mission objectives completion
+  const checkMissionObjectives = (
+    currentMission: Mission,
+    currentTransactions: Transaction[],
+    currentCash: number
+  ) => {
+    const newCompleted: string[] = [];
+    
+    // Compute holdings
+    const holdings: { [symbol: string]: number } = {};
+    currentTransactions.forEach((tx) => {
+      holdings[tx.symbol] =
+        (holdings[tx.symbol] || 0) +
+        (tx.action === "Buy" ? tx.quantity : -tx.quantity);
+    });
+    
+    // Check each objective
+    currentMission.objectives.forEach((objective) => {
+      if (completedObjectives.includes(objective)) {
+        newCompleted.push(objective);
+        return;
+      }
+      
+      // Check diversification (3+ sectors)
+      if (objective.toLowerCase().includes("sector") && objective.toLowerCase().includes("3")) {
+        const sectors = new Set<string>();
+        Object.keys(holdings).forEach((sym) => {
+          const detail = stockDetails[sym] || allStocks.find((s) => s.symbol === sym);
+          if (detail && 'sector' in detail) {
+            sectors.add((detail as StockDetail).sector);
+          }
+        });
+        if (sectors.size >= 3) {
+          newCompleted.push(objective);
+        }
+      }
+      
+      // Check ETF inclusion
+      if (objective.toLowerCase().includes("etf")) {
+        // Simple check - in real implementation, you'd check if symbol is an ETF
+        const hasETF = Object.keys(holdings).some((sym) => 
+          sym.includes('ETF') || ['SPY', 'QQQ', 'VTI', 'IWM'].includes(sym)
+        );
+        if (hasETF) {
+          newCompleted.push(objective);
+        }
+      }
+      
+      // Check inflation rate (for inflation mission)
+      if (objective.toLowerCase().includes("inflation") && objective.toLowerCase().includes("2%")) {
+        const startingBalance = currentMission.sandboxConfig.startingBalance;
+        const totalValue = currentCash + Object.keys(holdings).reduce((acc, sym) => {
+          const qty = holdings[sym] || 0;
+          const detail = stockDetails[sym] || allStocks.find((s) => s.symbol === sym);
+          const price = detail ? (detail as StockDetail | (typeof allStocks)[0]).price : 0;
+          return acc + qty * price;
+        }, 0);
+        const returnPercent = startingBalance > 0 ? ((totalValue - startingBalance) / startingBalance) * 100 : 0;
+        if (returnPercent >= 2) {
+          newCompleted.push(objective);
+        }
+      }
+    });
+    
+    if (newCompleted.length > completedObjectives.length) {
+      setCompletedObjectives(newCompleted);
+      // Save progress
+      try {
+        localStorage.setItem(
+          `mission_progress_${currentMission.id}`,
+          JSON.stringify({ completedObjectives: newCompleted })
+        );
+      } catch (e) {
+        console.warn("Failed to save mission progress", e);
+      }
+    }
+  };
 
   const deleteCurrentSandbox = () => {
     try {
@@ -262,11 +347,71 @@ function PortfolioDashboardPageContent() {
     setStocks(filteredStocks);
   }, [filteredStocks]);
 
-  // Read sandboxId from query params and try to load matching sandbox from localStorage
+  // Read missionId or sandboxId from query params
   useEffect(() => {
+    // Check for mission first
+    const missionId = searchParams?.get("missionId");
+    if (missionId) {
+      const foundMission = getMissionById(missionId);
+      if (foundMission) {
+        console.log('[Mission] Loading mission:', foundMission.id, foundMission.title);
+        setMission(foundMission);
+        
+        // Initialize mission portfolio in localStorage first
+        try {
+          const portRaw = localStorage.getItem("enviro_mission_portfolios");
+          const map = portRaw ? JSON.parse(portRaw) : {};
+          if (!map[missionId]) {
+            map[missionId] = {
+              cashBalance: foundMission.sandboxConfig.startingBalance,
+              transactions: [],
+            };
+            localStorage.setItem("enviro_mission_portfolios", JSON.stringify(map));
+            setCashBalance(foundMission.sandboxConfig.startingBalance);
+            setTransactions([]);
+          } else {
+            setCashBalance(map[missionId].cashBalance);
+            setTransactions(map[missionId].transactions || []);
+          }
+        } catch (e) {
+          console.warn("Failed to initialize mission portfolio", e);
+          setCashBalance(foundMission.sandboxConfig.startingBalance);
+          setTransactions([]);
+        }
+        
+        // Load mission progress
+        try {
+          const progressRaw = localStorage.getItem(`mission_progress_${missionId}`);
+          if (progressRaw) {
+            const progress = JSON.parse(progressRaw);
+            setCompletedObjectives(progress.completedObjectives || []);
+          }
+        } catch (e) {
+          console.warn("Failed to load mission progress", e);
+        }
+      } else {
+        console.warn('[Mission] Mission not found:', missionId);
+      }
+      return;
+    }
+    
+    // Otherwise, try to load sandbox
+    // Clear mission state if we're in sandbox mode
+    if (mission) {
+      setMission(null);
+      setCompletedObjectives([]);
+    }
+    
     try {
       const id = searchParams?.get("sandboxId");
-      if (!id) return;
+      if (!id) {
+        // No mission and no sandbox - clear everything
+        if (mission) {
+          setMission(null);
+          setCompletedObjectives([]);
+        }
+        return;
+      }
       const raw = localStorage.getItem("enviro_sandboxes");
       if (!raw) return;
       const items: Sandbox[] = JSON.parse(raw);
@@ -327,7 +472,7 @@ function PortfolioDashboardPageContent() {
     } catch (e) {
       console.warn("Failed to load sandbox from localStorage", e);
     }
-  }, [searchParams]);
+  }, [searchParams, mission]);
 
   // Function to generate mock chart data
   const generateChartData = useCallback((
@@ -452,7 +597,24 @@ function PortfolioDashboardPageContent() {
     setTransactions((prev) => {
       const next = [tx, ...prev];
       try {
-        if (sandbox) {
+        if (mission) {
+          // Save to mission portfolio
+          const portRaw = localStorage.getItem("enviro_mission_portfolios");
+          const map = portRaw ? JSON.parse(portRaw) : {};
+          const prevCash =
+            (map[mission.id] && map[mission.id].cashBalance) || cashBalance;
+          const newCash =
+            action === "Buy" ? prevCash - total : prevCash + total;
+          map[mission.id] = { cashBalance: newCash, transactions: next };
+          localStorage.setItem(
+            "enviro_mission_portfolios",
+            JSON.stringify(map)
+          );
+          setCashBalance(newCash);
+          
+          // Check mission objectives after trade
+          checkMissionObjectives(mission, next, newCash);
+        } else if (sandbox) {
           const portRaw = localStorage.getItem("enviro_sandbox_portfolios");
           const map = portRaw ? JSON.parse(portRaw) : {};
           const prevCash =
@@ -466,7 +628,7 @@ function PortfolioDashboardPageContent() {
           );
           setCashBalance(newCash);
         } else {
-          // no sandbox selected: just update cash locally
+          // no sandbox/mission selected: just update cash locally
           setCashBalance((prev) =>
             action === "Buy" ? prev - total : prev + total
           );
@@ -497,8 +659,8 @@ function PortfolioDashboardPageContent() {
 
   const totalValue = cashBalance + holdingsValue;
 
-  // baseline for gain/loss: if sandbox exists use its starting balance, otherwise use initial cash
-  const baseline = sandbox ? sandbox.balance : cashBalance;
+  // baseline for gain/loss: if mission exists use its starting balance, else if sandbox use its balance, otherwise use initial cash
+  const baseline = mission ? mission.sandboxConfig.startingBalance : (sandbox ? sandbox.balance : cashBalance);
   const totalGainLoss = totalValue - baseline;
   const totalGainLossPercent = baseline ? (totalGainLoss / baseline) * 100 : 0;
 
@@ -531,55 +693,97 @@ function PortfolioDashboardPageContent() {
     );
   };
 
+  // Debug: Log mission state
+  console.log('[Render] Mission state:', mission ? mission.title : 'null', 'Cash balance:', cashBalance);
+
+  // Handle buy/sell for newspaper layout
+  const handleBuy = (symbol: string, quantity: number) => {
+    const stock = stocks.find(s => s.symbol === symbol);
+    if (stock) {
+      handleExecuteTrade("Buy", symbol, stock.price, quantity);
+    }
+  };
+
+  const handleSell = (symbol: string, quantity: number) => {
+    const stock = stocks.find(s => s.symbol === symbol);
+    if (stock) {
+      handleExecuteTrade("Sell", symbol, stock.price, quantity);
+    }
+  };
+
+  // If in mission mode, use the new newspaper layout
+  if (mission) {
+    return (
+      <NewspaperMissionLayout
+        mission={mission}
+        stocks={filteredStocks}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onStockSelect={setSelectedStock}
+        selectedStock={selectedStock}
+        cashBalance={cashBalance}
+        portfolioValue={totalValue}
+        completedObjectives={completedObjectives}
+        onBuy={handleBuy}
+        onSell={handleSell}
+        holdings={holdingsMap}
+      />
+    );
+  }
+
   return (
-    <div className="bg-[#fcfbf9] min-h-screen">
-      <main className="max-w-7xl mx-auto px-4 py-8 font-serif text-[#1a1a1a]">
+    <div className="bg-[#fcfbf9] dark:bg-stone-900 min-h-screen">
+      <main className="max-w-7xl mx-auto px-4 py-8 font-serif text-[#1a1a1a] dark:text-stone-100">
 
         {/* Newspaper Masthead */}
-        <div className="border-b-4 border-black pb-4 mb-8">
+        <div className="border-b-4 border-black dark:border-stone-600 pb-4 mb-8">
           <div className="flex justify-between items-end mb-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Interactive Environment</p>
-              <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black leading-none">
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-1">
+                Interactive Environment
+              </p>
+              <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black dark:text-white leading-none">
                 {sandbox ? sandbox.name : "Market Sandbox"}
               </h1>
             </div>
             <div className="text-right hidden md:block">
-              <p className="font-serif italic text-sm text-gray-500">Simulated Trading Floor</p>
-              <p className="font-bold text-xs uppercase tracking-widest mt-1">Section E</p>
+              <p className="font-serif italic text-sm text-gray-500 dark:text-stone-400">
+                Simulated Trading Floor
+              </p>
+              <p className="font-bold text-xs uppercase tracking-widest mt-1 dark:text-stone-300">Section E</p>
             </div>
           </div>
-          <p className="text-lg font-serif italic text-gray-700 border-t border-black/10 pt-2">
+          <p className="text-lg font-serif italic text-gray-700 dark:text-stone-400 border-t border-black/10 dark:border-stone-700 pt-2">
             Test your thesis in a risk-free environment.
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row w-full gap-8 mb-12">
           {/* Stock Card Section - Newspaper Column */}
-          <div className="w-full lg:w-1/2 border-2 border-black bg-stone-50 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="text-3xl font-black text-black mb-6 uppercase tracking-wide border-b-2 border-black pb-2">Market Scanner</h2>
+          <div className="w-full lg:w-1/2 border-2 border-black dark:border-stone-600 bg-stone-50 dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+            <h2 className="text-3xl font-black text-black dark:text-white mb-6 uppercase tracking-wide border-b-2 border-black dark:border-stone-600 pb-2">Market Scanner</h2>
 
             <div className="mb-6 relative">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-stone-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search stocks by symbol or company..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 border-2 border-black/20 focus:border-black bg-white rounded-none focus:outline-none transition-all font-serif placeholder:italic"
+                  className="w-full pl-10 pr-10 py-3 border-2 border-black/20 dark:border-stone-600 focus:border-black dark:focus:border-stone-400 bg-white dark:bg-stone-900 dark:text-stone-100 rounded-none focus:outline-none transition-all font-serif placeholder:italic dark:placeholder:text-stone-500"
                 />
                 {searchQuery && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 )}
               </div>
               {searchQuery && (
-                <p className="text-sm text-gray-500 mt-2 italic">
+                <p className="text-sm text-gray-500 dark:text-stone-400 mt-2 italic">
                   {filteredStocks.length} stock
                   {filteredStocks.length !== 1 ? "s" : ""} found
                 </p>
@@ -611,11 +815,11 @@ function PortfolioDashboardPageContent() {
           </div>
 
           {/* Portfolio Chart Section - Newspaper Column */}
-          <div className="w-full lg:w-1/2 border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="text-3xl font-black text-black mb-6 uppercase tracking-wide border-b-2 border-black pb-2">Portfolio Analytics</h2>
+          <div className="w-full lg:w-1/2 border-2 border-black dark:border-stone-600 bg-white dark:bg-stone-800 p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+            <h2 className="text-3xl font-black text-black dark:text-white mb-6 uppercase tracking-wide border-b-2 border-black dark:border-stone-600 pb-2">Portfolio Analytics</h2>
 
             <PortfolioChart portfolioHistory={portfolioHistory} />
-            <div className="mt-8 w-full border-t flex flex-col gap-4 pt-6 border-black/20">
+            <div className="mt-8 w-full border-t flex flex-col gap-4 pt-6 border-black/20 dark:border-stone-700">
               <PortfolioSummary
                 totalValue={totalValue}
                 cashBalance={cashBalance}
@@ -626,34 +830,48 @@ function PortfolioDashboardPageContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <div className="border-t-4 border-black pt-6">
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-3 h-3 bg-black inline-block"></span>
-              Advisory Wire
-            </h3>
-            <div className="bg-white border border-black p-4">
-              <MarketTips />
+        {(
+          /* Sandbox Mode Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className="border-t-4 border-black dark:border-stone-600 pt-6">
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+                <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+                Advisory Wire
+              </h3>
+              <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+                <MarketTips />
+              </div>
+            </div>
+
+            <div className="border-t-4 border-black dark:border-stone-600 pt-6">
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+                <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+                Transaction Ledger
+              </h3>
+              <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+                <TransactionHistory transactions={transactions} />
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="border-t-4 border-black pt-6">
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-3 h-3 bg-black inline-block"></span>
-              Transaction Ledger
-            </h3>
-            <div className="bg-white border border-black p-4">
-              <TransactionHistory transactions={transactions} />
-            </div>
+        {/* Transaction Ledger */}
+        <div className="mb-12 border-t-4 border-black dark:border-stone-600 pt-6">
+          <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+            <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+            Transaction Ledger
+          </h3>
+          <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+            <TransactionHistory transactions={transactions} />
           </div>
         </div>
 
         {/* Sandbox actions (delete current sandbox) */}
-        <div className="pt-6 flex justify-end border-t border-black">
+        <div className="pt-6 flex justify-end border-t border-black dark:border-stone-600">
           {sandbox && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="bg-black text-white hover:bg-gray-800 font-bold uppercase tracking-widest py-3 px-6 border-2 border-transparent hover:border-black transition-all"
+              className="bg-black dark:bg-red-600 text-white hover:bg-gray-800 dark:hover:bg-red-700 font-bold uppercase tracking-widest py-3 px-6 border-2 border-transparent hover:border-black dark:hover:border-red-500 transition-all"
               title="Delete this sandbox"
             >
               Delete Sandbox
@@ -664,24 +882,24 @@ function PortfolioDashboardPageContent() {
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center font-serif">
             <div
-              className="absolute inset-0 bg-black opacity-60"
+              className="absolute inset-0 bg-black opacity-60 dark:opacity-70"
               onClick={() => {
                 setShowDeleteConfirm(false);
                 setDeleteConfirmText("");
               }}
             />
-            <div className="relative bg-[#fcfbf9] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8 w-full max-w-md z-10">
-              <h3 className="text-2xl font-black mb-4">Confirm Termination</h3>
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+            <div className="relative bg-[#fcfbf9] dark:bg-stone-800 border-2 border-black dark:border-stone-600 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] p-8 w-full max-w-md z-10">
+              <h3 className="text-2xl font-black mb-4 dark:text-white">Confirm Termination</h3>
+              <p className="text-lg text-gray-700 dark:text-stone-300 mb-6 leading-relaxed">
                 To permanently delete the sandbox{" "}
-                <span className="font-bold bg-yellow-200 px-1">{sandbox?.name}</span>, please type{" "}
+                <span className="font-bold bg-yellow-200 dark:bg-yellow-700 dark:text-white px-1">{sandbox?.name}</span>, please type{" "}
                 <span className="font-mono font-bold">delete</span> below.
               </p>
               <input
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="Type 'delete' to confirm"
-                className="w-full border-2 border-black p-3 mb-6 focus:outline-none focus:bg-stone-50"
+                className="w-full border-2 border-black dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 p-3 mb-6 focus:outline-none focus:bg-stone-50 dark:focus:bg-stone-800"
               />
               <div className="flex justify-end gap-4">
                 <button
@@ -689,7 +907,7 @@ function PortfolioDashboardPageContent() {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmText("");
                   }}
-                  className="px-6 py-2 border-2 border-black font-bold hover:bg-stone-100"
+                  className="px-6 py-2 border-2 border-black dark:border-stone-600 font-bold hover:bg-stone-100 dark:hover:bg-stone-700 dark:text-white"
                 >
                   Cancel
                 </button>
@@ -700,9 +918,9 @@ function PortfolioDashboardPageContent() {
                     }
                   }}
                   disabled={deleteConfirmText.trim().toLowerCase() !== "delete"}
-                  className={`px-6 py-2 border-2 border-black font-bold text-white transition-all ${deleteConfirmText.trim().toLowerCase() === "delete"
+                  className={`px-6 py-2 border-2 border-black dark:border-stone-600 font-bold text-white transition-all ${deleteConfirmText.trim().toLowerCase() === "delete"
                     ? "bg-red-600 hover:bg-red-700 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    : "bg-gray-400 cursor-not-allowed border-gray-400"
+                    : "bg-gray-400 dark:bg-stone-600 cursor-not-allowed border-gray-400 dark:border-stone-600"
                     }`}
                 >
                   Confirm

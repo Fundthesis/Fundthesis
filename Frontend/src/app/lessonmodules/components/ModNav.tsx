@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAnsweredCount } from '@/app/lessonmodules/data/userProgress';
+import { trackModuleAccess } from '@/lib/tracking';
 
 type Props = {
   moduleIndex: number;
@@ -15,6 +16,15 @@ const ModNav: React.FC<Props> = ({ moduleIndex, totalModules, title }) => {
   const isFirst = moduleIndex <= 1;
 
   const [counts, setCounts] = useState(() => getAnsweredCount(moduleIndex));
+
+  // Track module access when component mounts
+  useEffect(() => {
+    if (title) {
+      trackModuleAccess(title, moduleIndex).catch(
+        (error) => console.error("Failed to track module access:", error)
+      );
+    }
+  }, [moduleIndex, title]);
 
   useEffect(() => {
     function onChange() {

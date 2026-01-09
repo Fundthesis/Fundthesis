@@ -132,6 +132,11 @@ export async function fetchArticles(params?: {
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized gracefully - return empty articles instead of throwing
+      if (response.status === 401) {
+        // Silently return empty articles for unauthorized access (expected when not logged in)
+        return { articles: [], count: 0 };
+      }
       const errorText = await response.text();
       console.error('API Error:', errorText);
       throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`);
