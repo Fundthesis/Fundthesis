@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
   Activity,
+  Zap,
 } from 'lucide-react';
 
 import { Mission } from '@/data/missions';
@@ -36,6 +37,13 @@ import {
   NewsEvent,
 } from '@/lib/missionSimulation';
 import { getMissionNewsEvents, getEventsOnDay, getTriggeredEvents } from '@/lib/missionNewsEvents';
+import { 
+  MissionDifficultyLevel, 
+  MissionTrade, 
+  PortfolioSnapshot,
+  MissionGrade,
+  DIFFICULTY_CONFIGS 
+} from '@/lib/types/mission';
 
 interface Holding {
   symbol: string;
@@ -48,11 +56,23 @@ interface Holding {
   sector?: string;
 }
 
+interface SimulationCompletionData {
+  grade: MissionGrade;
+  returnPercent: number;
+  maxDrawdown: number;
+  trades: MissionTrade[];
+  portfolioHistory: PortfolioSnapshot[];
+  initialBalance: number;
+  finalBalance: number;
+  durationDays: number;
+}
+
 interface MissionSimulatorV2Props {
   mission: Mission;
   initialHoldings: Record<string, { quantity: number; avgPrice: number }>;
   initialCash: number;
-  onComplete?: (grade: 'S' | 'A' | 'B' | 'C' | 'F', stats: { returnPercent: number; maxDrawdown: number }) => void;
+  difficulty?: MissionDifficultyLevel;
+  onComplete?: (data: SimulationCompletionData) => void;
   onExit?: () => void;
 }
 
@@ -60,16 +80,20 @@ export function MissionSimulatorV2({
   mission, 
   initialHoldings, 
   initialCash,
+  difficulty = 'medium',
   onComplete, 
   onExit 
 }: MissionSimulatorV2Props) {
+  // Difficulty configuration
+  const difficultyConfig = DIFFICULTY_CONFIGS[difficulty];
+  
   // Scenario configuration
   const scenarioConfig = SCENARIO_CONFIGS[mission.sandboxConfig.scenario] || SCENARIO_CONFIGS.neutral;
   const fullScenario: MissionScenario = {
     id: mission.id,
     name: mission.title,
     description: mission.description,
-    durationDays: scenarioConfig.durationDays || 60,
+    durationDays: difficultyConfig.timePressure || scenarioConfig.durationDays || 60,
     startDate: new Date(),
     phases: scenarioConfig.phases || [],
     triggerEvents: getMissionNewsEvents(mission.sandboxConfig.scenario),
@@ -83,14 +107,17 @@ export function MissionSimulatorV2({
   const [currentDay, setCurrentDay] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [isComplete, setIsComplete] = useState(false);
-  const [grade, setGrade] = useState<'S' | 'A' | 'B' | 'C' | 'F' | undefined>();
+  const [grade, setGrade] = useState<MissionGrade | undefined>();
 
   // Portfolio state
   const [cashBalance, setCashBalance] = useState(initialCash);
   const [holdings, setHoldings] = useState(initialHoldings);
-  const [portfolioHistory, setPortfolioHistory] = useState<{ day: number; value: number }[]>([]);
+  const [portfolioHistory, setPortfolioHistory] = useState<PortfolioSnapshot[]>([]);
   const [maxDrawdown, setMaxDrawdown] = useState(0);
   const [peakValue, setPeakValue] = useState(mission.sandboxConfig.startingBalance);
+  
+  // Trade tracking
+  const [trades, setTrades] = useState<MissionTrade[]>([]);
 
   // Market state
   const [stocks, setStocks] = useState<SimulatedStock[]>(() => 
@@ -258,7 +285,7 @@ export function MissionSimulatorV2({
     };
   }, [isRunning, isPaused, isComplete, speed, advanceDay]);
 
-  // Check completion
+  // Check completion and trigger callback
   useEffect(() => {
     if (currentDay >= fullScenario.durationDays && !isComplete) {
       setIsComplete(true);
@@ -278,9 +305,29 @@ export function MissionSimulatorV2({
       );
       
       setGrade(finalGrade);
-      onComplete?.(finalGrade, { returnPercent, maxDrawdown });
+      
+      // Calculate final values
+      const finalValue = calculatePortfolioValue();
+      const holdingsValue = finalValue - cashBalance;
+      
+      // Pass full completion data
+      onComplete?.({
+        grade: finalGrade,
+        returnPercent,
+        maxDrawdown,
+        trades,
+        portfolioHistory: portfolioHistory.map(p => ({
+          day: p.day,
+          value: p.value,
+          cash: cashBalance,
+          holdingsValue: p.value - cashBalance,
+        })),
+        initialBalance: initialValue,
+        finalBalance: finalValue,
+        durationDays: currentDay,
+      });
     }
-  }, [currentDay, fullScenario.durationDays, isComplete, holdingsForDisplay, stocks, returnPercent, maxDrawdown, fullScenario.winCondition, fullScenario.failCondition, onComplete]);
+  }, [currentDay, fullScenario.durationDays, isComplete, holdingsForDisplay, stocks, returnPercent, maxDrawdown, fullScenario.winCondition, fullScenario.failCondition, onComplete, trades, portfolioHistory, calculatePortfolioValue, cashBalance, initialValue]);
 
   // Handlers
   const handleStart = () => {
@@ -302,6 +349,21 @@ export function MissionSimulatorV2({
     if (!stock || !holding || quantity <= 0 || quantity > holding.quantity) return;
 
     const total = stock.currentPrice * quantity;
+    
+    // Track the trade
+    const newTrade: MissionTrade = {
+      id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      day: currentDay,
+      symbol,
+      action: 'sell',
+      quantity,
+      price: stock.currentPrice,
+      total,
+      timestamp: new Date(),
+      triggerReason: latestNews?.headline,
+    };
+    setTrades(prev => [...prev, newTrade]);
+    
     setCashBalance(prev => prev + total);
     setHoldings(prev => {
       const newQuantity = prev[symbol].quantity - quantity;
@@ -321,6 +383,7 @@ export function MissionSimulatorV2({
     setGrade(undefined);
     setCashBalance(initialCash);
     setHoldings(initialHoldings);
+    setTrades([]);
     setPortfolioHistory([]);
     setMaxDrawdown(0);
     setPeakValue(initialValue);

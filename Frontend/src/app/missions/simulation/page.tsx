@@ -1,14 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { getMissionById, Mission } from '@/data/missions';
 import { MissionPreBuild } from '@/components/missions/MissionPreBuild';
 import { MissionSimulatorV2 } from '@/components/missions/MissionSimulatorV2';
+import { MissionDebrief } from '@/components/missions/MissionDebrief';
 import { Loader2 } from 'lucide-react';
+import { 
+  MissionDifficultyLevel,
+  MissionTrade,
+  PortfolioSnapshot,
+  MissionGrade,
+  MissionCompletionData,
+  DIFFICULTY_CONFIGS 
+} from '@/lib/types/mission';
 
-type Phase = 'prebuild' | 'simulation' | 'complete';
+type Phase = 'prebuild' | 'simulation' | 'debrief';
+
+interface SimulationCompletionData {
+  grade: MissionGrade;
+  returnPercent: number;
+  maxDrawdown: number;
+  trades: MissionTrade[];
+  portfolioHistory: PortfolioSnapshot[];
+  initialBalance: number;
+  finalBalance: number;
+  durationDays: number;
+}
 
 function MissionSimulationContent() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -18,10 +38,14 @@ function MissionSimulationContent() {
   const [mission, setMission] = useState<Mission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [phase, setPhase] = useState<Phase>('prebuild');
+  const [difficulty, setDifficulty] = useState<MissionDifficultyLevel>('medium');
   
   // Portfolio state that carries between phases
   const [holdings, setHoldings] = useState<Record<string, { quantity: number; avgPrice: number }>>({});
   const [cashBalance, setCashBalance] = useState(0);
+  
+  // Completion data for debrief
+  const [completionData, setCompletionData] = useState<SimulationCompletionData | null>(null);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -32,6 +56,12 @@ function MissionSimulationContent() {
 
     // Load mission from query params
     const missionId = searchParams?.get('missionId');
+    const difficultyParam = searchParams?.get('difficulty') as MissionDifficultyLevel;
+    
+    if (difficultyParam && ['easy', 'medium', 'hard'].includes(difficultyParam)) {
+      setDifficulty(difficultyParam);
+    }
+    
     if (missionId) {
       const foundMission = getMissionById(missionId);
       if (foundMission) {
@@ -55,11 +85,39 @@ function MissionSimulationContent() {
     setPhase('simulation');
   };
 
-  const handleComplete = (
-    grade: 'S' | 'A' | 'B' | 'C' | 'F', 
-    stats: { returnPercent: number; maxDrawdown: number }
-  ) => {
-    // Save completion to localStorage
+  const handleComplete = useCallback(async (data: SimulationCompletionData) => {
+    setCompletionData(data);
+    
+    // Save to database
+    if (mission && user) {
+      try {
+        const response = await fetch('/api/mission/results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            missionId: mission.id,
+            grade: data.grade,
+            difficulty,
+            returnPercent: data.returnPercent,
+            maxDrawdown: data.maxDrawdown,
+            initialBalance: data.initialBalance,
+            finalBalance: data.finalBalance,
+            durationDays: data.durationDays,
+            totalTrades: data.trades.length,
+            trades: data.trades,
+            portfolioHistory: data.portfolioHistory,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to save mission result to database');
+        }
+      } catch (e) {
+        console.error('Failed to save mission result:', e);
+      }
+    }
+
+    // Also save to localStorage for offline access
     if (mission) {
       try {
         const storageKey = 'ft_completed_missions';
@@ -69,17 +127,17 @@ function MissionSimulationContent() {
           localStorage.setItem(storageKey, JSON.stringify(completedMissions));
         }
 
-        // Save grade
         const gradesKey = 'ft_mission_grades';
         const grades = JSON.parse(localStorage.getItem(gradesKey) || '{}');
-        
-        // Only update if new grade is better or first attempt
-        const existingGrade = grades[mission.id];
         const gradeOrder = { 'S': 5, 'A': 4, 'B': 3, 'C': 2, 'F': 1 };
-        if (!existingGrade || gradeOrder[grade] > gradeOrder[existingGrade.grade as keyof typeof gradeOrder]) {
+        const existingGrade = grades[mission.id];
+        
+        if (!existingGrade || gradeOrder[data.grade] > gradeOrder[existingGrade.grade as keyof typeof gradeOrder]) {
           grades[mission.id] = { 
-            grade, 
-            ...stats, 
+            grade: data.grade, 
+            returnPercent: data.returnPercent,
+            maxDrawdown: data.maxDrawdown,
+            difficulty,
             completedAt: new Date().toISOString(),
             attempts: (existingGrade?.attempts || 0) + 1
           };
@@ -91,10 +149,25 @@ function MissionSimulationContent() {
         }
         localStorage.setItem(gradesKey, JSON.stringify(grades));
       } catch (e) {
-        console.error('Failed to save mission completion', e);
+        console.error('Failed to save mission completion to localStorage', e);
       }
     }
-    setPhase('complete');
+    
+    setPhase('debrief');
+  }, [mission, user, difficulty]);
+
+  const handlePlayAgain = () => {
+    setCompletionData(null);
+    setPhase('prebuild');
+    if (mission) {
+      setCashBalance(mission.sandboxConfig.startingBalance);
+    }
+    setHoldings({});
+  };
+
+  const handleNextMission = () => {
+    // TODO: Navigate to next mission in sequence
+    router.push('/missions');
   };
 
   const handleExit = () => {
@@ -133,8 +206,28 @@ function MissionSimulationContent() {
     return (
       <MissionPreBuild
         mission={mission}
+        difficulty={difficulty}
+        onDifficultyChange={setDifficulty}
         onStartSimulation={handleStartSimulation}
         onExit={handleExit}
+      />
+    );
+  }
+
+  if (phase === 'debrief' && completionData) {
+    return (
+      <MissionDebrief
+        mission={mission}
+        grade={completionData.grade}
+        returnPercent={completionData.returnPercent}
+        maxDrawdown={completionData.maxDrawdown}
+        trades={completionData.trades}
+        portfolioHistory={completionData.portfolioHistory}
+        initialBalance={completionData.initialBalance}
+        finalBalance={completionData.finalBalance}
+        durationDays={completionData.durationDays}
+        onPlayAgain={handlePlayAgain}
+        onNextMission={completionData.grade !== 'F' ? handleNextMission : undefined}
       />
     );
   }
@@ -144,6 +237,7 @@ function MissionSimulationContent() {
       mission={mission}
       initialHoldings={holdings}
       initialCash={cashBalance}
+      difficulty={difficulty}
       onComplete={handleComplete}
       onExit={handleExit}
     />
