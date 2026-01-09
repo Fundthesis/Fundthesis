@@ -1,32 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-
-const STORAGE_KEY_EMAIL_NOTIFICATIONS = 'ft_email_notifications';
-const STORAGE_KEY_NEWS_ALERTS = 'ft_news_alerts';
-const STORAGE_KEY_ALERT_FREQUENCY = 'ft_alert_frequency';
-
 export function NotificationSettings() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [newsAlerts, setNewsAlerts] = useState(true);
-  const [alertFrequency, setAlertFrequency] = useState<"realtime" | "daily" | "weekly">("daily");
-
-  useEffect(() => {
-    // Load saved preferences
-    const savedEmail = localStorage.getItem(STORAGE_KEY_EMAIL_NOTIFICATIONS);
-    if (savedEmail !== null) {
-      setEmailNotifications(savedEmail === "true");
-    }
-    const savedNews = localStorage.getItem(STORAGE_KEY_NEWS_ALERTS);
-    if (savedNews !== null) {
-      setNewsAlerts(savedNews === "true");
-    }
-    const savedFreq = localStorage.getItem(STORAGE_KEY_ALERT_FREQUENCY);
-    if (savedFreq === "realtime" || savedFreq === "daily" || savedFreq === "weekly") {
-      setAlertFrequency(savedFreq);
-    }
-  }, []);
 
   return (
     <div className="space-y-4">

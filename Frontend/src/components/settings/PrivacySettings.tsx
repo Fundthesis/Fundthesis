@@ -1,41 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
-const STORAGE_KEY_PROFILE_VISIBILITY = 'ft_profile_visibility';
-const STORAGE_KEY_DATA_SHARING = 'ft_data_sharing';
-
 export function PrivacySettings() {
-  const [profileVisibility, setProfileVisibility] = useState<"private" | "public">("private");
-  const [dataSharing, setDataSharing] = useState(false);
-
-  useEffect(() => {
-    // Load saved preferences
-    const savedVisibility = localStorage.getItem(STORAGE_KEY_PROFILE_VISIBILITY);
-    if (savedVisibility === "public" || savedVisibility === "private") {
-      setProfileVisibility(savedVisibility);
-    }
-    const savedDataSharing = localStorage.getItem(STORAGE_KEY_DATA_SHARING);
-    if (savedDataSharing === "true") {
-      setDataSharing(true);
-    }
-  }, []);
-
-  const handleVisibilityChange = (value: "private" | "public") => {
-    setProfileVisibility(value);
-    localStorage.setItem(STORAGE_KEY_PROFILE_VISIBILITY, value);
-    toast.success(`Profile visibility set to ${value}`);
-  };
-
-  const handleDataSharingToggle = () => {
-    const newValue = !dataSharing;
-    setDataSharing(newValue);
-    localStorage.setItem(STORAGE_KEY_DATA_SHARING, newValue.toString());
-    toast.success(`Data sharing ${newValue ? "enabled" : "disabled"}`);
-  };
 
   const handleDownloadData = () => {
     // Collect user data from localStorage
