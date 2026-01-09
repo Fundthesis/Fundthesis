@@ -146,6 +146,23 @@ function MissionSimulationContent() {
           };
         }
         localStorage.setItem(gradesKey, JSON.stringify(grades));
+        
+        // Also save trades to localStorage for the debrief page
+        const tradesKey = 'ft_mission_trades';
+        const existingTrades = JSON.parse(localStorage.getItem(tradesKey) || '[]');
+        const newTrades = data.trades.map((trade, index) => ({
+          id: `${mission.id}-${Date.now()}-${index}`,
+          symbol: trade.symbol,
+          action: trade.action,
+          price: trade.price,
+          quantity: trade.quantity,
+          timestamp: trade.timestamp || new Date().toISOString(),
+          missionId: mission.id,
+          missionTitle: mission.title,
+          day: trade.day,
+        }));
+        const allTrades = [...newTrades, ...existingTrades].slice(0, 100); // Keep last 100 trades
+        localStorage.setItem(tradesKey, JSON.stringify(allTrades));
       } catch (e) {
         console.error('Failed to save mission completion to localStorage', e);
       }

@@ -10,7 +10,10 @@ interface TradeRecord {
     price: number;
     quantity: number;
     timestamp: string;
-    sandboxId: string;
+    sandboxId?: string;
+    missionId?: string;
+    missionTitle?: string;
+    day?: number;
 }
 
 interface DebriefAnalysis {
@@ -47,10 +50,21 @@ export default function DebriefPage() {
 
     useEffect(() => {
         try {
+            const allTrades: TradeRecord[] = [];
+            
+            // Load trades from mission simulations
+            const missionTrades = localStorage.getItem('ft_mission_trades');
+            if (missionTrades) {
+                const parsed = JSON.parse(missionTrades);
+                parsed.forEach((trade: TradeRecord) => {
+                    allTrades.push(trade);
+                });
+            }
+            
+            // Also load from enviro sandbox portfolios (legacy)
             const portfolios = localStorage.getItem('enviro_sandbox_portfolios');
             if (portfolios) {
                 const parsed = JSON.parse(portfolios);
-                const allTrades: TradeRecord[] = [];
 
                 Object.entries(parsed).forEach(([sandboxId, data]: [string, unknown]) => {
                     const portfolioData = data as { history?: TradeRecord[] };
@@ -60,13 +74,13 @@ export default function DebriefPage() {
                         });
                     }
                 });
-
-                allTrades.sort(
-                    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-                );
-
-                setTrades(allTrades.slice(0, 20));
             }
+
+            allTrades.sort(
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+
+            setTrades(allTrades.slice(0, 50));
         } catch (e) {
             console.error('Failed to load trade history', e);
         }
@@ -169,8 +183,18 @@ export default function DebriefPage() {
                                                 <span>${trade.price.toFixed(2)}</span>
                                                 <span>{trade.quantity} shares</span>
                                             </div>
-                                            <div className="text-xs text-stone-400 mt-1">
-                                                {new Date(trade.timestamp).toLocaleDateString()}
+                                            <div className="text-xs text-stone-400 mt-1 flex items-center justify-between">
+                                                <span>
+                                                    {trade.missionTitle 
+                                                        ? `${trade.missionTitle}${trade.day ? ` • Day ${trade.day}` : ''}`
+                                                        : new Date(trade.timestamp).toLocaleDateString()
+                                                    }
+                                                </span>
+                                                {trade.missionId && (
+                                                    <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] uppercase">
+                                                        Mission
+                                                    </span>
+                                                )}
                                             </div>
                                             {analyses[trade.id]?.psychologyTag && (
                                                 <div className="mt-2 text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400 border-l-2 border-stone-300 dark:border-stone-600 pl-2">
