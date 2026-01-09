@@ -12,24 +12,24 @@ const bodyStyle: React.CSSProperties = { fontFamily: 'Georgia, serif' };
 const Module1: React.FC = () => {
   const qs = getQuestions(1);
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-stone-900">
       <ModNav moduleIndex={1} totalModules={10} title="Introduction to FundThesis" />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <article className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <article className="bg-white dark:bg-stone-800 rounded-xl shadow-lg overflow-hidden">
           <div className="p-8">
             <header className="mb-8">
-              <h1 className="text-4xl font-bold mb-4" style={headerStyle}>{content.title}</h1>
-              <p style={bodyStyle} className="text-gray-800 text-lg mb-4">{content.intro}</p>
-              <p style={bodyStyle} className="text-gray-700 text-lg italic mb-6">{content.purpose}</p>
+              <h1 className="text-4xl font-bold mb-4 dark:text-white" style={headerStyle}>{content.title}</h1>
+              <p style={bodyStyle} className="text-gray-800 dark:text-stone-300 text-lg mb-4">{content.intro}</p>
+              <p style={bodyStyle} className="text-gray-700 dark:text-stone-300 text-lg italic mb-6">{content.purpose}</p>
             </header>
 
-            <div className="bg-emerald-50 rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-semibold mb-4" style={headerStyle}>What you will learn</h2>
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-semibold mb-4 dark:text-white" style={headerStyle}>What you will learn</h2>
               <ul className="space-y-2" style={bodyStyle}>
                 {content.learnList.map((it, idx) => (
                   <li key={idx} className="flex items-start">
-                    <span className="text-emerald-600 mr-2">•</span>
-                    <span>{it}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 mr-2">•</span>
+                    <span className="dark:text-stone-300">{it}</span>
                   </li>
                 ))}
               </ul>
@@ -37,8 +37,8 @@ const Module1: React.FC = () => {
 
             {content.sections.map((s, idx) => (
               <section key={idx} className="mb-8">
-                <h3 className="text-2xl font-semibold mb-3" style={headerStyle}>{s.heading}</h3>
-                <div style={bodyStyle} className="text-gray-800 leading-relaxed space-y-4">
+                <h3 className="text-2xl font-semibold mb-3 dark:text-white" style={headerStyle}>{s.heading}</h3>
+                <div style={bodyStyle} className="text-gray-800 dark:text-stone-300 leading-relaxed space-y-4">
                   {s.body.split('\n').map((paragraph, i) => (
                     <p key={i}>{paragraph}</p>
                   ))}
@@ -46,13 +46,13 @@ const Module1: React.FC = () => {
               </section>
             ))}
 
-            <div className="bg-gray-50 rounded-lg p-6 mt-8">
-              <h3 className="text-2xl font-semibold mb-4" style={headerStyle}>Key points</h3>
+            <div className="bg-gray-50 dark:bg-stone-700 rounded-lg p-6 mt-8">
+              <h3 className="text-2xl font-semibold mb-4 dark:text-white" style={headerStyle}>Key points</h3>
               <ul className="space-y-2" style={bodyStyle}>
                 {content.keyPoints.map((kp, i) => (
                   <li key={i} className="flex items-start">
-                    <span className="text-emerald-600 mr-2">•</span>
-                    <span>{kp}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 mr-2">•</span>
+                    <span className="dark:text-stone-300">{kp}</span>
                   </li>
                 ))}
               </ul>
@@ -61,8 +61,8 @@ const Module1: React.FC = () => {
         </article>
 
         <section className="mt-8">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h3 className="text-2xl font-semibold mb-6" style={headerStyle}>Module Quiz</h3>
+          <div className="bg-white dark:bg-stone-800 rounded-xl shadow-lg p-8">
+            <h3 className="text-2xl font-semibold mb-6 dark:text-white" style={headerStyle}>Module Quiz</h3>
             <div style={bodyStyle}>
               <Quiz moduleIndex={1} questions={qs} />
             </div>
@@ -74,7 +74,7 @@ const Module1: React.FC = () => {
           <div className="flex justify-between items-center">
             <a 
               href="/learn" 
-              className="flex items-center px-4 py-2 text-emerald-700 hover:text-emerald-800 transition-colors"
+              className="flex items-center px-4 py-2 text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
               aria-label="Back to Learning Hub"
             >
               <svg 
@@ -97,7 +97,7 @@ const Module1: React.FC = () => {
 
             <a 
               href="/lessonmodules/2" 
-              className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              className="flex items-center px-6 py-3 bg-emerald-600 dark:bg-emerald-700 text-white rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors"
             >
               <span className="font-medium mr-2">Next Module</span>
               <svg 
