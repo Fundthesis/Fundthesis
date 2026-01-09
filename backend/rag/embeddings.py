@@ -1,7 +1,6 @@
-"""Cohere Embed-v4 Service for generating vector embeddings.
+"""Azure OpenAI Embedding Service for generating vector embeddings.
 
-Uses Cohere Embed-v4 on Azure for superior financial document understanding.
-Replaces previous Azure OpenAI embeddings for better FinanceBench performance.
+Uses Azure AI Foundry with OpenAI-compatible API for embeddings.
 """
 
 import os
@@ -13,57 +12,59 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class EmbeddingService:
-    """Service for generating embeddings using Cohere Embed-v4 on Azure."""
-    
+    """Service for generating embeddings using Azure OpenAI-compatible API."""
+
     def __init__(self):
-        """Initialize Cohere Embed client."""
+        """Initialize embedding client."""
+        # Azure AI Foundry OpenAI-compatible endpoint
+        # Format: https://fundthesis.services.ai.azure.com/openai/v1/
         self.endpoint = os.getenv("AZURE_EMBED_ENDPOINT")
         self.api_key = os.getenv("AZURE_EMBED_KEY")
         self.model_name = os.getenv("AZURE_EMBED_MODEL_NAME", "RagEmbed")
-        self.dimensions = 1024  # Cohere Embed-v4 default
-        
+        self.dimensions = 1536  # OpenAI ada-002 default
+
         if not self.endpoint or not self.api_key:
-            logging.warning("Cohere Embed credentials not configured (AZURE_EMBED_ENDPOINT, AZURE_EMBED_KEY)")
-    
+            logging.warning("Embed credentials not configured (AZURE_EMBED_ENDPOINT, AZURE_EMBED_KEY)")
+
     async def generate_embedding(self, text: str, input_type: str = "search_document") -> Optional[List[float]]:
         """
         Generate embedding for a single text.
-        
+
         Args:
             text: Text to embed
-            input_type: "search_document" for indexing, "search_query" for queries
-            
+            input_type: Ignored for OpenAI API (kept for compatibility)
+
         Returns:
             List of floats representing the embedding, or None if failed
         """
         if not text or not text.strip():
             return None
-            
+
         embeddings = await self.generate_embeddings_batch([text], input_type)
         return embeddings[0] if embeddings else None
-    
+
     async def generate_embeddings_batch(
-        self, 
+        self,
         texts: List[str],
         input_type: str = "search_document"
     ) -> List[Optional[List[float]]]:
         """
         Generate embeddings for multiple texts in batch.
-        
+
         Args:
             texts: List of texts to embed
-            input_type: "search_document" for indexing, "search_query" for queries
-            
+            input_type: Ignored for OpenAI API (kept for compatibility)
+
         Returns:
             List of embeddings (each is a list of floats)
         """
         if not texts:
             return []
-        
+
         if not self.endpoint or not self.api_key:
-            logging.error("Cohere Embed credentials not configured")
+            logging.warning("Embed credentials not configured - RAG operating without context retrieval")
             return [None] * len(texts)
-        
+
         # Filter out empty texts, keep track of indices
         valid_texts = []
         valid_indices = []
@@ -72,14 +73,26 @@ class EmbeddingService:
                 # Truncate to ~8000 chars to stay within limits
                 valid_texts.append(text.strip()[:8000])
                 valid_indices.append(i)
-        
+
         if not valid_texts:
             return [None] * len(texts)
-        
+
         try:
-            # Cohere Azure endpoint format
-            url = f"{self.endpoint.rstrip('/')}/{self.model_name}/embeddings"
-            
+            # OpenAI-compatible endpoint format
+            # Expected: https://fundthesis.services.ai.azure.com/openai/v1/
+            base_url = self.endpoint.rstrip('/')
+
+            # Handle various endpoint formats
+            if '/openai/v1' in base_url:
+                # Already correct format
+                url = f"{base_url}/embeddings"
+            elif base_url.endswith('/models'):
+                # Wrong format: /models -> replace with /openai/v1
+                url = base_url.replace('/models', '/openai/v1/embeddings')
+            else:
+                # Add /openai/v1 if not present
+                url = f"{base_url}/openai/v1/embeddings"
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     url,
@@ -88,52 +101,50 @@ class EmbeddingService:
                         "Content-Type": "application/json",
                     },
                     json={
-                        "texts": valid_texts,
-                        "input_type": input_type,
-                        "truncate": "END",
-                        "embedding_types": ["float"]
+                        "input": valid_texts,
+                        "model": self.model_name
                     }
                 )
-                
+
                 if response.status_code != 200:
-                    logging.error(f"Cohere Embed API error: {response.status_code} - {response.text[:500]}")
+                    logging.error(f"Embed API error: {response.status_code} - {response.text[:500]}")
                     return [None] * len(texts)
-                
+
                 data = response.json()
-                embeddings_data = data.get("embeddings", {})
-                
-                # Handle different response formats
-                if isinstance(embeddings_data, dict):
-                    raw_embeddings = embeddings_data.get("float", [])
-                elif isinstance(embeddings_data, list):
-                    raw_embeddings = embeddings_data
-                else:
-                    logging.error(f"Unexpected embeddings format: {type(embeddings_data)}")
+
+                # OpenAI format: {"data": [{"embedding": [...], "index": 0}, ...]}
+                embeddings_list = data.get("data", [])
+
+                if not embeddings_list:
+                    logging.error(f"No embeddings in response: {data}")
                     return [None] * len(texts)
-                
+
+                # Sort by index to ensure correct order
+                embeddings_list.sort(key=lambda x: x.get("index", 0))
+
+                raw_embeddings = [item.get("embedding") for item in embeddings_list]
+
                 # Map results back to original indices
                 result: List[Optional[List[float]]] = [None] * len(texts)
                 for idx, embedding in zip(valid_indices, raw_embeddings):
                     result[idx] = embedding
-                
-                logging.info(f"Generated {len(raw_embeddings)} embeddings using Cohere Embed-v4")
+
+                logging.info(f"Generated {len(raw_embeddings)} embeddings using Azure OpenAI")
                 return result
-                
+
         except Exception as e:
-            logging.error(f"Error calling Cohere Embed API: {e}")
+            logging.error(f"Error calling Embed API: {e}")
             return [None] * len(texts)
-    
+
     async def embed_query(self, query: str) -> Optional[List[float]]:
         """
         Generate embedding for a search query.
-        Uses "search_query" input type for better retrieval.
         """
         return await self.generate_embedding(query, input_type="search_query")
-    
+
     async def embed_document(self, text: str) -> Optional[List[float]]:
         """
         Generate embedding for a document to be indexed.
-        Uses "search_document" input type.
         """
         return await self.generate_embedding(text, input_type="search_document")
 

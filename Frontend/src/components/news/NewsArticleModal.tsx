@@ -2,6 +2,7 @@
 
 import React from "react";
 import { NewsArticle } from "@/lib/api";
+import { trackArticleView } from "@/lib/tracking";
 
 interface NewsArticleModalProps {
   article: NewsArticle | null;
@@ -19,6 +20,15 @@ export default function NewsArticleModal({
     document.body.style.removeProperty("overflow");
     onClose();
   }, [onClose]);
+
+  // Track article view when modal opens
+  React.useEffect(() => {
+    if (isOpen && article) {
+      trackArticleView(article.id, article.headline, article.source).catch(
+        (error) => console.error("Failed to track article view:", error)
+      );
+    }
+  }, [isOpen, article]);
 
   // Close modal on Escape key and manage body scroll
   React.useEffect(() => {

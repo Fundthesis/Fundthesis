@@ -11,17 +11,18 @@ datasource db {
 }
 
 model User {
-    id                 String              @id @default(cuid())
-    name               String?
-    email              String              @unique
-    emailVerified      Boolean?
-    image              String?
-    createdAt          DateTime            @default(now())
-    updatedAt          DateTime            @updatedAt
-    sessions           Session[]
-    accounts           Account[]
-    userAccounts       UserAccount[]
-    simulationAccounts SimulationAccount[]
+    id                  String                   @id @default(cuid())
+    name                String?
+    email               String                   @unique
+    emailVerified       Boolean?
+    image               String?
+    createdAt           DateTime                 @default(now())
+    updatedAt           DateTime                 @updatedAt
+    sessions            Session[]
+    accounts            Account[]
+    userAccounts        UserAccount[]
+    simulationAccounts  SimulationAccount[]
+    contentInteractions UserContentInteraction[]
 
     @@map("user")
     @@schema("public")
@@ -96,6 +97,25 @@ model Article {
     @@schema("public")
 }
 
+model LearningModule {
+    id             String                       @id @default(uuid())
+    moduleNumber   Int                          @map("module_number")
+    sectionIndex   Int?                         @map("section_index")
+    sectionHeading String?                      @map("section_heading")
+    title          String // Full module title
+    content        String // Chunk content
+    chunkType      String                       @map("chunk_type") // 'intro', 'purpose', 'section', 'keyPoints'
+    urlPath        String                       @map("url_path") // e.g., '/lessonmodules/1'
+    embedding      Unsupported("vector(1536)")? // pgvector for RAG
+    createdAt      DateTime                     @default(now()) @map("created_at")
+    updatedAt      DateTime                     @updatedAt @map("updated_at")
+
+    @@index([moduleNumber])
+    @@index([chunkType])
+    @@map("learning_modules")
+    @@schema("public")
+}
+
 model StockForecast {
     id              String   @id @default(uuid())
     symbol          String
@@ -143,6 +163,23 @@ model UserAccount {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@map("user_account")
+    @@schema("public")
+}
+
+// ============= USER CONTENT INTERACTION TRACKING =============
+
+model UserContentInteraction {
+    id           String   @id @default(cuid())
+    userId       String   @map("user_id")
+    contentType  String   @map("content_type") // 'article', 'module', 'coach_query'
+    contentId    String?  @map("content_id") // Article ID, module name, or null for queries
+    metadata     Json? // Additional context (article headline, module title, etc.)
+    interactedAt DateTime @default(now()) @map("interacted_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, interactedAt(sort: Desc)])
+    @@map("user_content_interactions")
     @@schema("public")
 }
 

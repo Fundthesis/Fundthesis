@@ -25,8 +25,13 @@ def finn_client():
     return finnhub.Client(api_key=API_KEY)
 
 
-async def scrape_finnhub_news():
-    """Scrape general news from Finnhub and insert into database."""
+async def scrape_finnhub_news(generate_embeddings: bool = False):
+    """
+    Scrape general news from Finnhub and insert into database.
+
+    Args:
+        generate_embeddings: If True, generates embeddings for new articles
+    """
     finc = finn_client()
     news = finc.general_news('general', min_id=0)
 
@@ -43,11 +48,14 @@ async def scrape_finnhub_news():
             error=error,
             http_status=http_status,
             meta=meta,
-            sentiment_label=None  # Sentiment job will update this
+            sentiment_label=None,  # Sentiment job will update this
+            generate_embedding=generate_embeddings
         )
 
         inserted += 1
 
     print(f"Inserted {inserted} articles from Finnhub into DB")
+    if generate_embeddings:
+        print(f"Embeddings generated for {inserted} articles")
     return inserted
 

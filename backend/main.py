@@ -87,6 +87,20 @@ try:
 except ImportError as e:
     print(f"Warning: RAG routes not available. AI Coach RAG features may not work. Error: {e}")
 
+# Include tracking routes for user interaction tracking
+try:
+    from app.api.tracking import router as tracking_router
+    app.include_router(tracking_router, prefix="/api/tracking")
+except ImportError as e:
+    print(f"Warning: Tracking routes not available. User interaction tracking may not work. Error: {e}")
+
+# Include schema management routes for LLM-driven schema changes
+try:
+    from app.api.schema import router as schema_router
+    app.include_router(schema_router, prefix="/api/schema")
+except ImportError as e:
+    print(f"Warning: Schema management routes not available. LLM schema management may not work. Error: {e}")
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FundThesis API"}
