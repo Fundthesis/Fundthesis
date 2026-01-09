@@ -48,6 +48,15 @@ export default function DiscoverPage() {
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Get today's date formatted like a newspaper
+  const today = new Date();
+  const dateString = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   // Reset to page 1 when filters change
   const handleFiltersChange = useCallback((newFilters: FilterOptions) => {
     setFilters(newFilters);
@@ -214,9 +223,20 @@ export default function DiscoverPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-stone-900">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <PageHeader title="Discover Stocks" />
+        {/* Masthead */}
+        <header className="text-center border-b-4 border-double border-black dark:border-stone-600 pb-4 mb-8">
+          <p className="text-xs tracking-widest text-stone-500 dark:text-stone-400 uppercase mb-2">
+            {dateString}
+          </p>
+          <h1 className="font-serif text-5xl font-black tracking-tight text-black dark:text-white">
+            Discover Stocks
+          </h1>
+          <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2">
+            &ldquo;Explore the Market Across All Sectors&rdquo;
+          </p>
+        </header>
 
         {/* Filters */}
         <div className="mt-6 mb-6">

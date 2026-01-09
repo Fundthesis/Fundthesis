@@ -18,6 +18,7 @@ import { getMissionById, type Mission } from "@/data/missions";
 import { MissionContextPanel } from "@/components/missions/MissionContextPanel";
 import { MissionNewsFeed } from "@/components/missions/MissionNewsFeed";
 import { MissionAICoach } from "@/components/missions/MissionAICoach";
+import { NewspaperMissionLayout } from "@/components/missions/NewspaperMissionLayout";
 
 interface StockDetail {
   symbol: string;
@@ -210,6 +211,7 @@ function PortfolioDashboardPageContent() {
   // Mission state
   const [mission, setMission] = useState<Mission | null>(null);
   const [completedObjectives, setCompletedObjectives] = useState<string[]>([]);
+  const [selectedStock, setSelectedStock] = useState<(typeof allStocks[0]) | null>(null);
 
   const router = useRouter();
 
@@ -697,6 +699,41 @@ function PortfolioDashboardPageContent() {
   // Debug: Log mission state
   console.log('[Render] Mission state:', mission ? mission.title : 'null', 'Cash balance:', cashBalance);
 
+  // Handle buy/sell for newspaper layout
+  const handleBuy = (symbol: string, quantity: number) => {
+    const stock = stocks.find(s => s.symbol === symbol);
+    if (stock) {
+      handleExecuteTrade("Buy", symbol, stock.price, quantity);
+    }
+  };
+
+  const handleSell = (symbol: string, quantity: number) => {
+    const stock = stocks.find(s => s.symbol === symbol);
+    if (stock) {
+      handleExecuteTrade("Sell", symbol, stock.price, quantity);
+    }
+  };
+
+  // If in mission mode, use the new newspaper layout
+  if (mission) {
+    return (
+      <NewspaperMissionLayout
+        mission={mission}
+        stocks={filteredStocks}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onStockSelect={setSelectedStock}
+        selectedStock={selectedStock}
+        cashBalance={cashBalance}
+        portfolioValue={totalValue}
+        completedObjectives={completedObjectives}
+        onBuy={handleBuy}
+        onSell={handleSell}
+        holdings={holdingsMap}
+      />
+    );
+  }
+
   return (
     <div className="bg-[#fcfbf9] dark:bg-stone-900 min-h-screen">
       <main className="max-w-7xl mx-auto px-4 py-8 font-serif text-[#1a1a1a] dark:text-stone-100">
@@ -706,21 +743,21 @@ function PortfolioDashboardPageContent() {
           <div className="flex justify-between items-end mb-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-1">
-                {mission ? "Mission Environment" : "Interactive Environment"}
+                Interactive Environment
               </p>
               <h1 className="text-5xl md:text-6xl font-black font-serif tracking-tight text-black dark:text-white leading-none">
-                {mission ? mission.title : sandbox ? sandbox.name : "Market Sandbox"}
+                {sandbox ? sandbox.name : "Market Sandbox"}
               </h1>
             </div>
             <div className="text-right hidden md:block">
               <p className="font-serif italic text-sm text-gray-500 dark:text-stone-400">
-                {mission ? "Learning Through Doing" : "Simulated Trading Floor"}
+                Simulated Trading Floor
               </p>
               <p className="font-bold text-xs uppercase tracking-widest mt-1 dark:text-stone-300">Section E</p>
             </div>
           </div>
           <p className="text-lg font-serif italic text-gray-700 dark:text-stone-400 border-t border-black/10 dark:border-stone-700 pt-2">
-            {mission ? mission.description : "Test your thesis in a risk-free environment."}
+            Test your thesis in a risk-free environment.
           </p>
         </div>
 
@@ -796,38 +833,7 @@ function PortfolioDashboardPageContent() {
           </div>
         </div>
 
-        {mission ? (
-          /* Mission Mode Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            {/* Left Column: Mission Context */}
-            <div className="lg:col-span-1">
-              <MissionContextPanel
-                mission={mission}
-                completedObjectives={completedObjectives}
-                portfolioValue={totalValue}
-                startingBalance={mission.sandboxConfig.startingBalance}
-              />
-            </div>
-
-            {/* Middle Column: News Feed */}
-            <div className="lg:col-span-1">
-              <MissionNewsFeed mission={mission} />
-            </div>
-
-            {/* Right Column: AI Coach */}
-            <div className="lg:col-span-1">
-              <MissionAICoach
-                mission={mission}
-                portfolioContext={{
-                  cashBalance,
-                  holdings: holdingsMap,
-                  transactions,
-                  totalValue,
-                }}
-              />
-            </div>
-          </div>
-        ) : (
+        {(
           /* Sandbox Mode Layout */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             <div className="border-t-4 border-black dark:border-stone-600 pt-6">
@@ -852,18 +858,16 @@ function PortfolioDashboardPageContent() {
           </div>
         )}
 
-        {/* Transaction Ledger - Always visible */}
-        {mission && (
-          <div className="mb-12 border-t-4 border-black dark:border-stone-600 pt-6">
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
-              <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
-              Transaction Ledger
-            </h3>
-            <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
-              <TransactionHistory transactions={transactions} />
-            </div>
+        {/* Transaction Ledger */}
+        <div className="mb-12 border-t-4 border-black dark:border-stone-600 pt-6">
+          <h3 className="text-xl font-bold uppercase tracking-widest mb-4 flex items-center gap-2 dark:text-white">
+            <span className="w-3 h-3 bg-black dark:bg-green-500 inline-block"></span>
+            Transaction Ledger
+          </h3>
+          <div className="bg-white dark:bg-stone-800 border border-black dark:border-stone-600 p-4">
+            <TransactionHistory transactions={transactions} />
           </div>
-        )}
+        </div>
 
         {/* Sandbox actions (delete current sandbox) */}
         <div className="pt-6 flex justify-end border-t border-black dark:border-stone-600">
