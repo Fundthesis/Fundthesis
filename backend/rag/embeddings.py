@@ -83,15 +83,20 @@ class EmbeddingService:
             base_url = self.endpoint.rstrip('/')
 
             # Handle various endpoint formats
+            # Remove any trailing paths like /models or /models/ModelName
+            if '/models' in base_url:
+                # Strip everything from /models onwards
+                base_url = base_url.split('/models')[0]
+            
+            # Ensure we have the OpenAI-compatible path
             if '/openai/v1' in base_url:
-                # Already correct format
-                url = f"{base_url}/embeddings"
-            elif base_url.endswith('/models'):
-                # Wrong format: /models -> replace with /openai/v1
-                url = base_url.replace('/models', '/openai/v1/embeddings')
+                # Already correct format, just add /embeddings
+                url = f"{base_url.rstrip('/')}/embeddings"
             else:
-                # Add /openai/v1 if not present
-                url = f"{base_url}/openai/v1/embeddings"
+                # Add /openai/v1/embeddings
+                url = f"{base_url.rstrip('/')}/openai/v1/embeddings"
+            
+            logging.debug(f"[Embeddings] Using endpoint URL: {url}")
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
