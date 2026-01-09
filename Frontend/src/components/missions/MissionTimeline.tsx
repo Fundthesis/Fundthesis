@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Calendar, AlertCircle, TrendingUp, TrendingDown, Clock, Flag, Zap } from 'lucide-react';
+import { Calendar, AlertCircle, TrendingUp, TrendingDown, Clock, Zap } from 'lucide-react';
+import { MissionDifficultyLevel } from '@/lib/types/mission';
 
 interface TimelineEvent {
   day: number;
@@ -23,7 +24,8 @@ interface MissionTimelineProps {
     description: string;
     marketTrend: 'bullish' | 'bearish' | 'volatile' | 'stable';
   }[];
-  portfolioHistory: { day: number; value: number }[];
+  difficulty?: MissionDifficultyLevel;
+  portfolioHistory?: { day: number; value: number }[];
   onDayClick?: (day: number) => void;
 }
 
@@ -32,33 +34,25 @@ export function MissionTimeline({
   totalDays,
   events,
   phases,
-  portfolioHistory: _portfolioHistory,
-  onDayClick: _onDayClick,
+  difficulty = 'medium',
 }: MissionTimelineProps) {
   // Calculate progress percentage
   const progressPercent = (currentDay / totalDays) * 100;
   
+  // Difficulty settings - hide more info on harder difficulties
+  const showMarketTrend = difficulty === 'easy'; // Only show on easy
+  const showPhaseColors = difficulty === 'easy'; // Only color-code phases on easy
+  
   // Get current phase
   const currentPhase = phases.find(p => currentDay >= p.startDay && currentDay <= p.endDay);
   
-  // Get visible events (past and current)
+  // Get visible events (past and current only - NO future events!)
   const visibleEvents = events.filter(e => e.day <= currentDay).slice(-5);
-  
-  // Get upcoming milestones (next 3 phase transitions or events)
-  const upcomingMilestones = [
-    ...phases.filter(p => p.startDay > currentDay).map(p => ({
-      day: p.startDay,
-      name: p.name,
-      type: 'phase' as const,
-    })),
-    ...events.filter(e => e.day > currentDay).map(e => ({
-      day: e.day,
-      name: e.title,
-      type: e.type,
-    })),
-  ].sort((a, b) => a.day - b.day).slice(0, 3);
 
   const getTrendIcon = (trend: string) => {
+    if (!showMarketTrend) {
+      return <Clock className="w-4 h-4 text-gray-500" />;
+    }
     switch (trend) {
       case 'bullish':
         return <TrendingUp className="w-4 h-4 text-green-500" />;
@@ -105,8 +99,8 @@ export function MissionTimeline({
       {/* Progress Bar with Phase Markers */}
       <div className="mb-6">
         <div className="relative h-8 bg-stone-200 dark:bg-stone-700 border-2 border-black dark:border-stone-600 overflow-hidden">
-          {/* Phase backgrounds */}
-          {phases.map((phase, idx) => {
+          {/* Phase backgrounds - only show colors on easy mode */}
+          {showPhaseColors && phases.map((phase, idx) => {
             const startPercent = (phase.startDay / totalDays) * 100;
             const widthPercent = ((phase.endDay - phase.startDay) / totalDays) * 100;
             const phaseColors = {
@@ -120,7 +114,7 @@ export function MissionTimeline({
                 key={idx}
                 className={`absolute top-0 h-full ${phaseColors[phase.marketTrend]}`}
                 style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
-                title={phase.name}
+                title={showMarketTrend ? phase.name : undefined}
               />
             );
           })}
@@ -177,29 +171,31 @@ export function MissionTimeline({
         </div>
       </div>
 
-      {/* Current Phase Info */}
+      {/* Current Phase Info - simplified on harder difficulties */}
       {currentPhase && (
         <div className="mb-6 p-4 bg-stone-100 dark:bg-stone-900 border-2 border-black dark:border-stone-700">
           <div className="flex items-center gap-2 mb-2">
             {getTrendIcon(currentPhase.marketTrend)}
             <h4 className="font-bold text-black dark:text-stone-100 uppercase tracking-wide">
-              Current Phase: {currentPhase.name}
+              {showMarketTrend ? `Current Phase: ${currentPhase.name}` : `Day ${currentDay} of ${totalDays}`}
             </h4>
           </div>
           <p className="text-sm text-gray-700 dark:text-stone-300">
-            {currentPhase.description}
+            {showMarketTrend ? currentPhase.description : 'Analyze the news to understand market conditions.'}
           </p>
-          <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-stone-400">
-            <span>Days {currentPhase.startDay} - {currentPhase.endDay}</span>
-            <span className={`px-2 py-0.5 rounded uppercase font-bold ${
-              currentPhase.marketTrend === 'bullish' ? 'bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
-              currentPhase.marketTrend === 'bearish' ? 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
-              currentPhase.marketTrend === 'volatile' ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
-              'bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-            }`}>
-              {currentPhase.marketTrend}
-            </span>
-          </div>
+          {showMarketTrend && (
+            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-stone-400">
+              <span>Days {currentPhase.startDay} - {currentPhase.endDay}</span>
+              <span className={`px-2 py-0.5 rounded uppercase font-bold ${
+                currentPhase.marketTrend === 'bullish' ? 'bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
+                currentPhase.marketTrend === 'bearish' ? 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300' :
+                currentPhase.marketTrend === 'volatile' ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
+                'bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+              }`}>
+                {currentPhase.marketTrend}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -242,31 +238,6 @@ export function MissionTimeline({
                     {event.impact === 'neutral' && <AlertCircle className="w-4 h-4 text-yellow-500" />}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upcoming Milestones */}
-      {upcomingMilestones.length > 0 && (
-        <div>
-          <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400 mb-3">
-            Upcoming
-          </h4>
-          <div className="flex gap-4">
-            {upcomingMilestones.map((milestone, idx) => (
-              <div
-                key={idx}
-                className="flex-1 p-3 bg-stone-50 dark:bg-stone-900 border border-dashed border-gray-300 dark:border-stone-600 text-center"
-              >
-                <Flag className="w-4 h-4 mx-auto mb-1 text-gray-400 dark:text-stone-500" />
-                <p className="text-xs font-bold text-gray-600 dark:text-stone-300">
-                  Day {milestone.day}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-stone-400 truncate">
-                  {milestone.name}
-                </p>
               </div>
             ))}
           </div>

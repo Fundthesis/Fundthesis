@@ -84,6 +84,11 @@ export function MissionSimulatorV2({
   // Difficulty configuration
   const difficultyConfig = DIFFICULTY_CONFIGS[difficulty];
   
+  // What to show based on difficulty
+  const showImpactIndicators = difficulty === 'easy'; // Only show ↑/↓ on easy
+  const showImpactColors = difficulty !== 'hard'; // Hide color-coding on hard
+  const showAffectedSectors = difficulty !== 'hard'; // Hide sectors on hard
+  
   // Scenario configuration - memoized to prevent recreation on every render
   const scenarioConfig = SCENARIO_CONFIGS[mission.sandboxConfig.scenario] || SCENARIO_CONFIGS.neutral;
   const fullScenario: MissionScenario = useMemo(() => ({
@@ -767,11 +772,13 @@ export function MissionSimulatorV2({
                       } ${
                         event.isBreaking 
                           ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
-                          : event.impact === 'positive'
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/10'
-                            : event.impact === 'negative'
-                              ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
-                              : 'border-stone-400 dark:border-stone-600 bg-stone-50 dark:bg-stone-800/30'
+                          : !showImpactColors
+                            ? 'border-stone-400 dark:border-stone-600 bg-stone-50 dark:bg-stone-800/30'
+                            : event.impact === 'positive'
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/10'
+                              : event.impact === 'negative'
+                                ? 'border-red-400 bg-red-50 dark:bg-red-900/10'
+                                : 'border-stone-400 dark:border-stone-600 bg-stone-50 dark:bg-stone-800/30'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
@@ -781,17 +788,22 @@ export function MissionSimulatorV2({
                             Breaking
                           </span>
                         )}
-                        <span className={`text-xs ${
-                          event.impact === 'positive' ? 'text-green-600 dark:text-green-400' :
-                          event.impact === 'negative' ? 'text-red-600 dark:text-red-400' :
-                          'text-stone-500'
-                        }`}>
-                          {event.impact === 'positive' ? '↑' : event.impact === 'negative' ? '↓' : '—'} {event.source}
+                        <span className="text-xs text-stone-500">
+                          {showImpactIndicators && (
+                            <span className={
+                              event.impact === 'positive' ? 'text-green-600 dark:text-green-400' :
+                              event.impact === 'negative' ? 'text-red-600 dark:text-red-400' :
+                              'text-stone-500'
+                            }>
+                              {event.impact === 'positive' ? '📈 ' : event.impact === 'negative' ? '📉 ' : ''}
+                            </span>
+                          )}
+                          {event.source}
                         </span>
                       </div>
                       <h4 className="font-bold text-stone-900 dark:text-white mb-1">{event.headline}</h4>
                       <p className="text-sm text-stone-600 dark:text-stone-400">{event.summary}</p>
-                      {event.affectedSectors && event.affectedSectors.length > 0 && (
+                      {showAffectedSectors && event.affectedSectors && event.affectedSectors.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {event.affectedSectors.slice(0, 3).map(sector => (
                             <span 

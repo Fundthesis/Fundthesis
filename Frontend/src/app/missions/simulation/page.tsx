@@ -163,6 +163,17 @@ function MissionSimulationContent() {
     setHoldings({});
   };
 
+  const handleMissionChange = (missionId: string) => {
+    const newMission = getMissionById(missionId);
+    if (newMission) {
+      setMission(newMission);
+      setCashBalance(newMission.sandboxConfig.startingBalance);
+      setHoldings({});
+      // Update URL without full page reload
+      router.replace(`/missions/simulation?missionId=${missionId}&difficulty=${difficulty}`);
+    }
+  };
+
   const handleNextMission = () => {
     // TODO: Navigate to next mission in sequence
     router.push('/missions');
@@ -206,6 +217,7 @@ function MissionSimulationContent() {
         mission={mission}
         difficulty={difficulty}
         onDifficultyChange={setDifficulty}
+        onMissionChange={handleMissionChange}
         onStartSimulation={handleStartSimulation}
         onExit={handleExit}
       />

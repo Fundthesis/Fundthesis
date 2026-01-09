@@ -119,6 +119,13 @@ FundThesis follows a modern, cloud-native architecture with clear separation bet
 - Responsive design
 - Newspaper-inspired layout
 
+#### 5. **Mission System**
+- Interactive market simulations (2008 crash, COVID, inflation, etc.)
+- Difficulty-based learning (Easy/Medium/Hard)
+- Real-time portfolio tracking
+- Behavioral analysis and grading
+- See [08-Mission-System.md](./08-Mission-System.md) for details
+
 ### Backend Components
 
 #### 1. **FastAPI Application**
@@ -133,6 +140,7 @@ FundThesis follows a modern, cloud-native architecture with clear separation bet
 - `/api/insights` - AI insights
 - `/api/sentiment` - Sentiment analysis
 - `/api/coach` - AI coaching/education
+- `/api/mission/results` - Mission completion results (save/retrieve)
 
 #### 3. **Scheduled Jobs**
 - **Forecasting Job:** Daily stock price predictions

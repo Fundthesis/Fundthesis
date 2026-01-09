@@ -30,9 +30,19 @@ import {
   Sparkles,
   Flame,
   Skull,
+  BookOpen,
+  TrendingUp,
+  TrendingDown,
+  Globe,
+  Package,
+  Merge,
+  Zap as ZapIcon,
+  Bug,
+  LineChart,
+  Newspaper as NewspaperIcon,
 } from 'lucide-react';
 
-import { Mission } from '@/data/missions';
+import { Mission, missions as allMissions } from '@/data/missions';
 import { 
   MISSION_STOCKS,
   SCENARIO_CONFIGS,
@@ -55,6 +65,20 @@ const SECTOR_ICONS: Record<string, React.ElementType> = {
   'Communications': Radio,
 };
 
+// Mission/Scenario icons
+const SCENARIO_ICONS: Record<string, React.ElementType> = {
+  'building-portfolio': BookOpen,
+  'inflation-spike': TrendingUp,
+  'interest-rate-cuts': TrendingDown,
+  'currency-devaluation': Globe,
+  'tariff-wars': Package,
+  'merger-acquisition': Merge,
+  'hype-bubble': ZapIcon,
+  'pandemic-panicking': Bug,
+  'market-crash-2008': LineChart,
+  'news-whirlwind': NewspaperIcon,
+};
+
 // Difficulty icons
 const DIFFICULTY_ICONS: Record<MissionDifficultyLevel, React.ElementType> = {
   'easy': Sparkles,
@@ -66,6 +90,7 @@ interface MissionPreBuildProps {
   mission: Mission;
   difficulty?: MissionDifficultyLevel;
   onDifficultyChange?: (difficulty: MissionDifficultyLevel) => void;
+  onMissionChange?: (missionId: string) => void;
   onStartSimulation: (holdings: Record<string, { quantity: number; avgPrice: number }>, cashBalance: number) => void;
   onExit: () => void;
 }
@@ -74,12 +99,16 @@ export function MissionPreBuild({
   mission, 
   difficulty = 'medium',
   onDifficultyChange,
+  onMissionChange,
   onStartSimulation, 
   onExit 
 }: MissionPreBuildProps) {
   const scenario = mission.sandboxConfig.scenario;
   const scenarioConfig = SCENARIO_CONFIGS[scenario] || SCENARIO_CONFIGS.neutral;
   const difficultyConfig = DIFFICULTY_CONFIGS[difficulty];
+  
+  // State for scenario selector
+  const [showScenarioSelector, setShowScenarioSelector] = useState(false);
   
   // Start with empty portfolio - user builds from scratch
   const [holdings, setHoldings] = useState<Record<string, { quantity: number; avgPrice: number }>>({});
@@ -287,12 +316,86 @@ export function MissionPreBuild({
 
       {/* Main Portfolio Builder */}
       <div className="max-w-7xl mx-auto p-6">
+        {/* Scenario Selector Dropdown */}
+        {showScenarioSelector && (
+          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-40 flex items-start justify-center pt-24 p-4">
+            <div className="bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 max-w-4xl w-full p-6 shadow-2xl max-h-[70vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-stone-900 dark:text-white">Select a Scenario</h2>
+                <button 
+                  onClick={() => setShowScenarioSelector(false)}
+                  className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {allMissions.map((m) => {
+                  const Icon = SCENARIO_ICONS[m.id] || BookOpen;
+                  const isActive = m.id === mission.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        onMissionChange?.(m.id);
+                        setShowScenarioSelector(false);
+                      }}
+                      className={`p-4 text-left border transition-all ${
+                        isActive
+                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                          : 'border-stone-300 dark:border-stone-700 hover:border-amber-400 dark:hover:border-amber-600'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 ${isActive ? 'bg-amber-500 text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400'}`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className={`font-bold ${isActive ? 'text-amber-700 dark:text-amber-400' : 'text-stone-900 dark:text-white'}`}>
+                            {m.title}
+                          </h3>
+                          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">{m.subtitle}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className={`text-[10px] px-1.5 py-0.5 uppercase font-bold ${
+                              m.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                              m.difficulty === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+                              m.difficulty === 'advanced' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                              'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            }`}>
+                              {m.difficulty}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 uppercase">
+                              {m.category}
+                            </span>
+                          </div>
+                        </div>
+                        {isActive && (
+                          <span className="text-amber-500 text-xs font-bold">ACTIVE</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em] text-xs mb-1">Pre-Mission Setup</div>
-              <h1 className="text-2xl font-bold text-stone-900 dark:text-white">{mission.title}</h1>
+              <button 
+                onClick={() => setShowScenarioSelector(true)}
+                className="text-2xl font-bold text-stone-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-2 group"
+              >
+                {mission.title}
+                <ChevronRight className="w-5 h-5 text-stone-400 group-hover:text-amber-500 transition-colors" />
+              </button>
+              <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+                Click to change scenario • {mission.subtitle}
+              </p>
             </div>
             <div className="flex items-center gap-4">
               {/* Difficulty Selector */}
@@ -374,23 +477,24 @@ export function MissionPreBuild({
         <div className="grid grid-cols-12 gap-6">
           {/* Left Column - News Preview & Portfolio */}
           <div className="col-span-4 space-y-6">
-            {/* News Preview - IMPORTANT for stock selection */}
-            <div className="bg-white dark:bg-stone-800/50 border border-stone-300 dark:border-stone-700 p-6 shadow-lg dark:shadow-none">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                  <Newspaper className="w-5 h-5 text-amber-600 dark:text-amber-500" />
-                  Upcoming News Events
-                </h2>
-                <button
-                  onClick={() => setShowNewsPreview(!showNewsPreview)}
-                  className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
-                >
-                  {showNewsPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              
-              {showNewsPreview && (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
+            {/* News Preview - Only shown on Easy mode (players shouldn't know future on Medium/Hard) */}
+            {difficulty === 'easy' ? (
+              <div className="bg-white dark:bg-stone-800/50 border border-stone-300 dark:border-stone-700 p-6 shadow-lg dark:shadow-none">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                    <Newspaper className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+                    Upcoming News Events
+                  </h2>
+                  <button
+                    onClick={() => setShowNewsPreview(!showNewsPreview)}
+                    className="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+                  >
+                    {showNewsPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                
+                {showNewsPreview && (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
                   {newsEvents.length === 0 ? (
                     <p className="text-stone-500 dark:text-stone-400 italic text-sm">No specific news events for this scenario.</p>
                   ) : (
@@ -447,6 +551,27 @@ export function MissionPreBuild({
                 💡 Use these upcoming events to decide which stocks to buy or avoid.
               </p>
             </div>
+            ) : (
+              /* Medium/Hard mode: No future news preview */
+              <div className="bg-white dark:bg-stone-800/50 border border-stone-300 dark:border-stone-700 p-6 shadow-lg dark:shadow-none">
+                <div className="flex items-center gap-2 mb-4">
+                  <Newspaper className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-white">Market Intelligence</h2>
+                </div>
+                <div className="text-center py-8">
+                  <EyeOff className="w-12 h-12 text-stone-400 dark:text-stone-600 mx-auto mb-3" />
+                  <p className="text-stone-600 dark:text-stone-400 text-sm">
+                    {difficulty === 'hard' 
+                      ? 'Expert mode: No advance market intelligence. React to news as it happens.'
+                      : 'Intermediate mode: Limited market intelligence. Trust your analysis skills.'
+                    }
+                  </p>
+                  <p className="text-stone-500 dark:text-stone-500 text-xs mt-2 italic">
+                    💡 Build a diversified portfolio to handle unknown market conditions.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Portfolio Summary */}
             <div className="bg-white dark:bg-stone-800/50 border border-stone-300 dark:border-stone-700 p-6 shadow-lg dark:shadow-none">

@@ -16,6 +16,7 @@ Fundthesis bridges the gap in financial literacy by simplifying portfolio select
 - Real-time market news summarization
 - AI-driven stock insights and portfolio diversification guidance
 - Company deep-dives with historical and live metrics
+- **Mission System**: Interactive simulations of historical market events (2008 crash, COVID, etc.) with difficulty-based learning
 - Theme toggle (light/dark) and modern UI with shadcn/ui
 
 ## Tech Stack
