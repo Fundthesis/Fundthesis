@@ -23,6 +23,11 @@ class EmbeddingService:
         self.model_name = os.getenv("AZURE_EMBED_MODEL_NAME", "RagEmbed")
         self.dimensions = 1536  # OpenAI ada-002 default
 
+        # Log the actual values from environment (for debugging Azure vs local)
+        logging.info(f"[Embeddings] INIT - Endpoint from env: '{self.endpoint}'")
+        logging.info(f"[Embeddings] INIT - Model name from env: '{self.model_name}'")
+        logging.info(f"[Embeddings] INIT - Has API key: {bool(self.api_key)}")
+
         if not self.endpoint or not self.api_key:
             logging.warning("Embed credentials not configured (AZURE_EMBED_ENDPOINT, AZURE_EMBED_KEY)")
 
@@ -58,6 +63,11 @@ class EmbeddingService:
         Returns:
             List of embeddings (each is a list of floats)
         """
+        # VERSION v2.2 - Simplified URL construction for Azure
+        logging.info("=" * 60)
+        logging.info("[Embeddings] VERSION v2.2 - generate_embeddings_batch")
+        logging.info("=" * 60)
+        
         if not texts:
             return []
 
@@ -79,31 +89,34 @@ class EmbeddingService:
 
         try:
             # OpenAI-compatible endpoint format
-            # Expected: https://fundthesis.services.ai.azure.com/openai/v1/
-            # But Azure env var might be:
-            # - https://fundthesis.services.ai.azure.com/models/RagEmbed
+            # The endpoint should be: https://fundthesis.services.ai.azure.com/openai/v1
+            # We need to construct: https://fundthesis.services.ai.azure.com/openai/v1/embeddings
+            # The model name (RagEmbed) goes in the JSON body, NOT in the URL
+            
+            endpoint_raw = self.endpoint.rstrip('/')
+            
+            # Extract the base domain - everything before /openai/v1 or /models
+            # This handles all cases:
+            # - https://fundthesis.services.ai.azure.com/openai/v1
             # - https://fundthesis.services.ai.azure.com/openai/v1/RagEmbed
-            base_url = self.endpoint.rstrip('/')
-
-            # Strip /models and everything after it
-            if '/models' in base_url:
-                base_url = base_url.split('/models')[0]
-            
-            # If /openai/v1 is present, strip everything after it (including model names)
-            if '/openai/v1' in base_url:
-                # Keep only up to /openai/v1, remove any model name after it
-                parts = base_url.split('/openai/v1')
-                base_url = parts[0] + '/openai/v1'
-            
-            # Construct final URL - always use /openai/v1/embeddings
-            # The model name goes in the JSON body, not the URL
-            if '/openai/v1' in base_url:
-                url = f"{base_url.rstrip('/')}/embeddings"
+            # - https://fundthesis.services.ai.azure.com/models/RagEmbed
+            if '/openai/v1' in endpoint_raw:
+                # Split on /openai/v1 and take only the base domain part
+                base_domain = endpoint_raw.split('/openai/v1')[0]
+            elif '/models' in endpoint_raw:
+                # Split on /models and take only the base domain part
+                base_domain = endpoint_raw.split('/models')[0]
             else:
-                # If no /openai/v1 found, add it
-                url = f"{base_url.rstrip('/')}/openai/v1/embeddings"
+                # If neither found, use as-is (shouldn't happen but be safe)
+                base_domain = endpoint_raw
             
-            logging.info(f"[Embeddings] Constructed URL: {url} (model: {self.model_name} in body)")
+            # Always construct the URL as: {base_domain}/openai/v1/embeddings
+            url = f"{base_domain}/openai/v1/embeddings"
+            
+            logging.info(f"[Embeddings] Raw endpoint from env: '{self.endpoint}'")
+            logging.info(f"[Embeddings] Extracted base domain: '{base_domain}'")
+            logging.info(f"[Embeddings] Final URL: '{url}'")
+            logging.info(f"[Embeddings] Model name in JSON body: '{self.model_name}'")
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
