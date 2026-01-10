@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
-import { archetypes, getArchetypeById, InvestorArchetype } from '@/data/archetypes';
-import { ranks, getXPProgress } from '@/data/ranks';
-
-const STORAGE_KEY_XP = 'ft_user_xp';
-const STORAGE_KEY_ARCHETYPE = 'ft_user_archetype';
-const STORAGE_KEY_ACHIEVEMENTS = 'ft_user_achievements';
+import { archetypes, getArchetypeById } from '@/data/archetypes';
+import { ranks } from '@/data/ranks';
+import { useBiography } from '@/lib/hooks/useBiography';
 
 interface Achievement {
     id: string;
@@ -32,19 +29,101 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     { id: 'mentor-chat', title: 'Inquisitive Mind', description: 'Submit 10 questions to the editor' },
 ];
 
+// Easing function for smooth animations
+function easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+}
+
+// Count-up animation hook
+function useCountUp(targetValue: number, duration: number = 2000, enabled: boolean = true) {
+    const [currentValue, setCurrentValue] = useState(0);
+    const animationFrameRef = useRef<number | undefined>(undefined);
+    const startTimeRef = useRef<number | undefined>(undefined);
+    const startValueRef = useRef(0);
+
+    useEffect(() => {
+        if (!enabled || targetValue === 0) {
+            setCurrentValue(0);
+            return;
+        }
+
+        startValueRef.current = currentValue;
+        startTimeRef.current = undefined;
+
+        const animate = (timestamp: number) => {
+            if (!startTimeRef.current) {
+                startTimeRef.current = timestamp;
+            }
+
+            const elapsed = timestamp - startTimeRef.current;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeOutCubic(progress);
+            
+            const newValue = Math.floor(startValueRef.current + (targetValue - startValueRef.current) * easedProgress);
+            setCurrentValue(newValue);
+
+            if (progress < 1) {
+                animationFrameRef.current = requestAnimationFrame(animate);
+            } else {
+                setCurrentValue(targetValue);
+            }
+        };
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [targetValue, duration, enabled]);
+
+    return currentValue;
+}
+
 export default function BiographyPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
+    const { data: biographyData, isLoading: isBiographyLoading, error: biographyError } = useBiography();
+    
+    // Animation state
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [animatedProgress, setAnimatedProgress] = useState(0);
+    
+    // Extract data from biography API response
+    const xp = biographyData?.xp || 0;
+    const archetypeId = biographyData?.archetype || 'value-veronica';
+    const earnedAchievements = biographyData?.achievements || [];
+    const currentRank = biographyData?.rank ? ranks.find(r => r.level === biographyData.rank.level) || ranks[0] : ranks[0];
+    const nextRank = biographyData?.nextRank ? ranks.find(r => r.level === biographyData.nextRank!.level) || null : null;
+    const progress = biographyData?.progress || 0;
+    const displayArchetype = getArchetypeById(archetypeId) || archetypes[0];
 
-    useEffect(() => {
+    // Animated values
+    const animatedXP = useCountUp(xp, 1800, isAnimating);
+    const animatedProgressPercent = useCountUp(progress, 1800, isAnimating);
+
+    React.useEffect(() => {
         if (!isAuthLoading && !user) {
             router.replace('/auth');
         }
     }, [isAuthLoading, user, router]);
 
-    const [xp, setXP] = useState(0);
-    const [archetype, setArchetype] = useState<InvestorArchetype | null>(null);
-    const [earnedAchievements, setEarnedAchievements] = useState<string[]>([]);
+    // Trigger animations when data loads
+    useEffect(() => {
+        if (biographyData && !isBiographyLoading) {
+            setIsAnimating(false);
+            setAnimatedProgress(0);
+            
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => {
+                setIsAnimating(true);
+                setAnimatedProgress(progress);
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [biographyData, isBiographyLoading, progress]);
 
     // Get today's date
     const today = new Date();
@@ -55,28 +134,23 @@ export default function BiographyPage() {
         day: 'numeric',
     });
 
-    useEffect(() => {
-        try {
-            const storedXP = localStorage.getItem(STORAGE_KEY_XP);
-            if (storedXP) setXP(parseInt(storedXP, 10));
+    // Loading state
+    if (isAuthLoading || isBiographyLoading) {
+        return (
+            <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+                <p className="text-stone-600 dark:text-stone-400">Loading biography...</p>
+            </div>
+        );
+    }
 
-            const storedArchetype = localStorage.getItem(STORAGE_KEY_ARCHETYPE);
-            if (storedArchetype) {
-                const found = getArchetypeById(storedArchetype);
-                if (found) setArchetype(found);
-            }
-
-            const storedAchievements = localStorage.getItem(STORAGE_KEY_ACHIEVEMENTS);
-            if (storedAchievements) {
-                setEarnedAchievements(JSON.parse(storedAchievements));
-            }
-        } catch (e) {
-            console.error('Failed to load achievements data', e);
-        }
-    }, []);
-
-    const { current: currentRank, next: nextRank, progress } = getXPProgress(xp);
-    const displayArchetype = archetype || archetypes[0];
+    // Error state
+    if (biographyError) {
+        return (
+            <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+                <p className="text-red-600 dark:text-red-400">Failed to load biography data. Please try again later.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
@@ -98,7 +172,7 @@ export default function BiographyPage() {
                     {/* Profile Column */}
                     <div className="lg:col-span-1 space-y-6">
                         {/* Investor Profile Card */}
-                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 opacity-0 translate-y-4 animate-fade-in-up" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
                             <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 Investor Profile
                             </h2>
@@ -144,7 +218,7 @@ export default function BiographyPage() {
                         </article>
 
                         {/* Other Profiles */}
-                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 opacity-0 translate-y-4 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
                             <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 Investor Archetypes
                             </h2>
@@ -170,20 +244,20 @@ export default function BiographyPage() {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Rank Progress */}
-                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 opacity-0 translate-y-4 animate-fade-in-up" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
                             <div className="flex items-start justify-between mb-6">
                                 <div>
                                     <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
                                         Current Standing
                                     </h2>
-                                    <p className="font-serif text-3xl font-black text-black dark:text-white">
+                                    <p className="font-serif text-3xl font-black text-black dark:text-white opacity-0 animate-fade-in" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
                                         {currentRank.title}
                                     </p>
                                     <p className="text-sm text-stone-500 dark:text-stone-400">Level {currentRank.level}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-serif text-2xl font-bold text-black dark:text-white">
-                                        {xp.toLocaleString()}
+                                        {animatedXP.toLocaleString()}
                                     </p>
                                     <p className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
                                         Total XP
@@ -195,16 +269,16 @@ export default function BiographyPage() {
                                 <div className="mb-6">
                                     <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 mb-2">
                                         <span>Progress to {nextRank.title}</span>
-                                        <span>{progress}%</span>
+                                        <span>{animatedProgressPercent}%</span>
                                     </div>
-                                    <div className="w-full bg-stone-200 dark:bg-stone-700 h-2">
+                                    <div className="w-full bg-stone-200 dark:bg-stone-700 h-2 overflow-hidden">
                                         <div
-                                            className="bg-black dark:bg-green-500 h-2 transition-all"
-                                            style={{ width: `${progress}%` }}
+                                            className="bg-black dark:bg-green-500 h-2 transition-all duration-[1800ms] ease-out"
+                                            style={{ width: `${animatedProgress}%`, willChange: 'width' }}
                                         />
                                     </div>
                                     <p className="text-xs text-stone-400 mt-2">
-                                        {(nextRank.requiredXP - xp).toLocaleString()} XP required for advancement
+                                        {((nextRank.requiredXP || 0) - xp).toLocaleString()} XP required for advancement
                                     </p>
                                 </div>
                             )}
@@ -227,7 +301,7 @@ export default function BiographyPage() {
                         </article>
 
                         {/* Rank Ladder */}
-                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 opacity-0 translate-y-4 animate-fade-in-up" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
                             <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 The Advancement Ladder
                             </h2>
@@ -250,7 +324,7 @@ export default function BiographyPage() {
                         </article>
 
                         {/* Achievements */}
-                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6">
+                        <article className="border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 p-6 opacity-0 translate-y-4 animate-fade-in-up" style={{ animationDelay: '700ms', animationFillMode: 'forwards' }}>
                             <div className="flex items-center justify-between mb-4 border-b border-stone-200 dark:border-stone-700 pb-2">
                                 <h2 className="text-xs uppercase tracking-widest text-stone-500 dark:text-stone-400">
                                     Distinctions & Honors
@@ -260,15 +334,19 @@ export default function BiographyPage() {
                                 </span>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {AVAILABLE_ACHIEVEMENTS.map((achievement) => {
+                                {AVAILABLE_ACHIEVEMENTS.map((achievement, index) => {
                                     const isEarned = earnedAchievements.includes(achievement.id);
                                     return (
                                         <div
                                             key={achievement.id}
-                                            className={`p-4 border ${isEarned
-                                                ? 'border-stone-400 dark:border-stone-500 bg-stone-50 dark:bg-stone-700'
-                                                : 'border-stone-200 dark:border-stone-700 opacity-50'
+                                            className={`p-4 border opacity-0 scale-95 ${isEarned
+                                                ? 'border-stone-400 dark:border-stone-500 bg-stone-50 dark:bg-stone-700 animate-fade-in-scale'
+                                                : 'border-stone-200 dark:border-stone-700 animate-fade-in-scale-unearned'
                                                 }`}
+                                            style={{ 
+                                                animationDelay: `${800 + index * 50}ms`, 
+                                                animationFillMode: 'forwards'
+                                            }}
                                         >
                                             <h4 className="font-serif font-bold text-sm text-black dark:text-white mb-1">
                                                 {achievement.title}

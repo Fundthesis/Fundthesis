@@ -23,6 +23,8 @@ model User {
   missionResults     MissionResult[]
   contentInteractions UserContentInteraction[]
   conversations      Conversation[]
+  userProgress       UserProgress?
+  moduleProgress     UserModuleProgress[]
 
   @@map("user")
   @@schema("public")
@@ -308,6 +310,41 @@ model MissionResult {
   @@index([userId, missionId])
   @@index([userId, completedAt(sort: Desc)])
   @@map("mission_results")
+  @@schema("public")
+}
+
+// ============= USER PROGRESS MODELS =============
+
+model UserProgress {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id")
+  totalXP         Int      @default(0) @map("total_xp")
+  archetypeId     String?  @map("archetype_id")
+  achievements    Json     @default("[]") // Array of achievement IDs
+  lastCalculatedAt DateTime @default(now()) @map("last_calculated_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_progress")
+  @@schema("public")
+}
+
+model UserModuleProgress {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  moduleNumber Int     @map("module_number")
+  completedAt DateTime? @map("completed_at")
+  progress    Json?    // For storing quiz answers, etc.
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleNumber])
+  @@index([userId, moduleNumber])
+  @@map("user_module_progress")
   @@schema("public")
 }
 

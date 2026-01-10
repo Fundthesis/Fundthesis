@@ -86,6 +86,29 @@ function MissionSimulationContent() {
   const handleComplete = useCallback(async (data: SimulationCompletionData) => {
     setCompletionData(data);
     
+    // Calculate XP earned (matching backend/app/api/biography.py)
+    const XP_VALUES: Record<string, number> = {
+      mission_complete_beginner: 150,
+      mission_complete_intermediate: 250,
+      mission_complete_advanced: 400,
+      mission_complete_expert: 600,
+      mission_grade_S: 100,
+      mission_grade_A: 50,
+    };
+    
+    // Map frontend difficulty to backend XP keys
+    const DIFFICULTY_XP_MAP: Record<string, string> = {
+      easy: 'mission_complete_beginner',
+      medium: 'mission_complete_intermediate',
+      hard: 'mission_complete_advanced',
+      expert: 'mission_complete_expert',
+    };
+    
+    const difficultyKey = DIFFICULTY_XP_MAP[difficulty] || 'mission_complete_intermediate';
+    const baseXP = XP_VALUES[difficultyKey] || 250;
+    const gradeBonus = data.grade === 'S' ? XP_VALUES.mission_grade_S : 
+                      data.grade === 'A' ? XP_VALUES.mission_grade_A : 0;
+    
     // Save to database
     if (mission && user) {
       try {
@@ -107,7 +130,44 @@ function MissionSimulationContent() {
           }),
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+          // Calculate updated total XP (with small delay to ensure DB transaction is committed)
+          try {
+            // Wait a bit to ensure the database transaction is committed
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const xpResponse = await fetch('/api/users/me/xp/calculate', {
+              method: 'POST',
+            });
+            if (xpResponse.ok) {
+              const xpData = await xpResponse.json();
+              
+              // Show XP notification
+              const { showMissionXPNotification } = await import('@/lib/xpNotifications');
+              showMissionXPNotification(
+                difficulty,
+                data.grade,
+                baseXP,
+                gradeBonus,
+                xpData.xp
+              );
+              
+              // Dispatch event to invalidate biography cache
+              window.dispatchEvent(new CustomEvent('xp-earned', { detail: { source: 'mission' } }));
+            } else {
+              // If XP calculation fails, show notification without total
+              const { showMissionXPNotification } = await import('@/lib/xpNotifications');
+              showMissionXPNotification(difficulty, data.grade, baseXP, gradeBonus);
+              window.dispatchEvent(new CustomEvent('xp-earned', { detail: { source: 'mission' } }));
+            }
+          } catch (xpError) {
+            console.warn('Failed to calculate XP:', xpError);
+            // Still show notification with calculated values
+            const { showMissionXPNotification } = await import('@/lib/xpNotifications');
+            showMissionXPNotification(difficulty, data.grade, baseXP, gradeBonus);
+            window.dispatchEvent(new CustomEvent('xp-earned', { detail: { source: 'mission' } }));
+          }
+        } else {
           console.error('Failed to save mission result to database');
         }
       } catch (e) {
