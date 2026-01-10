@@ -207,12 +207,16 @@ export function ReturnsGraph({
       <CardContent>
         {chartData.length === 0 ||
         (chartData.length === 1 && chartData[0].value === initialBalance) ? (
-          <div className="h-64 flex flex-col items-center justify-center text-gray-500 dark:text-stone-400 space-y-2 p-4">
-            <ChartLine className="w-8 h-8 text-gray-400 dark:text-stone-500" />
-            <p className="text-sm font-medium">No trading activity yet</p>
-            <p className="text-xs text-gray-400 dark:text-stone-500 text-center">
-              Start trading to see your portfolio returns over time
-            </p>
+          <div className="h-64 flex flex-col items-center justify-center text-gray-500 dark:text-stone-400 space-y-3 p-4">
+            <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+              <ChartLine className="w-8 h-8 text-stone-400 dark:text-stone-500" />
+            </div>
+            <div className="space-y-1 text-center">
+              <p className="text-sm font-semibold text-black dark:text-stone-100">No trading activity yet</p>
+              <p className="text-xs text-gray-500 dark:text-stone-400 max-w-xs">
+                Start trading to see your portfolio returns visualized over time
+              </p>
+            </div>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
