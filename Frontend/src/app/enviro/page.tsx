@@ -1,18 +1,23 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
+import { useSandboxes, useCreateSandbox, useDeleteSandbox } from '@/lib/hooks/useSandboxes';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
-
-type Sandbox = {
-  id: string;
-  name: string;
-  difficulty: Difficulty;
-  balance: number;
-  createdAt: string;
-};
 
 const DIFFICULTY_BALANCE: Record<Difficulty, number> = {
   easy: 100000,
@@ -26,25 +31,25 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   hard: 'Challenge Mode',
 };
 
-const STORAGE_KEY = 'enviro_sandboxes';
+// Helper to determine difficulty from balance
+function getDifficultyFromBalance(balance: number): Difficulty {
+  if (balance >= DIFFICULTY_BALANCE.easy) return 'easy';
+  if (balance >= DIFFICULTY_BALANCE.medium) return 'medium';
+  return 'hard';
+}
 
 export default function EnviroPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const { data: sandboxes = [], isLoading: isLoadingSandboxes } = useSandboxes();
+  const createSandbox = useCreateSandbox();
+  const deleteSandbox = useDeleteSandbox();
 
-  useEffect(() => {
-    if (!isAuthLoading && !user) {
-      router.replace('/auth');
-    }
-  }, [isAuthLoading, user, router]);
-
-  const [sandboxes, setSandboxes] = useState<Sandbox[]>([]);
   const [name, setName] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState<string>('');
-  const [selectedToDelete, setSelectedToDelete] = useState<Sandbox | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [selectedToDelete, setSelectedToDelete] = useState<string | null>(null);
 
   // Get today's date
   const today = new Date();
@@ -55,47 +60,22 @@ export default function EnviroPage() {
     day: 'numeric',
   });
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        setSandboxes(JSON.parse(raw));
-      } else {
-        const defaultSandbox: Sandbox = {
-          id: 'default-' + Date.now(),
-          name: 'Practice Edition',
-          difficulty: 'easy',
-          balance: DIFFICULTY_BALANCE.easy,
-          createdAt: new Date().toISOString(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([defaultSandbox]));
-        setSandboxes([defaultSandbox]);
-      }
-    } catch (e) {
-      console.error('Failed to read sandboxes from localStorage', e);
-    }
-  }, []);
-
-  const save = (items: Sandbox[]) => {
-    setSandboxes(items);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  };
-
-  const createSandbox = () => {
-    const id = Date.now().toString();
+  const handleCreateSandbox = async () => {
     const balance = DIFFICULTY_BALANCE[difficulty];
-    const sb: Sandbox = {
-      id,
-      name: name || `Edition ${new Date().toLocaleDateString()}`,
-      difficulty,
-      balance,
-      createdAt: new Date().toISOString(),
-    };
-    const next = [sb, ...sandboxes];
-    save(next);
-    setName('');
-    setDifficulty('easy');
-    router.push(`/enviro/enviro-dashboard?sandboxId=${encodeURIComponent(id)}`);
+    const sandboxName = name || `Edition ${new Date().toLocaleDateString()}`;
+
+    try {
+      const newSandbox = await createSandbox.mutateAsync({
+        name: sandboxName,
+        balance,
+      });
+      setName('');
+      setDifficulty('easy');
+      router.push(`/enviro/enviro-dashboard?sandboxId=${encodeURIComponent(newSandbox.id)}`);
+    } catch (error) {
+      console.error('Failed to create sandbox:', error);
+      alert('Failed to create sandbox');
+    }
   };
 
   const openSandbox = (id: string) => {
@@ -103,31 +83,41 @@ export default function EnviroPage() {
   };
 
   const promptDeleteSandbox = (id: string) => {
-    const found = sandboxes.find((s) => s.id === id) || null;
-    setSelectedToDelete(found);
+    setSelectedToDelete(id);
     setDeleteConfirmText('');
     setShowDeleteConfirm(true);
   };
 
-  const confirmDeleteSandbox = () => {
-    if (!selectedToDelete) return;
-    const filtered = sandboxes.filter((s) => s.id !== selectedToDelete.id);
-    save(filtered);
-    try {
-      const portRaw = localStorage.getItem('enviro_sandbox_portfolios');
-      if (portRaw) {
-        const map = JSON.parse(portRaw);
-        delete map[selectedToDelete.id];
-        localStorage.setItem('enviro_sandbox_portfolios', JSON.stringify(map));
+  const confirmDeleteSandbox = async () => {
+    if (deleteConfirmText.trim().toLowerCase() === 'delete' && selectedToDelete) {
+      try {
+        await deleteSandbox.mutateAsync(selectedToDelete);
+        setShowDeleteConfirm(false);
+        setDeleteConfirmText('');
+        setSelectedToDelete(null);
+      } catch (error) {
+        console.error('Failed to delete sandbox:', error);
+        alert('Failed to delete sandbox');
       }
-    } catch (e) {
-      console.warn('failed to remove sandbox portfolio', e);
     }
-
-    setShowDeleteConfirm(false);
-    setSelectedToDelete(null);
-    setDeleteConfirmText('');
   };
+
+  const selectedSandbox = selectedToDelete
+    ? sandboxes.find((s) => s.id === selectedToDelete)
+    : null;
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex items-center justify-center">
+        <p className="text-gray-500 dark:text-stone-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.replace('/auth');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
@@ -143,12 +133,14 @@ export default function EnviroPage() {
           <p className="text-sm font-serif italic text-stone-600 dark:text-stone-400 mt-2 mb-4">
             &ldquo;Practice Without Consequence&rdquo;
           </p>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => router.push('/debrief')}
-            className="inline-block border border-black dark:border-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+            className="inline-block"
           >
             Confidential Debrief
-          </button>
+          </Button>
         </header>
 
         {/* New Edition Form */}
@@ -161,11 +153,10 @@ export default function EnviroPage() {
               <label className="text-xs uppercase tracking-widest text-stone-400 block mb-2">
                 Edition Name
               </label>
-              <input
+              <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Optional title"
-                className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-3 py-2 font-serif focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
               />
             </div>
             <div>
@@ -189,12 +180,13 @@ export default function EnviroPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <button
-                onClick={createSandbox}
-                className="w-full bg-black dark:bg-green-600 text-white py-2 text-sm uppercase tracking-widest font-medium hover:bg-stone-800 dark:hover:bg-green-700 transition-colors"
+              <Button
+                onClick={handleCreateSandbox}
+                disabled={createSandbox.isPending}
+                className="w-full"
               >
-                Create & Open
-              </button>
+                {createSandbox.isPending ? 'Creating...' : 'Create & Open'}
+              </Button>
             </div>
           </div>
         </section>
@@ -207,99 +199,98 @@ export default function EnviroPage() {
             </h2>
           </div>
           <div className="divide-y divide-stone-100 dark:divide-stone-700">
-            {sandboxes.length === 0 && (
+            {isLoadingSandboxes ? (
+              <p className="p-6 text-center font-serif text-stone-500 dark:text-stone-400 italic">
+                Loading sandboxes...
+              </p>
+            ) : sandboxes.length === 0 ? (
               <p className="p-6 text-center font-serif text-stone-500 dark:text-stone-400 italic">
                 No editions created yet.
               </p>
+            ) : (
+              sandboxes.map((sb) => {
+                const difficulty = getDifficultyFromBalance(sb.balance);
+                return (
+                  <div
+                    key={sb.id}
+                    className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
+                  >
+                    <div>
+                      <h3 className="font-serif font-bold text-black dark:text-white">
+                        {sb.name}
+                      </h3>
+                      <p className="text-xs text-stone-500 dark:text-stone-400">
+                        {DIFFICULTY_LABELS[difficulty]} — ${sb.balance.toLocaleString()}{' '}
+                        starting capital
+                      </p>
+                      <p className="text-xs text-stone-400 mt-1">
+                        Created {new Date(sb.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openSandbox(sb.id)}
+                      >
+                        Open
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => promptDeleteSandbox(sb.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
             )}
-            {sandboxes.map((sb) => (
-              <div
-                key={sb.id}
-                className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
-              >
-                <div>
-                  <h3 className="font-serif font-bold text-black dark:text-white">{sb.name}</h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    {DIFFICULTY_LABELS[sb.difficulty]} — ${sb.balance.toLocaleString()} starting capital
-                  </p>
-                  <p className="text-xs text-stone-400 mt-1">
-                    Created {new Date(sb.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => openSandbox(sb.id)}
-                    className="text-xs uppercase tracking-widest font-medium text-black dark:text-white hover:underline"
-                  >
-                    Open
-                  </button>
-                  <button
-                    onClick={() => promptDeleteSandbox(sb.id)}
-                    className="text-xs uppercase tracking-widest text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
       </main>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black opacity-40 dark:opacity-60"
-            onClick={() => {
-              setShowDeleteConfirm(false);
-              setDeleteConfirmText('');
-              setSelectedToDelete(null);
-            }}
-          />
-          <div className="relative bg-white dark:bg-stone-800 p-8 w-full max-w-md z-10 border border-stone-200 dark:border-stone-700">
-            <h3 className="font-serif text-xl font-bold text-black dark:text-white mb-2">
-              Confirm Removal
-            </h3>
-            <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">
-              To permanently remove the edition &ldquo;{selectedToDelete?.name}&rdquo;,
-              type <span className="font-mono font-bold">delete</span> below.
-            </p>
-            <input
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Removal</AlertDialogTitle>
+            <AlertDialogDescription>
+              To permanently remove the edition &ldquo;{selectedSandbox?.name}&rdquo;, type{' '}
+              <span className="font-mono font-bold">delete</span> below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type delete to confirm"
-              className="w-full border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900 dark:text-stone-100 px-3 py-2 font-serif mb-4 focus:outline-none focus:border-stone-400 dark:focus:border-stone-500"
             />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setDeleteConfirmText('');
-                  setSelectedToDelete(null);
-                }}
-                className="px-4 py-2 text-sm text-stone-600 dark:text-stone-300 border border-stone-300 dark:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-700"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (deleteConfirmText.trim().toLowerCase() === 'delete') {
-                    confirmDeleteSandbox();
-                  }
-                }}
-                disabled={deleteConfirmText.trim().toLowerCase() !== 'delete'}
-                className={`px-4 py-2 text-sm uppercase tracking-widest ${deleteConfirmText.trim().toLowerCase() === 'delete'
-                  ? 'bg-black dark:bg-green-600 text-white hover:bg-stone-800 dark:hover:bg-green-700'
-                  : 'bg-stone-200 dark:bg-stone-700 text-stone-400 cursor-not-allowed'
-                  }`}
-              >
-                Confirm
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setDeleteConfirmText('');
+                setSelectedToDelete(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteSandbox}
+              disabled={
+                deleteConfirmText.trim().toLowerCase() !== 'delete' ||
+                deleteSandbox.isPending
+              }
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
