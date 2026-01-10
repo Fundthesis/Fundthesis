@@ -124,19 +124,19 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center border-2 border-black dark:border-stone-700">
-                    <span className="text-white text-sm font-black">G</span>
+                    <span className="text-white text-sm font-black">M</span>
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-black dark:text-stone-100 font-serif">Google</div>
+                    <div className="text-sm font-bold text-black dark:text-stone-100 font-serif">Microsoft</div>
                     <div className="text-xs text-gray-500 dark:text-stone-400 font-serif">
-                      {user?.email?.includes("@gmail.com")
+                      {user?.email?.includes("@microsoft.com") || user?.email?.includes("@outlook.com") || user?.email?.includes("@hotmail.com")
                         ? "Connected"
                         : "Not connected"}
                     </div>
                   </div>
                 </div>
                 <button className="text-xs font-bold text-[#9DB38A] dark:text-green-400 hover:underline uppercase tracking-widest font-serif">
-                  {user?.email?.includes("@gmail.com")
+                  {user?.email?.includes("@microsoft.com") || user?.email?.includes("@outlook.com") || user?.email?.includes("@hotmail.com")
                     ? "Disconnect"
                     : "Connect"}
                 </button>

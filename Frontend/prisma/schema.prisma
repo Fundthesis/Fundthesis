@@ -8,23 +8,23 @@ datasource db {
 }
 
 model User {
-  id                 String                  @id @default(cuid())
-  name               String?
-  email              String                  @unique
-  emailVerified      Boolean?
-  image              String?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  sessions           Session[]
-  accounts           Account[]
-  userAccounts       UserAccount[]
-  simulationAccounts SimulationAccount[]
-  missionSessions    MissionSession[]
-  missionResults     MissionResult[]
+  id                  String                   @id @default(cuid())
+  name                String?
+  email               String                   @unique
+  emailVerified       Boolean?
+  image               String?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  sessions            Session[]
+  accounts            Account[]
+  userAccounts        UserAccount[]
+  simulationAccounts  SimulationAccount[]
+  missionSessions     MissionSession[]
+  missionResults      MissionResult[]
   contentInteractions UserContentInteraction[]
-  conversations      Conversation[]
-  userProgress       UserProgress?
-  moduleProgress     UserModuleProgress[]
+  conversations       Conversation[]
+  userProgress        UserProgress?
+  moduleProgress      UserModuleProgress[]
 
   @@map("user")
   @@schema("public")
@@ -52,6 +52,7 @@ model Account {
   providerId   String
   accessToken  String?
   refreshToken String?
+  idToken      String?
   expiresAt    DateTime?
   password     String?
   createdAt    DateTime  @default(now())
@@ -104,8 +105,8 @@ model LearningModule {
   moduleNumber   Int                          @map("module_number")
   sectionIndex   Int?                         @map("section_index")
   sectionHeading String?                      @map("section_heading")
-  title          String                       // Full module title
-  content        String                       // Chunk content
+  title          String // Full module title
+  content        String // Chunk content
   chunkType      String                       @map("chunk_type") // 'intro', 'purpose', 'section', 'keyPoints'
   urlPath        String                       @map("url_path") // e.g., '/lessonmodules/1'
   embedding      Unsupported("vector(1536)")? // pgvector for RAG
@@ -171,11 +172,11 @@ model UserAccount {
 // ============= MENTOR CONVERSATION MODELS =============
 
 model Conversation {
-  id        String    @id @default(cuid())
-  userId    String    @map("user_id")
-  title     String    @default("New conversation")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String   @default("New conversation")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
@@ -188,7 +189,7 @@ model Conversation {
 model Message {
   id             String   @id @default(cuid())
   conversationId String   @map("conversation_id")
-  role           String   // 'user' | 'coach'
+  role           String // 'user' | 'coach'
   content        String
   citations      Json?
   sources        Json?
@@ -204,11 +205,11 @@ model Message {
 // ============= USER CONTENT INTERACTION TRACKING =============
 
 model UserContentInteraction {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  contentType String   @map("content_type") // 'article', 'module', 'coach_query'
-  contentId   String?  @map("content_id")   // Article ID, module name, or null for queries
-  metadata    Json?                          // Additional context (article headline, module title, etc.)
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  contentType  String   @map("content_type") // 'article', 'module', 'coach_query'
+  contentId    String?  @map("content_id") // Article ID, module name, or null for queries
+  metadata     Json? // Additional context (article headline, module title, etc.)
   interactedAt DateTime @default(now()) @map("interacted_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -228,9 +229,9 @@ model SimulationAccount {
   settings  Json?
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  positions Position[]
-  trades    Trade[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positions       Position[]
+  trades          Trade[]
   missionSessions MissionSession[]
 
   @@map("simulation_accounts")
@@ -269,18 +270,18 @@ model Trade {
 // ============= MISSION SESSION MODELS =============
 
 model MissionSession {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  missionId         String   @map("mission_id")
-  accountId         String   @map("account_id")
-  simulatedDate     DateTime @map("simulated_date")
-  isPaused          Boolean  @default(false) @map("is_paused")
-  timeSpeed         Float    @default(1.0) @map("time_speed") // 1.0 = real-time, 2.0 = 2x speed, etc.
-  elapsedSeconds    Int      @default(0) @map("elapsed_seconds")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  missionId      String   @map("mission_id")
+  accountId      String   @map("account_id")
+  simulatedDate  DateTime @map("simulated_date")
+  isPaused       Boolean  @default(false) @map("is_paused")
+  timeSpeed      Float    @default(1.0) @map("time_speed") // 1.0 = real-time, 2.0 = 2x speed, etc.
+  elapsedSeconds Int      @default(0) @map("elapsed_seconds")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([userId, missionId])
@@ -289,21 +290,21 @@ model MissionSession {
 }
 
 model MissionResult {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  missionId       String   @map("mission_id")
-  grade           String   // 'S' | 'A' | 'B' | 'C' | 'F'
-  difficulty      String   @default("medium") // 'easy' | 'medium' | 'hard'
-  returnPercent   Float    @map("return_percent")
-  maxDrawdown     Float    @map("max_drawdown")
-  initialBalance  Float    @map("initial_balance")
-  finalBalance    Float    @map("final_balance")
-  durationDays    Int      @map("duration_days")
-  totalTrades     Int      @map("total_trades")
-  trades          Json     @default("[]") // Array of trade objects
-  portfolioHistory Json    @default("[]") @map("portfolio_history") // Array of {day, value}
-  completedAt     DateTime @default(now()) @map("completed_at")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  missionId        String   @map("mission_id")
+  grade            String // 'S' | 'A' | 'B' | 'C' | 'F'
+  difficulty       String   @default("medium") // 'easy' | 'medium' | 'hard'
+  returnPercent    Float    @map("return_percent")
+  maxDrawdown      Float    @map("max_drawdown")
+  initialBalance   Float    @map("initial_balance")
+  finalBalance     Float    @map("final_balance")
+  durationDays     Int      @map("duration_days")
+  totalTrades      Int      @map("total_trades")
+  trades           Json     @default("[]") // Array of trade objects
+  portfolioHistory Json     @default("[]") @map("portfolio_history") // Array of {day, value}
+  completedAt      DateTime @default(now()) @map("completed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -316,14 +317,14 @@ model MissionResult {
 // ============= USER PROGRESS MODELS =============
 
 model UserProgress {
-  id              String   @id @default(cuid())
-  userId          String   @unique @map("user_id")
-  totalXP         Int      @default(0) @map("total_xp")
-  archetypeId     String?  @map("archetype_id")
-  achievements    Json     @default("[]") // Array of achievement IDs
+  id               String   @id @default(cuid())
+  userId           String   @unique @map("user_id")
+  totalXP          Int      @default(0) @map("total_xp")
+  archetypeId      String?  @map("archetype_id")
+  achievements     Json     @default("[]") // Array of achievement IDs
   lastCalculatedAt DateTime @default(now()) @map("last_calculated_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -332,13 +333,13 @@ model UserProgress {
 }
 
 model UserModuleProgress {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  moduleNumber Int     @map("module_number")
-  completedAt DateTime? @map("completed_at")
-  progress    Json?    // For storing quiz answers, etc.
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  moduleNumber Int       @map("module_number")
+  completedAt  DateTime? @map("completed_at")
+  progress     Json? // For storing quiz answers, etc.
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
