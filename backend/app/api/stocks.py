@@ -8,6 +8,8 @@ import json
 import traceback
 import time
 import asyncio
+import math
+import pandas as pd
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent.parent
@@ -61,10 +63,23 @@ def batch_fetch_stocks_sync(symbols: List[str]) -> List[Dict]:
                     # Multi-index DataFrame structure
                     symbol_data = tickers[symbol]
                     if not symbol_data.empty:
-                        current_price = float(symbol_data['Close'].iloc[-1])
-                        open_price = float(symbol_data['Open'].iloc[0])
+                        current_price_raw = symbol_data['Close'].iloc[-1]
+                        open_price_raw = symbol_data['Open'].iloc[0]
+                        
+                        # Check for NaN values before processing
+                        if pd.isna(current_price_raw) or pd.isna(open_price_raw):
+                            print(f"⚠️ Skipping {symbol}: NaN price data")
+                            continue
+                        
+                        current_price = float(current_price_raw)
+                        open_price = float(open_price_raw)
                         change = current_price - open_price
                         change_percent = (change / open_price) * 100 if open_price != 0 else 0
+                        
+                        # Validate prices are finite numbers
+                        if not (math.isfinite(current_price) and math.isfinite(open_price)):
+                            print(f"⚠️ Skipping {symbol}: Non-finite price values")
+                            continue
                         
                         # Get additional info for filtering
                         try:
@@ -93,10 +108,23 @@ def batch_fetch_stocks_sync(symbols: List[str]) -> List[Dict]:
                     history = ticker.history(period='1d')
                     
                     if not history.empty:
-                        current_price = history['Close'].iloc[-1]
-                        open_price = history['Open'].iloc[0]
+                        current_price_raw = history['Close'].iloc[-1]
+                        open_price_raw = history['Open'].iloc[0]
+                        
+                        # Check for NaN values before processing
+                        if pd.isna(current_price_raw) or pd.isna(open_price_raw):
+                            print(f"⚠️ Skipping {symbol}: NaN price data (fallback)")
+                            continue
+                        
+                        current_price = float(current_price_raw)
+                        open_price = float(open_price_raw)
                         change = current_price - open_price
                         change_percent = (change / open_price) * 100 if open_price != 0 else 0
+                        
+                        # Validate prices are finite numbers
+                        if not (math.isfinite(current_price) and math.isfinite(open_price)):
+                            print(f"⚠️ Skipping {symbol}: Non-finite price values (fallback)")
+                            continue
                         
                         # Get additional info for filtering
                         try:
@@ -131,10 +159,23 @@ def batch_fetch_stocks_sync(symbols: List[str]) -> List[Dict]:
                 history = ticker.history(period='1d')
                 
                 if not history.empty:
-                    current_price = history['Close'].iloc[-1]
-                    open_price = history['Open'].iloc[0]
+                    current_price_raw = history['Close'].iloc[-1]
+                    open_price_raw = history['Open'].iloc[0]
+                    
+                    # Check for NaN values before processing
+                    if pd.isna(current_price_raw) or pd.isna(open_price_raw):
+                        print(f"⚠️ Skipping {symbol}: NaN price data (individual fetch)")
+                        continue
+                    
+                    current_price = float(current_price_raw)
+                    open_price = float(open_price_raw)
                     change = current_price - open_price
                     change_percent = (change / open_price) * 100 if open_price != 0 else 0
+                    
+                    # Validate prices are finite numbers
+                    if not (math.isfinite(current_price) and math.isfinite(open_price)):
+                        print(f"⚠️ Skipping {symbol}: Non-finite price values (individual fetch)")
+                        continue
                     
                     stock_data.append({
                         'symbol': symbol,
