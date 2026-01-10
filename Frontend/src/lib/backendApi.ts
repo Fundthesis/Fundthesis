@@ -5,8 +5,12 @@
  * - Extracting session tokens from Better Auth
  * - Passing tokens as Bearer headers to the backend
  * - Error handling and response parsing
+ *
+ * NOTE: This module is SERVER-ONLY and must not be imported in client components.
+ * Use Next.js API routes as a proxy for client-side requests.
  */
 
+import "server-only";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 

@@ -60,7 +60,7 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <AppFrame>{children}</AppFrame>
-              <Toaster position="top-center" richColors />
+              <Toaster position="bottom-right" richColors />
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

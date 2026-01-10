@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from typing import Optional, Dict, Any
+from datetime import datetime
 import traceback
 
 # Add backend to path
@@ -13,6 +14,7 @@ if str(backend_path) not in sys.path:
 from app.api.dependencies import get_current_user
 from app.core.auth import AuthenticatedUser
 from app.core.database import db
+from app.api.biography import get_user_biography_data, calculate_user_xp_breakdown
 
 router = APIRouter()
 
@@ -177,6 +179,136 @@ async def update_user_settings(
         }
     except Exception as e:
         print(f"❌ Error updating user settings: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/users/me/biography")
+async def get_user_biography(user: AuthenticatedUser = Depends(get_current_user)):
+    """Get user biography data including XP, archetype, achievements, and rank."""
+    try:
+        # Get biography data
+        biography_data = await get_user_biography_data(user.id)
+
+        # Update or create UserProgress record
+        try:
+            from prisma import Json
+            now = datetime.now()
+            await db.userprogress.upsert(
+                where={"userId": user.id},
+                data={
+                    "create": {
+                        "userId": user.id,
+                        "totalXP": biography_data["xp"],
+                        "archetypeId": biography_data["archetype"],
+                        "achievements": Json(biography_data["achievements"]),
+                        "lastCalculatedAt": now,
+                    },
+                    "update": {
+                        "totalXP": biography_data["xp"],
+                        "archetypeId": biography_data["archetype"],
+                        "achievements": Json(biography_data["achievements"]),
+                        "lastCalculatedAt": now,
+                    },
+                }
+            )
+        except Exception as e:
+            print(f"Warning: Could not update UserProgress: {e}")
+            # Continue even if update fails
+
+        return biography_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error fetching user biography: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/users/me/modules/{module_number}/complete")
+async def complete_module(
+    module_number: int,
+    user: AuthenticatedUser = Depends(get_current_user)
+):
+    """Mark a learning module as completed for the user."""
+    try:
+        # Upsert module progress
+        now = datetime.now()
+        # Find existing record first
+        existing = await db.usermoduleprogress.find_first(
+            where={
+                "userId": user.id,
+                "moduleNumber": module_number,
+            }
+        )
+        
+        if existing:
+            await db.usermoduleprogress.update(
+                where={"id": existing.id},
+                data={"completedAt": now}
+            )
+        else:
+            await db.usermoduleprogress.create(
+                data={
+                    "userId": user.id,
+                    "moduleNumber": module_number,
+                    "completedAt": now,
+                }
+            )
+
+        # Calculate XP breakdown to return XP earned
+        xp_breakdown = await calculate_user_xp_breakdown(user.id)
+        module_xp = 100  # Fixed XP per module
+
+        return {
+            "message": "Module marked as completed",
+            "moduleNumber": module_number,
+            "xpEarned": module_xp,
+            "totalXP": xp_breakdown["total"],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error completing module: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/users/me/xp/calculate")
+async def calculate_xp(user: AuthenticatedUser = Depends(get_current_user)):
+    """Force recalculation of XP and return breakdown."""
+    try:
+        xp_breakdown = await calculate_user_xp_breakdown(user.id)
+        
+        # Update UserProgress table
+        try:
+            from prisma import Json
+            now = datetime.now()
+            await db.userprogress.upsert(
+                where={"userId": user.id},
+                data={
+                    "create": {
+                        "userId": user.id,
+                        "totalXP": xp_breakdown["total"],
+                        "lastCalculatedAt": now,
+                    },
+                    "update": {
+                        "totalXP": xp_breakdown["total"],
+                        "lastCalculatedAt": now,
+                    },
+                }
+            )
+        except Exception as e:
+            print(f"Warning: Could not update UserProgress: {e}")
+
+        return {
+            "xp": xp_breakdown["total"],
+            "breakdown": xp_breakdown,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error calculating XP: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 

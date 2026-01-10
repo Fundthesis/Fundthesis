@@ -12,7 +12,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import db
 from app.core.config import settings
-from app.api import routes, news, stocks, insights, sentiment, users
+from app.api import routes, news, stocks, insights, sentiment, users, sandboxes
 from app.api.dependencies import check_rate_limit, get_optional_user
 from app.models.auth import AuthStatusResponse, UserResponse
 
@@ -64,6 +64,11 @@ app.include_router(
 )
 app.include_router(
     users.router,
+    prefix="/api",
+    dependencies=[Depends(check_rate_limit)]
+)
+app.include_router(
+    sandboxes.router,
     prefix="/api",
     dependencies=[Depends(check_rate_limit)]
 )
