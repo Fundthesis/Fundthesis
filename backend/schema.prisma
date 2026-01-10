@@ -23,7 +23,11 @@ model User {
     userAccounts        UserAccount[]
     simulationAccounts  SimulationAccount[]
     missionSessions     MissionSession[]
+    missionResults      MissionResult[]
     contentInteractions UserContentInteraction[]
+    conversations       Conversation[]
+    userProgress        UserProgress?
+    moduleProgress      UserModuleProgress[]
 
     @@map("user")
     @@schema("public")
@@ -167,6 +171,39 @@ model UserAccount {
     @@schema("public")
 }
 
+// ============= MENTOR CONVERSATION MODELS =============
+
+model Conversation {
+    id        String   @id @default(cuid())
+    userId    String   @map("user_id")
+    title     String   @default("New conversation")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    messages Message[]
+
+    @@index([userId, updatedAt(sort: Desc)])
+    @@map("conversations")
+    @@schema("public")
+}
+
+model Message {
+    id             String   @id @default(cuid())
+    conversationId String   @map("conversation_id")
+    role           String // 'user' | 'coach'
+    content        String
+    citations      Json?
+    sources        Json?
+    createdAt      DateTime @default(now()) @map("created_at")
+
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+    @@index([conversationId, createdAt])
+    @@map("messages")
+    @@schema("public")
+}
+
 // ============= USER CONTENT INTERACTION TRACKING =============
 
 model UserContentInteraction {
@@ -194,9 +231,9 @@ model SimulationAccount {
     settings  Json?
     createdAt DateTime @default(now()) @map("created_at")
 
-    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    positions Position[]
-    trades    Trade[]
+    user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    positions       Position[]
+    trades          Trade[]
     missionSessions MissionSession[]
 
     @@map("simulation_accounts")
@@ -246,11 +283,71 @@ model MissionSession {
     createdAt         DateTime @default(now()) @map("created_at")
     updatedAt         DateTime @updatedAt @map("updated_at")
 
-    user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
     account SimulationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
     @@unique([userId, missionId])
     @@map("mission_sessions")
+    @@schema("public")
+}
+
+model MissionResult {
+    id               String   @id @default(uuid())
+    userId           String   @map("user_id")
+    missionId        String   @map("mission_id")
+    grade            String // 'S' | 'A' | 'B' | 'C' | 'F'
+    difficulty       String   @default("medium") // 'easy' | 'medium' | 'hard'
+    returnPercent    Float    @map("return_percent")
+    maxDrawdown      Float    @map("max_drawdown")
+    initialBalance   Float    @map("initial_balance")
+    finalBalance     Float    @map("final_balance")
+    durationDays     Int      @map("duration_days")
+    totalTrades      Int      @map("total_trades")
+    trades           Json     @default("[]") // Array of trade objects
+    portfolioHistory Json     @default("[]") @map("portfolio_history") // Array of {day, value}
+    completedAt      DateTime @default(now()) @map("completed_at")
+    createdAt        DateTime @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId, missionId])
+    @@index([userId, completedAt(sort: Desc)])
+    @@map("mission_results")
+    @@schema("public")
+}
+
+// ============= USER PROGRESS MODELS =============
+
+model UserProgress {
+    id               String   @id @default(cuid())
+    userId           String   @unique @map("user_id")
+    totalXP          Int      @default(0) @map("total_xp")
+    archetypeId      String?  @map("archetype_id")
+    achievements     Json     @default("[]") // Array of achievement IDs
+    lastCalculatedAt DateTime @default(now()) @map("last_calculated_at")
+    createdAt        DateTime @default(now()) @map("created_at")
+    updatedAt        DateTime @updatedAt @map("updated_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("user_progress")
+    @@schema("public")
+}
+
+model UserModuleProgress {
+    id           String    @id @default(cuid())
+    userId       String    @map("user_id")
+    moduleNumber Int       @map("module_number")
+    completedAt  DateTime? @map("completed_at")
+    progress     Json? // For storing quiz answers, etc.
+    createdAt    DateTime  @default(now()) @map("created_at")
+    updatedAt    DateTime  @updatedAt @map("updated_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, moduleNumber])
+    @@index([userId, moduleNumber])
+    @@map("user_module_progress")
     @@schema("public")
 }
 
