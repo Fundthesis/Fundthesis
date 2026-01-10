@@ -53,17 +53,17 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
-      router.replace('/auth');
+      router.replace("/auth");
     }
   }, [isAuthLoading, user, router]);
 
   // Get today's date formatted like a newspaper
   const today = new Date();
-  const dateString = today.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const dateString = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   // Reset to page 1 when filters change
@@ -81,7 +81,7 @@ export default function DiscoverPage() {
     offset: offset,
     search: filters.search || undefined,
   });
-  
+
   const { data: metadataData } = useStockMetadata();
 
   const stocks = useMemo(() => stocksData?.stocks || [], [stocksData?.stocks]);
@@ -178,12 +178,16 @@ export default function DiscoverPage() {
   }, [metadataData?.industries, stocks]);
 
   // Fetch stock detail (info only - cached, doesn't change with timeframe)
-  const { data: stockInfo, isLoading: isLoadingStockInfo } = useStockDetail(selectedStockSymbol);
-  
+  const { data: stockInfo, isLoading: isLoadingStockInfo } =
+    useStockDetail(selectedStockSymbol);
+
   // Fetch chart data separately (refetches when timeframe changes)
   const days = timeframe === "day" ? 7 : timeframe === "month" ? 30 : 365;
-  const { data: chartData, isLoading: isLoadingChart } = useStockChart(selectedStockSymbol, days);
-  
+  const { data: chartData, isLoading: isLoadingChart } = useStockChart(
+    selectedStockSymbol,
+    days
+  );
+
   // Combine stock info and chart data
   const selectedStock = useMemo(() => {
     if (!stockInfo) return null;
@@ -191,29 +195,32 @@ export default function DiscoverPage() {
       ...stockInfo,
       chartData: chartData?.chartData || [],
       forecastData: chartData?.forecastData,
-    } as typeof stockInfo & { chartData: Array<{ date: string; price: number }>; forecastData?: Array<{ date: string; price: number }> };
+    } as typeof stockInfo & {
+      chartData: Array<{ date: string; price: number }>;
+      forecastData?: Array<{ date: string; price: number }>;
+    };
   }, [stockInfo, chartData]);
-  
+
   const isLoadingDetail = isLoadingStockInfo;
 
   // Pagination handlers
   const handlePreviousPage = useCallback(() => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
 
   const handleNextPage = useCallback(() => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage, totalPages]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   // Handle stock click - open modal and set selected symbol
@@ -288,7 +295,9 @@ export default function DiscoverPage() {
         ) : (
           <>
             <div className="mb-4 text-sm text-gray-600 dark:text-stone-400">
-              Showing {offset + 1}-{Math.min(offset + STOCKS_PER_PAGE, totalStocks)} of {totalStocks} stocks
+              Showing {offset + 1}-
+              {Math.min(offset + STOCKS_PER_PAGE, totalStocks)} of {totalStocks}{" "}
+              stocks
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredAndSortedStocks.map((stock) => (
@@ -315,7 +324,7 @@ export default function DiscoverPage() {
                 >
                   Previous
                 </button>
-                
+
                 {/* Page Numbers */}
                 <div className="flex gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -329,7 +338,7 @@ export default function DiscoverPage() {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
