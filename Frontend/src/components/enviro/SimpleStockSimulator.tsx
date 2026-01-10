@@ -31,6 +31,9 @@ import {
   Newspaper,
   ChevronDown,
   ChevronUp,
+  Check,
+  BarChart3,
+  Receipt,
 } from "lucide-react";
 import { StockRoulette } from "./StockRoulette";
 import { ReturnsGraph } from "./ReturnsGraph";
@@ -54,6 +57,22 @@ interface SimpleStockSimulatorProps {
   sandboxName?: string;
   onDeleteSandbox?: () => void;
 }
+
+// Helper function to format dates safely
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "Date unavailable";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Date unavailable";
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return "Date unavailable";
+  }
+};
 
 export function SimpleStockSimulator({
   sandboxId,
@@ -389,13 +408,13 @@ export function SimpleStockSimulator({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 mb-6">
           {/* Left Column - Search, Roulette, Quick Add, Portfolio */}
-          <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+          <div className="lg:col-span-3 space-y-5 lg:space-y-7">
             {/* Search Stocks */}
             <Card>
               <CardHeader>
                 <CardTitle>Search Stocks</CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="relative" ref={searchInputRef}>
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-stone-400 w-5 h-5" />
                   <Input
@@ -416,22 +435,23 @@ export function SimpleStockSimulator({
                   <p className="text-xs text-gray-500 dark:text-stone-400 mb-2 font-medium">
                     Quick Add:
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {POPULAR_STOCKS.map((symbol) => (
-                      <Button
-                        key={symbol}
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addToWatchlist(symbol)}
-                        disabled={
-                          watchedStocks.includes(symbol) ||
-                          updateSandbox.isPending
-                        }
-                        className="text-xs"
-                      >
-                        {symbol}
-                      </Button>
-                    ))}
+                  <div className="flex flex-wrap gap-2">
+                    {POPULAR_STOCKS.map((symbol) => {
+                      const isInWatchlist = watchedStocks.includes(symbol);
+                      return (
+                        <Button
+                          key={symbol}
+                          size="sm"
+                          variant={isInWatchlist ? "secondary" : "outline"}
+                          onClick={() => addToWatchlist(symbol)}
+                          disabled={isInWatchlist || updateSandbox.isPending}
+                          className="text-xs relative"
+                        >
+                          {isInWatchlist && <Check className="w-3 h-3 mr-1" />}
+                          {symbol}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -500,7 +520,7 @@ export function SimpleStockSimulator({
                   Portfolio
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs text-gray-500 dark:text-stone-400 uppercase tracking-widest">
@@ -540,7 +560,7 @@ export function SimpleStockSimulator({
           </div>
 
           {/* Center Column - Watchlist & Returns Graph */}
-          <div className="lg:col-span-8 space-y-4 lg:space-y-6">
+          <div className="lg:col-span-7 space-y-4 lg:space-y-6">
             {/* Watchlist with Sector Grouping */}
             <Card>
               <CardHeader>
@@ -548,14 +568,23 @@ export function SimpleStockSimulator({
               </CardHeader>
               <CardContent className="p-0 w-full">
                 {watchedStocks.length === 0 ? (
-                  <div className="py-12 px-4 text-center space-y-3">
-                    <p className="text-gray-500 dark:text-stone-400 font-medium">
-                      Your watchlist is empty
-                    </p>
-                    <p className="text-sm text-gray-400 dark:text-stone-500">
-                      Use the search bar or quick-add buttons to add stocks
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center mt-4">
+                  <div className="py-16 px-4 text-center space-y-4">
+                    <div className="flex justify-center">
+                      <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                        <BarChart3 className="w-8 h-8 text-stone-400 dark:text-stone-500" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-lg font-bold text-black dark:text-stone-100">
+                        Your watchlist is empty
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-stone-400 max-w-md mx-auto">
+                        Start building your portfolio by adding stocks to track.
+                        Use the search bar above or try the quick-add buttons
+                        below.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center mt-6">
                       {POPULAR_STOCKS.slice(0, 5).map((symbol) => (
                         <Button
                           key={symbol}
@@ -580,15 +609,22 @@ export function SimpleStockSimulator({
                       >
                         <button
                           onClick={() => toggleSector(sector)}
-                          className="w-full flex items-center justify-between p-2.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+                          className={`w-full flex items-center justify-between p-3 border-b-2 transition-all ${
+                            collapsedSectors.has(sector)
+                              ? "bg-stone-100 dark:bg-stone-800 border-stone-300 dark:border-stone-600 hover:bg-stone-200 dark:hover:bg-stone-700"
+                              : "bg-stone-50 dark:bg-stone-900 border-stone-400 dark:border-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+                          }`}
                         >
-                          <span className="font-bold text-black dark:text-stone-100">
-                            {sector} ({stocks.length})
+                          <span className="font-black text-sm uppercase tracking-wide text-black dark:text-stone-100">
+                            {sector}{" "}
+                            <span className="text-stone-500 dark:text-stone-400 font-semibold">
+                              ({stocks.length})
+                            </span>
                           </span>
                           {collapsedSectors.has(sector) ? (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-5 h-5 text-stone-600 dark:text-stone-400" />
                           ) : (
-                            <ChevronUp className="w-4 h-4" />
+                            <ChevronUp className="w-5 h-5 text-stone-600 dark:text-stone-400" />
                           )}
                         </button>
                         {!collapsedSectors.has(sector) && (
@@ -660,18 +696,26 @@ export function SimpleStockSimulator({
               </CardHeader>
               <CardContent className="p-4">
                 {transactions.length === 0 ? (
-                  <div className="py-8 text-center space-y-2">
-                    <p className="text-gray-500 dark:text-stone-400 font-medium">
-                      No transactions yet
-                    </p>
-                    <p className="text-sm text-gray-400 dark:text-stone-500">
-                      Your buy and sell orders will appear here
-                    </p>
+                  <div className="py-12 text-center space-y-3">
+                    <div className="flex justify-center">
+                      <div className="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                        <Receipt className="w-6 h-6 text-stone-400 dark:text-stone-500" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-black dark:text-stone-100">
+                        No transactions yet
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-stone-400">
+                        Your buy and sell orders will appear here once you start
+                        trading
+                      </p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="max-h-[600px] overflow-y-auto overflow-x-auto">
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="sticky top-0 bg-white dark:bg-stone-800 z-10">
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Symbol</TableHead>
@@ -684,13 +728,13 @@ export function SimpleStockSimulator({
                       <TableBody className="[&_tr]:border-b [&_tr:last-child]:border-0 [&_tr:hover]:bg-stone-50 [&_tr:hover]:dark:bg-stone-800/50">
                         {transactions.map((tx) => (
                           <TableRow key={tx.id} className="transition-colors">
-                            <TableCell className="text-xs py-2">
-                              {new Date(tx.date).toLocaleDateString()}
+                            <TableCell className="text-xs py-3">
+                              {formatDate(tx.date)}
                             </TableCell>
-                            <TableCell className="font-bold text-sm py-2">
+                            <TableCell className="font-bold text-sm py-3">
                               {tx.symbol}
                             </TableCell>
-                            <TableCell className="py-2">
+                            <TableCell className="py-3">
                               <span
                                 className={`font-semibold text-xs ${
                                   tx.action === "Buy"
@@ -701,13 +745,13 @@ export function SimpleStockSimulator({
                                 {tx.action}
                               </span>
                             </TableCell>
-                            <TableCell className="text-sm py-2">
+                            <TableCell className="text-sm py-3">
                               {tx.quantity}
                             </TableCell>
-                            <TableCell className="text-sm py-2">
+                            <TableCell className="text-sm py-3">
                               ${tx.price.toFixed(2)}
                             </TableCell>
-                            <TableCell className="font-semibold text-sm py-2">
+                            <TableCell className="font-semibold text-sm py-3">
                               ${tx.total.toFixed(2)}
                             </TableCell>
                           </TableRow>
@@ -773,9 +817,7 @@ export function SimpleStockSimulator({
                                 {article.source}
                               </span>
                               <span className="text-xs text-gray-500 dark:text-stone-500">
-                                {new Date(
-                                  article.published_at
-                                ).toLocaleDateString()}
+                                {formatDate(article.published_at)}
                               </span>
                             </div>
                           </div>
@@ -819,9 +861,7 @@ export function SimpleStockSimulator({
                                 {article.source}
                               </span>
                               <span className="text-xs text-gray-500 dark:text-stone-500">
-                                {new Date(
-                                  article.published_at
-                                ).toLocaleDateString()}
+                                {formatDate(article.published_at)}
                               </span>
                             </div>
                           </div>
@@ -942,7 +982,7 @@ function WatchedStockRow({
           value={quantity}
           onChange={(e) => onQuantityChange(e.target.value)}
           placeholder="Qty"
-          className="w-20 h-8 text-sm"
+          className="w-28 h-9 text-sm px-3 font-medium"
         />
       </TableCell>
       <TableCell className="py-2 px-3">
@@ -957,8 +997,9 @@ function WatchedStockRow({
               !quantity ||
               isTrading
             }
-            className="text-xs h-7 px-2"
+            className="text-xs h-7 px-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <TrendingUp className="w-3 h-3 mr-1" />
             Buy
           </Button>
           <Button
@@ -972,8 +1013,9 @@ function WatchedStockRow({
               !quantity ||
               isTrading
             }
-            className="text-xs h-7 px-2"
+            className="text-xs h-7 px-2 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <TrendingDown className="w-3 h-3 mr-1" />
             Sell
           </Button>
           <Button

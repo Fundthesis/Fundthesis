@@ -103,44 +103,46 @@ export default function DashboardPage() {
         {/* Newspaper Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Quick Stats & Education Focus (3 columns) */}
-          <div className="lg:col-span-3 space-y-8">
-            {/* Education / Learning Corner */}
-            <div className="border-t-4 border-black dark:border-stone-700 pt-2 bg-stone-100 dark:bg-stone-800 p-4">
-              <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-2 flex items-center text-black dark:text-stone-100">
-                <BookOpen className="w-4 h-4 mr-2" />
-                Learning Corner
-              </h3>
-              <p className="font-serif text-sm italic mb-4 text-black dark:text-stone-300">
-                &quot;Volatility is the price of admission for long-term
-                growth.&quot;
-              </p>
-              <Link
-                href="/learn"
-                className="block text-center bg-black dark:bg-stone-700 text-white dark:text-stone-100 px-4 py-2 font-serif text-sm font-bold hover:bg-gray-800 dark:hover:bg-stone-600 transition-colors"
-              >
-                RESUME LEARNING
-              </Link>
-            </div>
+          <div className="lg:col-span-3 space-y-8 ">
+            <div className="sticky top-24">
+              {/* Education / Learning Corner */}
+              <div className="border-t-4 border-black dark:border-stone-700 pt-2 bg-stone-100 dark:bg-stone-800 p-4 ">
+                <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-2 flex items-center text-black dark:text-stone-100">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Learning Corner
+                </h3>
+                <p className="font-serif text-sm italic mb-4 text-black dark:text-stone-300">
+                  &quot;Volatility is the price of admission for long-term
+                  growth.&quot;
+                </p>
+                <Link
+                  href="/learn"
+                  className="block text-center bg-black dark:bg-stone-700 text-white dark:text-stone-100 px-4 py-2 font-serif text-sm font-bold hover:bg-gray-800 dark:hover:bg-stone-600 transition-colors"
+                >
+                  RESUME LEARNING
+                </Link>
+              </div>
 
-            {/* Daily Wisdom */}
-            <div className="border-t-4 border-black dark:border-stone-700 pt-2">
-              <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-2 text-black dark:text-stone-100">
-                Daily Wisdom
-              </h3>
-              <blockquote className="font-serif text-xl italic leading-relaxed text-gray-800 dark:text-stone-300">
-                &quot;The individual investor should act consistently as an
-                investor and not as a speculator.&quot;
-              </blockquote>
-              <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400">
-                — Benjamin Graham
-              </p>
-            </div>
+              {/* Daily Wisdom */}
+              <div className="border-t-4 border-black dark:border-stone-700 pt-2">
+                <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-2 text-black dark:text-stone-100">
+                  Daily Wisdom
+                </h3>
+                <blockquote className="font-serif text-xl italic leading-relaxed text-gray-800 dark:text-stone-300">
+                  &quot;The individual investor should act consistently as an
+                  investor and not as a speculator.&quot;
+                </blockquote>
+                <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-stone-400">
+                  — Benjamin Graham
+                </p>
+              </div>
 
-            <div className="border-t-4 border-black dark:border-stone-700 pt-2">
-              <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-4 text-black dark:text-stone-100">
-                Market Movers
-              </h3>
-              <PerformersSection />
+              <div className="border-t-4 border-black dark:border-stone-700 pt-2">
+                <h3 className="font-serif text-lg font-bold uppercase tracking-wider mb-4 text-black dark:text-stone-100">
+                  Market Movers
+                </h3>
+                <PerformersSection />
+              </div>
             </div>
           </div>
 
@@ -237,8 +239,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Column: AI Coach (3 columns) */}
-          <div className="lg:col-span-3 space-y-8">
-            <div className="sticky top-6">
+          <div className="lg:col-span-3 space-y-8 ">
+            <div className="sticky top-24">
               <EditorsDesk />
 
               {/* Watchlist Section */}
